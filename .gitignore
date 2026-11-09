@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Django
+/media/
+/staticfiles/
+*.sqlite3
+huey*.db
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Éditeurs / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Exports de lots de cartes (contiennent les codes d'activation)
+/exports/

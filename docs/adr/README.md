@@ -1,0 +1,15 @@
+# Décisions d'architecture (ADR)
+
+Format Michael Nygard : Contexte · Décision · Alternatives · Conséquences. Une décision = un fichier numéroté.
+Statuts : Proposée → Acceptée → (Remplacée par ADR-xxxx).
+
+| N° | Titre | Statut |
+|---|---|---|
+| 0001 | Django 5.2 LTS + PostgreSQL au lieu de Laravel + MySQL | Proposée |
+| 0002 | Huey pour les tâches de fond | Proposée |
+| 0003 | 302 pour `/c/<code>`, 301 pour les anciens slugs | Proposée |
+| 0004 | Téléphone E.164 = identité unique | Proposée |
+| 0005 | Code d'activation secret par carte | Proposée |
+| 0006 | Multi-pays dès le modèle de données | Proposée |
+
+Elles passent à « Acceptée » quand vous validez le plan.
