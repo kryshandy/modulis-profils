@@ -1,0 +1,59 @@
+{% load i18n dashboard_tags %}
+<div class="panel stack" id="panel">
+  {% if media|length < max_items %}
+  <section class="card">
+    <form class="stack" method="post" enctype="multipart/form-data" action="{% url 'dashboard:media_add' %}" hx-post="{% url 'dashboard:media_add' %}" hx-encoding="multipart/form-data" hx-target="#panel" hx-swap="outerHTML">
+      {% csrf_token %}
+      <h2 class="h2">{% translate "Photos de ton travail" %}</h2>
+      <p class="tip">{% translate "Montre tes réalisations : avant / après, ta boutique, tes produits. 3 photos suffisent pour bien démarrer." %}</p>
+      {% for e in upload_errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+      <label class="dropzone">
+        {% icon "image" "icon--xl" %}
+        <span class="dropzone__title">{% translate "Choisir des photos" %}</span>
+        <span class="small muted">{% blocktranslate with n=media|length max=max_items %}{{ n }} sur {{ max }} · 5 Mo max par photo{% endblocktranslate %}</span>
+        <input class="visually-hidden-input" type="file" name="images" accept="image/*" multiple data-files-label>
+      </label>
+      <p class="small" data-files-output aria-live="polite"></p>
+      {% include "partials/field.html" with field=upload_form.caption %}
+      <button class="btn btn--primary" type="submit" data-busy="{% translate 'Envoi des photos…' %}">{% icon "upload" %}<span>{% translate "Ajouter à ma galerie" %}</span></button>
+    </form>
+  </section>
+  {% else %}
+    <p class="tip">{% translate "Ta galerie est pleine (12 photos). Supprime une photo pour en ajouter une autre." %}</p>
+  {% endif %}
+
+  <section class="card stack">
+    {% if media %}
+      <ul class="gallery">
+        {% for m in media %}
+        <li class="gallery__item">
+          <img src="{{ m.image.url }}" alt="{{ m.caption|default:_('Photo de réalisation') }}" width="{{ m.width|default:300 }}" height="{{ m.height|default:300 }}" loading="lazy">
+          <form class="gallery__caption" method="post" action="{% url 'dashboard:media_update' m.pk %}" hx-post="{% url 'dashboard:media_update' m.pk %}" hx-target="#panel" hx-swap="outerHTML">
+            {% csrf_token %}
+            <label class="sr-only" for="cap-{{ m.pk }}">{% translate "Légende" %}</label>
+            <input id="cap-{{ m.pk }}" name="caption" value="{{ m.caption }}" maxlength="140" placeholder="{% translate 'Ajoute une légende' %}">
+            <button class="iconbtn" type="submit" aria-label="{% translate 'Enregistrer la légende' %}">{% icon "check" %}</button>
+          </form>
+          <div class="gallery__tools">
+            <form method="post" action="{% url 'dashboard:media_move' m.pk %}" hx-post="{% url 'dashboard:media_move' m.pk %}" hx-target="#panel" hx-swap="outerHTML">
+              {% csrf_token %}
+              <button class="iconbtn" type="submit" name="direction" value="up" aria-label="{% translate 'Avant' %}"{% if forloop.first %} disabled{% endif %}>{% icon "left" %}</button>
+              <button class="iconbtn" type="submit" name="direction" value="down" aria-label="{% translate 'Après' %}"{% if forloop.last %} disabled{% endif %}>{% icon "right" %}</button>
+            </form>
+            <form method="post" action="{% url 'dashboard:media_delete' m.pk %}" hx-post="{% url 'dashboard:media_delete' m.pk %}" hx-target="#panel" hx-swap="outerHTML" hx-confirm="{% translate 'Supprimer cette photo ?' %}">
+              {% csrf_token %}
+              <button class="iconbtn iconbtn--danger" type="submit" aria-label="{% translate 'Supprimer la photo' %}">{% icon "trash" %}</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty">
+        {% icon "image" "empty__icon" %}
+        <p class="empty__title">{% translate "Ta galerie est vide" %}</p>
+        <p class="muted">{% translate "Les pages avec des photos de travaux reçoivent beaucoup plus de messages." %}</p>
+      </div>
+    {% endif %}
+  </section>
+</div>

@@ -1,0 +1,18 @@
+{% load i18n %}
+<div class="form-field{% if field.errors %} form-field--error{% endif %}">
+  <label class="form-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  <p class="counter" data-counter-for="{{ field.id_for_label }}" aria-live="polite">
+    <span data-counter-text>{% blocktranslate with n=field.value|default:""|length %}{{ n }} caractères — 120 minimum pour Google{% endblocktranslate %}</span>
+  </p>
+  {% for e in field.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+</div>
+{% if suggestions %}
+<details class="helper" open>
+  <summary>{% translate "Aide-moi à écrire" %}</summary>
+  <p class="form-field__help">{% translate "Touche une phrase pour l'ajouter, puis modifie-la avec tes mots. Un texte personnel est mieux vu par Google." %}</p>
+  <ul class="chips">
+    {% for s in suggestions %}<li><button class="chip" type="button" data-insert="{{ s }}" data-insert-target="{{ field.id_for_label }}">+ {{ s }}</button></li>{% endfor %}
+  </ul>
+</details>
+{% endif %}

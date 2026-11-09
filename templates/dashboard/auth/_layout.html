@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static i18n dashboard_tags %}
+{% block title %}{% block page_title %}{% translate "Connexion" %}{% endblock %} · {{ SITE_NAME }}{% endblock %}
+{% block body_class %}auth{% endblock %}
+{% block header %}
+<header class="auth__brand">
+  {% icon "logo" "brand__mark brand__mark--lg" %}<span class="brand__name">Modulis <b>Pro</b></span>
+</header>
+{% endblock %}
+{% block content %}
+<div class="auth__card card">
+  {% block auth_content %}{% endblock %}
+</div>
+<p class="auth__foot muted">{% translate "Pas de mot de passe à retenir : on t'envoie un code par SMS." %}</p>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/app.js' %}" defer></script>{% endblock %}

@@ -1,0 +1,11 @@
+{% load i18n dashboard_tags %}
+<section class="card url-card" data-tour="1" data-tour-title="{% translate 'Ta page' %}" data-tour-text="{% translate 'Voici l’adresse de ta page. Copie-la ou envoie-la sur WhatsApp à tes clients.' %}">
+  <p class="url-card__label">{% translate "L'adresse de ta page" %}</p>
+  <p class="url-card__url"><a href="{{ profile.get_absolute_url }}" target="_blank" rel="noopener" id="page-url">{{ profile.absolute_url|without_scheme }}</a></p>
+  {% if profile.visibility == "private" %}<p class="badge badge--warn">{% translate "Page privée : seulement toi peux la voir" %}</p>{% endif %}
+  <div class="url-card__actions">
+    <a class="btn btn--light" href="{{ profile.get_absolute_url }}" target="_blank" rel="noopener">{% icon "eye" %}<span>{% translate "Voir ma page" %}</span></a>
+    <button class="btn btn--light js-only" type="button" data-copy="{{ profile.absolute_url }}" data-copied="{% translate 'Lien copié ✓' %}" hidden>{% icon "copy" %}<span>{% translate "Copier" %}</span></button>
+    <a class="btn btn--whatsapp" href="{{ whatsapp_share }}" target="_blank" rel="noopener">{% icon "whatsapp" %}<span>{% translate "Envoyer sur WhatsApp" %}</span></a>
+  </div>
+</section>

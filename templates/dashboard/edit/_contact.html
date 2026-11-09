@@ -1,0 +1,15 @@
+{% load i18n %}
+<div class="panel" id="panel">
+  <form class="card stack" method="post" action="{% url 'dashboard:edit' 'contact' %}" hx-post="{% url 'dashboard:edit' 'contact' %}" hx-target="#panel" hx-swap="outerHTML" novalidate>
+    {% csrf_token %}
+    <h2 class="h2">{% translate "Tes contacts" %}</h2>
+    <p class="tip">{% translate "Ces informations deviennent des gros boutons sur ta page : WhatsApp, Appeler, Itinéraire." %}</p>
+    {% include "partials/form_errors.html" %}
+    {% include "partials/field.html" with field=form.whatsapp %}
+    {% include "partials/field.html" with field=form.phone_public %}
+    {% include "partials/field.html" with field=form.email_public %}
+    {% include "partials/field.html" with field=form.address %}
+    {% include "partials/field.html" with field=form.maps_url %}
+    <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
+  </form>
+</div>

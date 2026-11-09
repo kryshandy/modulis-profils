@@ -1,0 +1,14 @@
+{% load i18n %}
+<div class="form-field{% if form.trade_choice.errors %} form-field--error{% endif %}">
+  <label class="form-field__label" for="{{ form.trade_choice.id_for_label }}">{{ form.trade_choice.label }}</label>
+  <input class="filter js-only" type="search" placeholder="{% translate 'Tape pour chercher (ex. coiffure)' %}" aria-label="{% translate 'Chercher un métier' %}" data-filter-select="{{ form.trade_choice.id_for_label }}" hidden>
+  {{ form.trade_choice }}
+  {% for e in form.trade_choice.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+</div>
+<div class="form-field" data-show-when="{{ form.trade_choice.id_for_label }}=other">
+  <label class="form-field__label" for="{{ form.custom_title.id_for_label }}">{{ form.custom_title.label }}</label>
+  {{ form.custom_title }}
+  <p class="form-field__help">{% translate "Seulement si ton métier n'est pas dans la liste." %}</p>
+  {% for e in form.custom_title.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+</div>
+{% include "partials/field.html" with field=form.is_feminine %}

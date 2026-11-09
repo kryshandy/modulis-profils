@@ -1,0 +1,14 @@
+{% load i18n %}
+<div class="panel" id="panel">
+  <form class="card stack" method="post" action="{% url 'dashboard:edit' 'metier' %}" hx-post="{% url 'dashboard:edit' 'metier' %}" hx-target="#panel" hx-swap="outerHTML" novalidate>
+    {% csrf_token %}
+    <h2 class="h2">{% translate "Ton métier et ta zone" %}</h2>
+    <p class="tip">{% translate "Choisis le métier le plus proche : c'est ce que tes clients cherchent sur Google." %}</p>
+    {% include "partials/form_errors.html" %}
+    {% include "dashboard/partials/trade_fields.html" %}
+    {% include "partials/field.html" with field=form.city %}
+    {% include "partials/field.html" with field=form.district %}
+    {% include "partials/field.html" with field=form.service_area %}
+    <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
+  </form>
+</div>

@@ -1,0 +1,26 @@
+{% extends "dashboard/onboarding/_layout.html" %}
+{% load i18n %}
+{% block step %}
+<h1 class="h1">{% translate "Présente-toi" %}</h1>
+<p class="lead">{% translate "Quelques phrases simples suffisent : ce que tu fais, où, et pourquoi te choisir." %}</p>
+<form method="post" class="stack" novalidate>
+  {% csrf_token %}
+  {% include "partials/form_errors.html" %}
+  {% include "dashboard/partials/bio_field.html" with field=form.bio %}
+  <fieldset class="form-field">
+    <legend class="form-field__label">{% translate "Tes 2 prestations principales" %}</legend>
+    {% if existing_services %}
+      <p class="form-field__help">{% translate "Déjà ajoutées :" %} {% for s in existing_services %}{{ s.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+    <p class="form-field__help">{% translate "Exemples :" %} {{ service_examples|join:", " }}</p>
+    <div class="grid-2">
+      <div class="form-field"><label class="form-field__label" for="id_service_1">{{ services_form.service_1.label }}</label>{{ services_form.service_1 }}</div>
+      <div class="form-field"><label class="form-field__label" for="id_price_1">{{ services_form.price_1.label }}</label>{{ services_form.price_1 }}</div>
+      <div class="form-field"><label class="form-field__label" for="id_service_2">{{ services_form.service_2.label }}</label>{{ services_form.service_2 }}</div>
+      <div class="form-field"><label class="form-field__label" for="id_price_2">{{ services_form.price_2.label }}</label>{{ services_form.price_2 }}</div>
+    </div>
+  </fieldset>
+  {% translate "Mettre ma page en ligne" as save_label %}
+  {% include "dashboard/onboarding/_actions.html" with label=save_label %}
+</form>
+{% endblock %}

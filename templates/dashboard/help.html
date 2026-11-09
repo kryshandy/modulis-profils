@@ -1,0 +1,35 @@
+{% extends "dashboard_base.html" %}
+{% load i18n dashboard_tags %}
+{% block page_title %}{% translate "Aide" %}{% endblock %}
+{% block dash_content %}
+<h1 class="h1">{% translate "Aide" %}</h1>
+
+<section class="card stack">
+  <h2 class="h2">{% translate "Visite guidée" %}</h2>
+  <p class="muted">{% translate "Revois en 1 minute à quoi sert chaque partie de ton espace." %}</p>
+  <a class="btn btn--primary" href="{% url 'dashboard:home' %}?visite=1">{% icon "sparkle" %}<span>{% translate "Revoir la visite guidée" %}</span></a>
+</section>
+
+<section class="card stack">
+  <h2 class="h2">{% translate "Questions fréquentes" %}</h2>
+  <div class="faq">
+    <details><summary>{% translate "Ma page est-elle gratuite ?" %}</summary><p>{% translate "Oui. La page, son adresse et le QR code sont gratuits. Les offres payantes ajoutent le badge vérifié, des statistiques détaillées et retirent le logo Modulis." %}</p></details>
+    <details><summary>{% translate "Pourquoi ma page n'est pas encore sur Google ?" %}</summary><p>{% translate "Google ne montre que les pages assez complètes. Suis la jauge sur l'accueil : photo, métier et ville, une présentation d'au moins 120 caractères écrite par toi, et 2 prestations. Ensuite il faut compter quelques jours." %}</p></details>
+    <details><summary>{% translate "Comment marche une carte NFC ?" %}</summary><p>{% translate "La carte contient une petite puce. Ton client la pose au dos de son téléphone (NFC activé) et ta page s'ouvre, sans application. Si son téléphone n'a pas le NFC, il scanne le QR code imprimé au dos." %}</p></details>
+    <details><summary>{% translate "J'ai perdu ma carte, que faire ?" %}</summary><p>{% translate "Va dans « Cartes NFC » et touche « Signaler perdue ». La carte ne mènera plus à ta page. Tu peux ensuite lier une nouvelle carte." %}</p></details>
+    <details><summary>{% translate "Je change de numéro de téléphone" %}</summary><p>{% translate "Ton numéro sert à te connecter. Contacte le support pour le changer : on vérifie que c'est bien toi avant." %}</p></details>
+    <details><summary>{% translate "Puis-je changer l'adresse de ma page ?" %}</summary><p>{% translate "Oui, dans Paramètres, 3 fois par an. L'ancienne adresse redirige automatiquement vers la nouvelle." %}</p></details>
+    <details><summary>{% translate "Qui voit mon numéro ?" %}</summary><p>{% translate "Seuls les numéros que tu mets dans « Contact » sont affichés sur ta page. Ton numéro de connexion reste privé si tu l'enlèves de là." %}</p></details>
+  </div>
+</section>
+
+<section class="card stack">
+  <h2 class="h2">{% translate "Besoin d'un coup de main ?" %}</h2>
+  {% if support_whatsapp %}
+    <p class="muted">{% translate "Écris-nous sur WhatsApp, on te répond du lundi au samedi." %}</p>
+    <a class="btn btn--whatsapp" href="https://wa.me/{{ support_whatsapp }}" target="_blank" rel="noopener">{% icon "whatsapp" %}<span>{% translate "Écrire au support" %}</span></a>
+  {% else %}
+    <p class="muted">{% translate "Demande de l'aide à ton revendeur ou à l'agent Modulis qui t'a inscrit." %}</p>
+  {% endif %}
+</section>
+{% endblock %}

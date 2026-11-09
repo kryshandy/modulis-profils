@@ -1,0 +1,27 @@
+{% extends "dashboard/auth/_layout.html" %}
+{% load i18n %}
+{% block page_title %}{% translate "Code SMS" %}{% endblock %}
+{% block auth_content %}
+<h1 class="h1">{% translate "Entre ton code" %}</h1>
+<p class="lead">{% blocktranslate with phone=phone_display %}On vient d'envoyer un code à 6 chiffres au <strong class="nowrap">{{ phone }}</strong>.{% endblocktranslate %}</p>
+{% if error %}<p class="alert alert--error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" class="stack" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="action" value="verify">
+  <div class="form-field{% if form.code.errors %} form-field--error{% endif %}">
+    <label class="form-field__label" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+    {{ form.code }}
+    {% for e in form.code.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+  </div>
+  <button class="btn btn--primary btn--block btn--lg" type="submit" data-busy="{% translate 'Vérification…' %}">{% translate "Valider" %}</button>
+</form>
+<div class="resend">
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="resend">
+    <button class="btn btn--link" type="submit" data-countdown="{{ resend_wait }}" data-countdown-label="{% translate 'Renvoyer le code dans %s s' %}">{% translate "Je n'ai rien reçu : renvoyer le code" %}</button>
+  </form>
+  <a class="btn btn--link" href="{% url 'dashboard:login' %}">{% translate "Changer de numéro" %}</a>
+</div>
+<p class="small muted">{% translate "Le SMS peut mettre jusqu'à une minute à arriver. Le code expire au bout de 5 minutes." %}</p>
+{% endblock %}

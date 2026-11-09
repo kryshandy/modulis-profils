@@ -1,0 +1,23 @@
+{% load i18n dashboard_tags %}
+{# Two inputs with the same name: camera (capture) or gallery. The server takes the first file sent. #}
+<div class="photo-picker" data-photo-picker>
+  <div class="photo-picker__preview">
+    {% if profile.photo %}
+      <img src="{{ profile.photo.url }}" alt="{% translate 'Ta photo actuelle' %}" width="120" height="120" data-preview-img>
+    {% else %}
+      <img alt="" width="120" height="120" data-preview-img hidden>
+      <span class="photo-picker__placeholder" data-preview-empty>{% icon "user" "icon--xl" %}</span>
+    {% endif %}
+  </div>
+  <div class="photo-picker__buttons">
+    <label class="btn btn--primary btn--block">
+      {% icon "camera" %}<span>{% translate "Prendre une photo" %}</span>
+      <input class="visually-hidden-input" type="file" name="photo" accept="image/*" capture="user" data-preview>
+    </label>
+    <label class="btn btn--ghost btn--block">
+      {% icon "image" %}<span>{% translate "Choisir dans ma galerie" %}</span>
+      <input class="visually-hidden-input" type="file" name="photo" accept="image/*" data-preview>
+    </label>
+    <p class="form-field__help" data-preview-name>{% translate "JPG, PNG ou WebP, 5 Mo maximum. On l'allège automatiquement." %}</p>
+  </div>
+</div>

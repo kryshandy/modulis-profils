@@ -1,0 +1,12 @@
+{% load i18n %}
+{# SVG ring: geometry via presentation attributes only (CSP forbids inline styles). #}
+<div class="gauge" role="img" aria-label="{% blocktranslate with n=score %}Ta page est complète à {{ n }} %{% endblocktranslate %}">
+  <svg class="gauge__ring" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+    <circle class="gauge__track" cx="60" cy="60" r="52" fill="none" stroke-width="12"/>
+    <circle class="gauge__value{% if score >= 70 %} is-good{% endif %}" cx="60" cy="60" r="52" fill="none" stroke-width="12"
+            stroke-linecap="round" transform="rotate(-90 60 60)"
+            stroke-dasharray="{% widthratio score 100 327 %} 327"/>
+  </svg>
+  <p class="gauge__text"><strong>{{ score }}&nbsp;%</strong></p>
+  <p class="gauge__caption">{% blocktranslate with n=score %}Ta page est prête à {{ n }} %{% endblocktranslate %}</p>
+</div>

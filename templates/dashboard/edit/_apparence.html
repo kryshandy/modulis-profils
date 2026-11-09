@@ -1,0 +1,23 @@
+{% load i18n %}
+<div class="panel" id="panel">
+  <form class="card stack" method="post" action="{% url 'dashboard:edit' 'apparence' %}" hx-post="{% url 'dashboard:edit' 'apparence' %}" hx-target="#panel" hx-swap="outerHTML" novalidate>
+    {% csrf_token %}
+    <h2 class="h2">{% translate "Apparence et visibilité" %}</h2>
+    {% include "partials/form_errors.html" %}
+    <fieldset class="form-field">
+      <legend class="form-field__label">{{ form.cover_color.label }}</legend>
+      <div class="swatches">
+        {% for radio in form.cover_color %}
+          <label class="swatch">
+            {{ radio.tag }}
+            <span class="swatch__color swatch--{{ radio.data.value|slice:'1:'|lower }}" aria-hidden="true"></span>
+            <span class="swatch__name">{{ radio.choice_label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% include "partials/choice_cards.html" with field=form.visibility %}
+    <p class="tip">{% translate "Une page privée n'apparaît ni sur Google ni dans l'annuaire. Les personnes à qui tu tends ta carte voient quand même tes contacts." %}</p>
+    <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
+  </form>
+</div>

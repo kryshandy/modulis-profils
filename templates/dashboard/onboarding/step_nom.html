@@ -1,0 +1,13 @@
+{% extends "dashboard/onboarding/_layout.html" %}
+{% load i18n %}
+{% block step %}
+<h1 class="h1">{% translate "Comment t'appelles-tu ?" %}</h1>
+<p class="lead">{% translate "C'est le nom que tes clients verront en haut de ta page." %}</p>
+<form method="post" class="stack" novalidate>
+  {% csrf_token %}
+  {% include "partials/form_errors.html" %}
+  {% include "partials/field.html" with field=form.display_name %}
+  {% include "partials/choice_cards.html" with field=form.kind %}
+  {% include "dashboard/onboarding/_actions.html" %}
+</form>
+{% endblock %}

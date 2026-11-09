@@ -1,0 +1,11 @@
+{# Generic form field. Usage: {% include "partials/field.html" with field=form.x %} #}
+<div class="form-field{% if field.errors %} form-field--error{% endif %}">
+  {% if field.field.widget.input_type == 'checkbox' %}
+    <label class="check">{{ field }} <span>{{ field.label }}</span></label>
+  {% else %}
+    <label class="form-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<p class="form-field__help">{{ field.help_text }}</p>{% endif %}
+  {% for error in field.errors %}<p class="form-field__error" role="alert">{{ error }}</p>{% endfor %}
+</div>

@@ -1,0 +1,11 @@
+{% load i18n %}
+<div class="panel" id="panel">
+  <form class="card stack" method="post" action="{% url 'dashboard:edit' 'presentation' %}" hx-post="{% url 'dashboard:edit' 'presentation' %}" hx-target="#panel" hx-swap="outerHTML" novalidate>
+    {% csrf_token %}
+    <h2 class="h2">{% translate "Ta présentation" %}</h2>
+    <p class="tip">{% translate "Dis ce que tu fais, depuis quand, où tu te déplaces, et ce qui te rend différent. Évite de copier le texte d'un autre : Google le repère." %}</p>
+    {% include "partials/form_errors.html" %}
+    {% include "dashboard/partials/bio_field.html" with field=form.bio %}
+    <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
+  </form>
+</div>

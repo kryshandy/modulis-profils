@@ -1,0 +1,63 @@
+{% extends "dashboard_base.html" %}
+{% load i18n dashboard_tags %}
+{% block page_title %}{% translate "Paramètres" %}{% endblock %}
+{% block dash_content %}
+<h1 class="h1">{% translate "Paramètres" %}</h1>
+
+<section class="card stack" id="adresse">
+  <h2 class="h2">{% translate "Adresse de ta page" %}</h2>
+  <p class="muted">{% translate "Adresse actuelle :" %} <strong class="text-break">{{ profile.absolute_url|without_scheme }}</strong></p>
+  <form class="stack" method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="slug">
+    <div class="form-field{% if slug_form.slug.errors %} form-field--error{% endif %}">
+      <label class="form-field__label" for="{{ slug_form.slug.id_for_label }}">{{ slug_form.slug.label }}</label>
+      <div class="input-prefix">
+        <span class="input-prefix__code" aria-hidden="true">{{ SITE_URL|without_scheme }}/</span>
+        <input type="text" name="slug" id="{{ slug_form.slug.id_for_label }}" value="{{ slug_form.slug.value|default:'' }}" maxlength="50"
+               autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="slug-status"
+               hx-get="{% url 'dashboard:slug_check' %}" hx-trigger="input changed delay:500ms" hx-target="#slug-status" hx-swap="outerHTML">
+      </div>
+      {% for e in slug_form.slug.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+      <p class="slug-status" id="slug-status" aria-live="polite"></p>
+    </div>
+    <p class="tip">{% translate "L'ancienne adresse continue de marcher et redirige vers la nouvelle : tes cartes et QR codes restent valables. 3 changements par an maximum." %}</p>
+    <button class="btn btn--primary" type="submit">{% translate "Changer l'adresse" %}</button>
+  </form>
+</section>
+
+<section class="card">
+  <form class="stack" method="post" hx-post="{% url 'dashboard:settings' %}" hx-swap="none" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="language">
+    {% include "partials/choice_cards.html" with field=language_form.language %}
+    <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
+  </form>
+</section>
+
+<section class="card">
+  <form class="stack" method="post" hx-post="{% url 'dashboard:settings' %}" hx-swap="none" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="email">
+    <h2 class="h2">{% translate "Email de secours" %}</h2>
+    <p class="muted">{% translate "Facultatif. Il nous aide à te retrouver si tu perds ton numéro. Il n'est jamais affiché sur ta page." %}</p>
+    {% include "partials/field.html" with field=email_form.email %}
+    <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
+  </form>
+</section>
+
+<section class="card stack card--danger" id="supprimer">
+  <h2 class="h2">{% translate "Supprimer ma page" %}</h2>
+  <p class="muted">{% translate "Ta page, tes photos et tes textes seront effacés pour toujours. Tes cartes NFC seront désactivées. On ne peut pas revenir en arrière." %}</p>
+  <details{% if delete_form.errors %} open{% endif %}>
+    <summary class="btn btn--ghost btn--danger">{% translate "Je veux supprimer ma page" %}</summary>
+    <form class="stack" method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete">
+      <p>{% blocktranslate with slug=profile.slug %}Pour confirmer, écris <strong>{{ slug }}</strong> ci-dessous.{% endblocktranslate %}</p>
+      {% include "partials/field.html" with field=delete_form.confirm %}
+      <button class="btn btn--danger-solid" type="submit">{% translate "Supprimer définitivement" %}</button>
+    </form>
+  </details>
+</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static i18n dashboard_tags %}
+{% block title %}{% translate "Affiche" %} · {{ profile.display_name }}{% endblock %}
+{% block body_class %}poster-page{% endblock %}
+{% block content %}
+<div class="poster-tools no-print">
+  <a class="btn btn--ghost" href="{% url 'dashboard:share' %}">{% icon "back" %}<span>{% translate "Retour" %}</span></a>
+  <button class="btn btn--primary js-only" type="button" data-print hidden>{% icon "print" %}<span>{% translate "Imprimer" %}</span></button>
+</div>
+<article class="poster poster--{{ profile.cover_color|slice:'1:'|lower }}">
+  <p class="poster__kicker">{% translate "Scanne-moi" %}</p>
+  <h1 class="poster__name">{{ profile.display_name }}</h1>
+  {% if profile.title %}<p class="poster__title">{{ profile.title }}{% if profile.city %} · {{ profile.city.name }}{% endif %}</p>{% endif %}
+  <img class="poster__qr" src="/{{ profile.slug }}/qr.svg" width="260" height="260" alt="{% translate 'QR code' %}">
+  <p class="poster__hint">{% translate "Ouvre l'appareil photo de ton téléphone et vise le code" %}</p>
+  <p class="poster__url">{{ profile.absolute_url|without_scheme }}</p>
+</article>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/app.js' %}" defer></script>{% endblock %}

@@ -1,0 +1,50 @@
+{% load i18n dashboard_tags %}
+<div class="panel stack" id="panel">
+  <section class="card stack">
+    <div class="row-between">
+      <h2 class="h2">{% translate "Tes liens" %}</h2>
+      <span class="badge">{{ links|length }} / {{ max_items }}</span>
+    </div>
+    {% if links %}
+      <ol class="items">
+        {% for l in links %}
+        <li class="item">
+          <div class="item__main">
+            <p class="item__title">{{ l.get_kind_display }}</p>
+            <p class="item__desc muted text-break">{{ l.url }}</p>
+          </div>
+          <div class="item__tools">
+            <form method="post" action="{% url 'dashboard:link_move' l.pk %}" hx-post="{% url 'dashboard:link_move' l.pk %}" hx-target="#panel" hx-swap="outerHTML">
+              {% csrf_token %}
+              <button class="iconbtn" type="submit" name="direction" value="up" aria-label="{% translate 'Monter' %}"{% if forloop.first %} disabled{% endif %}>{% icon "up" %}</button>
+              <button class="iconbtn" type="submit" name="direction" value="down" aria-label="{% translate 'Descendre' %}"{% if forloop.last %} disabled{% endif %}>{% icon "down" %}</button>
+            </form>
+            <form method="post" action="{% url 'dashboard:link_delete' l.pk %}" hx-post="{% url 'dashboard:link_delete' l.pk %}" hx-target="#panel" hx-swap="outerHTML" hx-confirm="{% translate 'Supprimer ce lien ?' %}">
+              {% csrf_token %}
+              <button class="iconbtn iconbtn--danger" type="submit" aria-label="{% translate 'Supprimer le lien' %}">{% icon "trash" %}</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <div class="empty">
+        {% icon "link" "empty__icon" %}
+        <p class="empty__title">{% translate "Aucun lien pour l'instant" %}</p>
+        <p class="muted">{% translate "Ajoute ta page Facebook, ton Instagram ou ton site : tes clients verront ton travail ailleurs aussi." %}</p>
+      </div>
+    {% endif %}
+  </section>
+  {% if links|length < max_items %}
+  <section class="card">
+    <form class="stack" method="post" action="{% url 'dashboard:link_add' %}" hx-post="{% url 'dashboard:link_add' %}" hx-target="#panel" hx-swap="outerHTML" novalidate>
+      {% csrf_token %}
+      <h2 class="h3">{% translate "Ajouter un lien" %}</h2>
+      {% include "partials/field.html" with field=link_form.kind %}
+      {% include "partials/field.html" with field=link_form.url %}
+      <p class="form-field__help">{% translate "Astuce : ouvre ta page Facebook ou Instagram, copie l'adresse en haut et colle-la ici." %}</p>
+      <button class="btn btn--primary" type="submit">{% icon "plus" %}<span>{% translate "Ajouter" %}</span></button>
+    </form>
+  </section>
+  {% endif %}
+</div>

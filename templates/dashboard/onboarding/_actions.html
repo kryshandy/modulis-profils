@@ -1,0 +1,5 @@
+{% load i18n %}
+<div class="wizard__actions">
+  <button class="btn btn--primary btn--block btn--lg" type="submit" name="action" value="save" data-busy="{% translate 'Enregistrement…' %}">{% if label %}{{ label }}{% else %}{% translate "Continuer" %}{% endif %}</button>
+  {% if skippable %}<button class="btn btn--ghost btn--block" type="submit" name="action" value="skip" formnovalidate>{% translate "Passer cette étape" %}</button>{% endif %}
+</div>

@@ -1,0 +1,13 @@
+{# Radio choices rendered as big tappable cards. Usage: with field=form.kind #}
+<fieldset class="form-field choices{% if field.errors %} form-field--error{% endif %}">
+  <legend class="form-field__label">{{ field.label }}</legend>
+  <div class="choices__grid">
+    {% for radio in field %}
+      <label class="choice">
+        {{ radio.tag }}
+        <span class="choice__body">{{ radio.choice_label }}</span>
+      </label>
+    {% endfor %}
+  </div>
+  {% for error in field.errors %}<p class="form-field__error" role="alert">{{ error }}</p>{% endfor %}
+</fieldset>

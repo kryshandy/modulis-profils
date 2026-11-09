@@ -1,0 +1,74 @@
+{% extends "dashboard_base.html" %}
+{% load static i18n dashboard_tags %}
+{% block page_title %}{% translate "Accueil" %}{% endblock %}
+{% block dash_content %}
+<div class="home" data-tour-root{% if tour_autostart %} data-tour-autostart="1"{% endif %} data-tour-done-url="{% url 'dashboard:tour_done' %}"
+     data-label-next="{% translate 'Suivant' %}" data-label-prev="{% translate 'Retour' %}" data-label-skip="{% translate 'Passer' %}" data-label-done="{% translate 'Terminer' %}" data-label-of="{% translate 'sur' %}">
+
+  <div class="greeting">
+    <h1 class="h1">{% blocktranslate with name=profile.display_name %}Bonjour {{ name }} !{% endblocktranslate %}</h1>
+    <span class="badge badge--plan badge--{{ plan_code }}">
+      {% if plan_code == "free" %}{% translate "Offre gratuite" %}{% elif plan_code == "essentiel" %}{% translate "Offre Essentiel" %}{% elif plan_code == "pro" %}{% translate "Offre Pro" %}{% else %}{% translate "Offre Équipe" %}{% endif %}
+    </span>
+  </div>
+
+  {% if onboarding_pending %}
+    <a class="alert alert--info alert--link" href="{% url 'dashboard:onboarding' 'metier' %}">{% icon "sparkle" %}<span>{% translate "Termine la création de ta page en 2 minutes" %}</span>{% icon "chevron" %}</a>
+  {% endif %}
+
+  {% include "dashboard/partials/url_card.html" %}
+
+  <div class="home__grid">
+    <section class="card stack" data-tour="2" data-tour-title="{% translate 'Ta jauge de complétude' %}" data-tour-text="{% translate 'Plus ta page est complète, plus Google la montre. Touche une ligne pour la compléter.' %}">
+      <h2 class="h2">{% translate "Ta page" %}</h2>
+      {% include "dashboard/partials/gauge.html" with score=profile.completeness_score %}
+      <ul class="checklist">
+        {% for item in items %}
+          <li class="checklist__item{% if item.done %} is-done{% endif %}">
+            {% if item.done %}
+              {% icon "check" "checklist__icon" %}<span>{{ item.label }}</span>
+            {% else %}
+              <a href="{% url 'dashboard:edit' item.section %}">{% icon "circle" "checklist__icon" %}<span>{{ item.label }}</span><span class="badge">+{{ item.points }}</span></a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card stack google">
+      <h2 class="h2">{% icon "search" %} {% translate "Sur Google" %}</h2>
+      {% if profile.is_indexable %}
+        <p class="status status--ok">{% icon "check" %}<span>{% translate "Visible sur Google" %}</span></p>
+        <p class="muted">{% translate "Bravo ! Google peut montrer ta page quand on cherche ton métier dans ta ville. Ça peut prendre quelques jours." %}</p>
+      {% else %}
+        <p class="status status--wait">{% icon "clock" %}<span>{% translate "Pas encore sur Google" %}</span></p>
+        <p class="muted">{% translate "Ta page marche déjà pour tes clients. Pour que Google la montre aussi, il reste un peu à faire :" %}</p>
+        <ul class="bullets">{% for reason in blockers %}<li>{{ reason }}</li>{% endfor %}</ul>
+        <a class="btn btn--ghost btn--small" href="{% url 'dashboard:edit' 'presentation' %}">{% translate "Compléter ma présentation" %}</a>
+      {% endif %}
+    </section>
+
+    <section class="card stack">
+      <h2 class="h2">{% translate "Ces 30 derniers jours" %}</h2>
+      <div class="kpis">
+        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.visit }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "visites" %}</span></div>
+        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.whatsapp }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "clics WhatsApp" %}</span></div>
+        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.call }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "appels" %}</span></div>
+        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.scan }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "scans" %}</span></div>
+      </div>
+      {% if not stats %}<p class="small muted">{% translate "Tes statistiques apparaîtront ici dès les premières visites." %}</p>{% endif %}
+    </section>
+  </div>
+
+  <h2 class="h2">{% translate "Raccourcis" %}</h2>
+  <ul class="tiles">
+    <li><a class="tile" href="{% url 'dashboard:edit' 'identite' %}" data-tour="3" data-tour-title="{% translate 'Modifier ta page' %}" data-tour-text="{% translate 'Change ta photo, ton texte, tes prestations et tes photos de travaux quand tu veux.' %}">{% icon "edit" "tile__icon" %}<span>{% translate "Modifier ma page" %}</span></a></li>
+    <li><a class="tile" href="{% url 'dashboard:share' %}" data-tour="4" data-tour-title="{% translate 'Partager et QR code' %}" data-tour-text="{% translate 'Télécharge ton QR code, imprime une affiche et envoie ton lien.' %}">{% icon "qr" "tile__icon" %}<span>{% translate "Partager / QR" %}</span></a></li>
+    <li><a class="tile" href="{% url 'dashboard:stats' %}" data-tour="5" data-tour-title="{% translate 'Tes statistiques' %}" data-tour-text="{% translate 'Vois combien de personnes visitent ta page et te contactent.' %}">{% icon "chart" "tile__icon" %}<span>{% translate "Statistiques" %}</span></a></li>
+    <li><a class="tile" href="{% url 'dashboard:cards' %}" data-tour="6" data-tour-title="{% translate 'Tes cartes NFC' %}" data-tour-text="{% translate 'Tu as une carte Modulis ? Lie-la ici : un simple contact avec un téléphone ouvre ta page.' %}">{% icon "card" "tile__icon" %}<span>{% translate "Cartes NFC" %}</span></a></li>
+    <li><a class="tile" href="{% url 'dashboard:settings' %}" data-tour="7" data-tour-title="{% translate 'Paramètres' %}" data-tour-text="{% translate 'Change l’adresse de ta page, sa langue ou ton email. La visite est finie, à toi de jouer !' %}">{% icon "settings" "tile__icon" %}<span>{% translate "Paramètres" %}</span></a></li>
+    <li><a class="tile" href="{% url 'dashboard:help' %}">{% icon "help" "tile__icon" %}<span>{% translate "Aide" %}</span></a></li>
+  </ul>
+</div>
+{% endblock %}
+{% block dash_scripts %}<script src="{% static 'js/tour.js' %}" defer></script>{% endblock %}

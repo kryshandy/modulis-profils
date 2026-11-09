@@ -1,0 +1,33 @@
+{% extends "dashboard_base.html" %}
+{% load i18n %}
+{% block page_title %}{% translate "Statistiques" %}{% endblock %}
+{% block dash_content %}
+<h1 class="h1">{% translate "Mes statistiques" %}</h1>
+<p class="lead">{% translate "Ce qui s'est passé sur ta page ces 30 derniers jours." %}</p>
+{% if not available %}
+  <section class="card empty">
+    <p class="empty__title">{% translate "Les statistiques arrivent bientôt" %}</p>
+    <p class="muted">{% translate "On prépare tes chiffres. En attendant, partage ton lien pour recevoir tes premières visites !" %}</p>
+    <a class="btn btn--primary" href="{% url 'dashboard:share' %}">{% translate "Partager ma page" %}</a>
+  </section>
+{% else %}
+  <section class="card stack">
+    <ul class="bars">
+      {% for row in rows %}
+      <li class="bars__row">
+        <span class="bars__label">{{ row.label }}</span>
+        <svg class="bars__bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true">
+          <rect class="bars__track" x="0" y="0" width="100" height="10" rx="5"/>
+          <rect class="bars__fill" x="0" y="0" width="{{ row.pct }}" height="10" rx="5"/>
+        </svg>
+        <strong class="bars__value">{{ row.value }}</strong>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if not stats.totals.visit %}<p class="tip">{% translate "Pas encore de visite : envoie ton lien à 5 clients aujourd'hui, c'est le meilleur début." %}</p>{% endif %}
+  </section>
+{% endif %}
+{% if plan_code == "free" %}
+  <p class="tip">{% translate "Avec l'offre Pro, tu verras aussi d'où viennent tes visiteurs et l'évolution jour par jour." %}</p>
+{% endif %}
+{% endblock %}

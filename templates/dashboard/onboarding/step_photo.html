@@ -1,0 +1,13 @@
+{% extends "dashboard/onboarding/_layout.html" %}
+{% load i18n %}
+{% block step %}
+<h1 class="h1">{% translate "Ajoute ta photo" %}</h1>
+<p class="lead">{% translate "Une page avec une photo inspire beaucoup plus confiance : ton visage, ton logo ou ta boutique." %}</p>
+<form method="post" enctype="multipart/form-data" class="stack" novalidate>
+  {% csrf_token %}
+  {% if error %}<p class="alert alert--error" role="alert">{{ error }}</p>{% endif %}
+  {% include "dashboard/partials/photo_picker.html" %}
+  {% translate "Enregistrer ma photo" as save_label %}
+  {% include "dashboard/onboarding/_actions.html" with label=save_label %}
+</form>
+{% endblock %}

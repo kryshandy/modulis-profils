@@ -1,0 +1,38 @@
+{% extends "dashboard_base.html" %}
+{% load i18n dashboard_tags %}
+{% block page_title %}{% translate "Partager" %}{% endblock %}
+{% block dash_content %}
+<h1 class="h1">{% translate "Partager ma page" %}</h1>
+<p class="lead">{% translate "Plus tu partages ton lien, plus tu reçois de clients… et plus Google te fait confiance." %}</p>
+
+{% include "dashboard/partials/url_card.html" %}
+
+<div class="home__grid">
+  <section class="card stack center">
+    <h2 class="h2">{% translate "Ton QR code" %}</h2>
+    <img class="qr" src="/{{ profile.slug }}/qr.svg" width="200" height="200" alt="{% translate 'QR code menant à ta page' %}">
+    <p class="small muted">{% translate "Les clients le scannent avec l'appareil photo de leur téléphone." %}</p>
+    <div class="btn-row">
+      <a class="btn btn--primary" href="/{{ profile.slug }}/qr.png" download="qr-{{ profile.slug }}.png">{% icon "download" %}<span>{% translate "Image PNG" %}</span></a>
+      <a class="btn btn--ghost" href="/{{ profile.slug }}/qr.svg" download="qr-{{ profile.slug }}.svg">{% icon "download" %}<span>{% translate "Fichier SVG (imprimeur)" %}</span></a>
+    </div>
+  </section>
+
+  <section class="card stack">
+    <h2 class="h2">{% translate "Message tout prêt" %}</h2>
+    <label class="sr-only" for="share-text">{% translate "Texte à partager" %}</label>
+    <textarea id="share-text" rows="4" readonly>{{ share_text }}</textarea>
+    <div class="btn-row">
+      <a class="btn btn--whatsapp" href="{{ whatsapp_share }}" target="_blank" rel="noopener">{% icon "whatsapp" %}<span>{% translate "Envoyer sur WhatsApp" %}</span></a>
+      <button class="btn btn--ghost js-only" type="button" data-copy="{{ share_text }}" data-copied="{% translate 'Message copié ✓' %}" hidden>{% icon "copy" %}<span>{% translate "Copier le message" %}</span></button>
+    </div>
+    <p class="tip">{% translate "Astuce : mets ce lien dans ton statut WhatsApp et dans la description de ton profil WhatsApp Business." %}</p>
+  </section>
+
+  <section class="card stack">
+    <h2 class="h2">{% translate "Affiche à imprimer" %}</h2>
+    <p class="muted">{% translate "Une petite affiche A5 avec ton nom et ton QR code, pour ta boutique, ton atelier ou ta voiture." %}</p>
+    <a class="btn btn--ghost" href="{% url 'dashboard:poster' %}" target="_blank" rel="noopener">{% icon "print" %}<span>{% translate "Ouvrir l'affiche" %}</span></a>
+  </section>
+</div>
+{% endblock %}

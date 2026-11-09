@@ -1,0 +1,64 @@
+{% load i18n dashboard_tags %}
+<div class="panel stack" id="panel">
+  <section class="card stack">
+    <div class="row-between">
+      <h2 class="h2">{% translate "Tes prestations" %}</h2>
+      <span class="badge">{{ services|length }} / {{ max_items }}</span>
+    </div>
+    {% if services %}
+      <ol class="items">
+        {% for s in services %}
+        <li class="item">
+          <div class="item__main">
+            <p class="item__title">{{ s.title }}{% if s.price_label %} <span class="item__price">{{ s.price_label }}</span>{% endif %}</p>
+            {% if s.description %}<p class="item__desc muted">{{ s.description }}</p>{% endif %}
+          </div>
+          <div class="item__tools">
+            <form method="post" action="{% url 'dashboard:service_move' s.pk %}" hx-post="{% url 'dashboard:service_move' s.pk %}" hx-target="#panel" hx-swap="outerHTML">
+              {% csrf_token %}
+              <button class="iconbtn" type="submit" name="direction" value="up" aria-label="{% translate 'Monter' %}"{% if forloop.first %} disabled{% endif %}>{% icon "up" %}</button>
+              <button class="iconbtn" type="submit" name="direction" value="down" aria-label="{% translate 'Descendre' %}"{% if forloop.last %} disabled{% endif %}>{% icon "down" %}</button>
+            </form>
+            <form method="post" action="{% url 'dashboard:service_delete' s.pk %}" hx-post="{% url 'dashboard:service_delete' s.pk %}" hx-target="#panel" hx-swap="outerHTML" hx-confirm="{% translate 'Supprimer cette prestation ?' %}">
+              {% csrf_token %}
+              <button class="iconbtn iconbtn--danger" type="submit" aria-label="{% blocktranslate with t=s.title %}Supprimer {{ t }}{% endblocktranslate %}">{% icon "trash" %}</button>
+            </form>
+          </div>
+          <details class="item__edit">
+            <summary>{% translate "Modifier" %}</summary>
+            <form class="stack" method="post" action="{% url 'dashboard:service_update' s.pk %}" hx-post="{% url 'dashboard:service_update' s.pk %}" hx-target="#panel" hx-swap="outerHTML">
+              {% csrf_token %}
+              <div class="form-field"><label class="form-field__label" for="st-{{ s.pk }}">{% translate "Nom de la prestation" %}</label><input id="st-{{ s.pk }}" name="title" value="{{ s.title }}" maxlength="100" required></div>
+              <div class="form-field"><label class="form-field__label" for="sd-{{ s.pk }}">{% translate "Détail (facultatif)" %}</label><input id="sd-{{ s.pk }}" name="description" value="{{ s.description }}" maxlength="300"></div>
+              <div class="form-field"><label class="form-field__label" for="sp-{{ s.pk }}">{% translate "Prix indicatif (facultatif)" %}</label><input id="sp-{{ s.pk }}" name="price_label" value="{{ s.price_label }}" maxlength="60"></div>
+              <button class="btn btn--primary btn--small" type="submit">{% translate "Enregistrer" %}</button>
+            </form>
+          </details>
+        </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <div class="empty">
+        {% icon "list" "empty__icon" %}
+        <p class="empty__title">{% translate "Pas encore de prestation" %}</p>
+        <p class="muted">{% translate "Liste ce que tu proposes, avec un prix indicatif si tu veux. Les clients adorent savoir à quoi s'attendre." %}</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {% if services|length < max_items %}
+  <section class="card">
+    <form class="stack" method="post" action="{% url 'dashboard:service_add' %}" hx-post="{% url 'dashboard:service_add' %}" hx-target="#panel" hx-swap="outerHTML" novalidate>
+      {% csrf_token %}
+      <h2 class="h3">{% translate "Ajouter une prestation" %}</h2>
+      <p class="form-field__help">{% translate "Idées :" %} {{ examples|join:", " }}</p>
+      {% include "partials/field.html" with field=service_form.title %}
+      {% include "partials/field.html" with field=service_form.description %}
+      {% include "partials/field.html" with field=service_form.price_label %}
+      <button class="btn btn--primary" type="submit">{% icon "plus" %}<span>{% translate "Ajouter" %}</span></button>
+    </form>
+  </section>
+  {% else %}
+    <p class="tip">{% translate "Tu as atteint le maximum de prestations. Supprime-en une pour en ajouter une autre." %}</p>
+  {% endif %}
+</div>

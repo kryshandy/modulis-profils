@@ -1,0 +1,51 @@
+{% extends "dashboard_base.html" %}
+{% load i18n dashboard_tags %}
+{% block page_title %}{% translate "Cartes NFC" %}{% endblock %}
+{% block dash_content %}
+<h1 class="h1">{% translate "Mes cartes NFC" %}</h1>
+<p class="lead">{% translate "Une carte Modulis ouvre ta page quand on la pose contre un téléphone, ou quand on scanne son QR code." %}</p>
+
+<section class="card stack">
+  {% if cards %}
+    <ul class="items">
+      {% for c in cards %}
+      <li class="item">
+        <div class="item__main">
+          <p class="item__title">{% icon "card" %} {{ c.label|default:c.public_code }}</p>
+          <p class="item__desc muted">
+            {% if c.status == "active" %}<span class="badge badge--ok">{% translate "Active" %}</span>
+            {% elif c.status == "disabled" %}<span class="badge badge--off">{% translate "Désactivée" %}</span>
+            {% else %}<span class="badge">{{ c.get_status_display }}</span>{% endif %}
+            {% blocktranslate count n=c.scan_count %}{{ n }} scan{% plural %}{{ n }} scans{% endblocktranslate %}
+            {% if c.last_scan_at %} · {% blocktranslate with d=c.last_scan_at|timesince %}dernier il y a {{ d }}{% endblocktranslate %}{% endif %}
+          </p>
+        </div>
+        {% if c.status == "active" %}
+        <form method="post" action="{% url 'dashboard:card_lost' c.pk %}" data-confirm="{% translate 'Désactiver cette carte ? Elle ne mènera plus à ta page. Cette action est définitive.' %}">
+          {% csrf_token %}
+          <button class="btn btn--ghost btn--small btn--danger" type="submit">{% translate "Signaler perdue" %}</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty">
+      {% icon "card" "empty__icon" %}
+      <p class="empty__title">{% translate "Pas encore de carte liée" %}</p>
+      <p class="muted">{% translate "Tu as reçu une carte Modulis ? Lie-la ci-dessous en 30 secondes. Tu n'en as pas ? Demande-la à ton revendeur Modulis." %}</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="card stack" id="lier">
+  <h2 class="h2">{% translate "Lier une nouvelle carte" %}</h2>
+  {% if error %}<p class="alert alert--error" role="alert">{{ error }}</p>{% endif %}
+  <form class="stack" method="post" action="{% url 'dashboard:card_link' %}" novalidate>
+    {% csrf_token %}
+    {% include "partials/field.html" with field=form.public_code %}
+    {% include "partials/field.html" with field=form.activation_code %}
+    <button class="btn btn--primary" type="submit" data-busy="{% translate 'Vérification…' %}">{% translate "Lier la carte à ma page" %}</button>
+  </form>
+</section>
+{% endblock %}

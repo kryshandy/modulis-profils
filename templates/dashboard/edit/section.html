@@ -1,0 +1,17 @@
+{% extends "dashboard_base.html" %}
+{% load i18n dashboard_tags %}
+{% block page_title %}{{ section_label }} · {% translate "Ma page" %}{% endblock %}
+{% block dash_content %}
+<div class="editor">
+  <div class="editor__head">
+    <h1 class="h1">{% translate "Ma page" %}</h1>
+    <a class="btn btn--ghost btn--small" href="{{ profile.get_absolute_url }}" target="_blank" rel="noopener">{% icon "phone-screen" %}<span>{% translate "Aperçu" %}</span></a>
+  </div>
+  <nav class="tabs" aria-label="{% translate 'Sections de ta page' %}">
+    {% for slug, label, icon_name in sections %}
+      <a class="tabs__item" href="{% url 'dashboard:edit' slug %}"{% if slug == section %} aria-current="page"{% endif %}>{% icon icon_name %}<span>{{ label }}</span></a>
+    {% endfor %}
+  </nav>
+  {% include panel_template %}
+</div>
+{% endblock %}

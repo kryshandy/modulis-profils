@@ -1,0 +1,20 @@
+{% extends "dashboard/auth/_layout.html" %}
+{% load i18n %}
+{% block auth_content %}
+<h1 class="h1">{% translate "Bienvenue !" %}</h1>
+<p class="lead">{% translate "Entre ton numéro. Tu recevras un code par SMS pour ouvrir ton espace ou créer ta page gratuite." %}</p>
+{% if error %}<p class="alert alert--error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" class="stack" novalidate>
+  {% csrf_token %}
+  <div class="form-field{% if form.phone.errors %} form-field--error{% endif %}">
+    <label class="form-field__label" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+    <div class="input-prefix">
+      <span class="input-prefix__code" aria-hidden="true">+237</span>
+      {{ form.phone }}
+    </div>
+    {% for e in form.phone.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+  </div>
+  <button class="btn btn--primary btn--block btn--lg" type="submit" data-busy="{% translate 'Envoi du code…' %}">{% translate "Recevoir mon code" %}</button>
+</form>
+<p class="small muted">{% translate "En continuant, tu acceptes de recevoir un SMS de Modulis Profils. Ton numéro n'est jamais affiché sans ton accord." %}</p>
+{% endblock %}

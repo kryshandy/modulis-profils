@@ -1,0 +1,15 @@
+{% extends "dashboard/onboarding/_layout.html" %}
+{% load i18n %}
+{% block step %}
+<h1 class="h1">{% translate "Comment te joindre ?" %}</h1>
+<p class="lead">{% translate "Tes clients pourront t'écrire sur WhatsApp ou t'appeler en un seul geste." %}</p>
+<form method="post" class="stack" novalidate>
+  {% csrf_token %}
+  {% include "partials/form_errors.html" %}
+  {% include "partials/field.html" with field=form.whatsapp %}
+  {% include "partials/field.html" with field=form.phone_public %}
+  {% include "partials/field.html" with field=form.email_public %}
+  <p class="tip">{% translate "Astuce : on a déjà mis ton numéro de connexion. Change-le si tu utilises un autre numéro pour le travail." %}</p>
+  {% include "dashboard/onboarding/_actions.html" %}
+</form>
+{% endblock %}
