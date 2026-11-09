@@ -1,6 +1,7 @@
 # Plateforme Profils Pros & Cartes NFC — Plan complet
 
-> Projet Modulis Tech · plan rédigé le 9 novembre 2026 · version 1.1 (après revue architecte : `docs/revues/2026-11-09-revue-plan.md`)
+> Projet Modulis Tech · plan rédigé le 9 novembre 2026 · version 1.2
+> v1.1 : revue architecte (`docs/revues/2026-11-09-revue-plan.md`) · v1.2 : Docker/WSL (ADR-0008), kliz (ADR-0007), OTP par SMS uniquement, équipe d'agents (`.claude/agents/`)
 > Sources : *Spécification Plateforme Profils NFC* (3 nov. 2026, F. Choudja) et *Point d'équipe Identité pro numérique* (7 nov. 2026).
 > Ce document est la référence. Toute décision qui le modifie passe par un ADR (`docs/adr/`) et une mise à jour ici.
 
@@ -55,7 +56,9 @@ Lecture croisée des deux PDF : voici les points qu'il faut trancher ou corriger
 | A7 | Pages catégorie `/plombiers/yaounde` à la racine | Risque de collision avec un slug de profil (`/plombiers`) | Liste de **slugs réservés** qui inclut automatiquement tous les métiers, toutes les villes et les routes système. |
 | A8 | « Sitemap soumis à Google » | Google a **supprimé l'endpoint de ping** des sitemaps en 2023 | Sitemap déclaré dans `robots.txt` et Search Console ; **IndexNow** pour Bing et Yandex ; l'API Indexing de Google seulement pour les offres d'emploi (JobPosting, V2). |
 | A9 | Statistiques : visites et scans | Les robots gonflent les chiffres ; les IP sont des données personnelles | Filtrage des robots, IP **jamais stockées en clair** (hachage salé, renouvelé chaque jour), agrégats journaliers. |
-| A10 | « Dépendance Kliz » (votre demande) | Introuvable : aucun paquet Python ni service de paiement camerounais connu sous ce nom | **Question ouverte Q1.** Le point d'intégration est isolé derrière une interface (`payments/providers/`) pour pouvoir le brancher sans toucher au reste. |
+| A10 | Paquet `kliz` (votre demande) | Trouvé sur PyPI (0.3.1) : il ne fait que **notifier** les moteurs (IndexNow + Search Console) | **Adopté pour la notification d'indexation uniquement** (ADR-0007, étude `docs/etudes/kliz.md`). |
+| A18 | OTP | Le plan hésitait entre SMS et WhatsApp | **OTP par SMS uniquement** (décision du porteur, 9 nov. 2026). |
+| A19 | Environnement | Le plan v1.1 prévoyait Windows natif sans Docker | **Docker + Compose dans WSL2 Ubuntu**, `Makefile` (ADR-0008). |
 | A11 | Outils d'équipe (pre-commit) | Le framework `pre-commit` télécharge ses hooks depuis GitHub | Hooks **git locaux** (`.githooks/`) qui appellent Ruff et les tests installés dans le venv. Zéro dépendance GitHub. |
 | A12 | Domaine | « Choix définitif avant toute impression » | Ajout d'une règle de maintenance : **renouvellement automatique sur 5 à 10 ans + alerte**. Un domaine expiré met hors service toutes les cartes vendues. |
 | A13 | Domaine `.cm` + multi-pays | Un ccTLD `.cm` est géociblé sur le Cameroun ; or l'URL des cartes est figée à vie | **ADR obligatoire avant le lot 5** : le domaine des cartes doit être court et neutre (sans pays) ; il peut différer du ou des domaines des profils. |
@@ -451,7 +454,7 @@ Chaque lot se termine par une note courte : concepts Django vus (ORM, migrations
 | préprod | VPS (plus tard) | PostgreSQL | `noindex` + mot de passe, fournisseur de paiement en bac à sable |
 | prod | VPS + Cloudflare | PostgreSQL + Redis | Nginx + Gunicorn, HTTPS, sauvegardes |
 
-**Prérequis constatés sur votre PC** : git 2.53 ✔, Node ✔ (pour Lighthouse). **Python n'est pas installé** (seul l'alias du Microsoft Store répond) et **PostgreSQL non plus**. Le lot 0 commence par leur installation (`winget install Python.Python.3.13` et `winget install PostgreSQL.PostgreSQL.17`).
+**Poste de développement** (ADR-0008) : Windows 11 + WSL2 Ubuntu 26.04 (Python 3.14 pour le venv de tests) + Docker Engine dans WSL (`scripts/wsl/install-docker.sh`). PostgreSQL et Redis tournent dans Docker : rien à installer sous Windows.
 
 ---
 
@@ -510,9 +513,9 @@ Profils créés, profils indexables, % de profils complets, cartes activées / v
 
 | # | Question | Bloque |
 |---|---|---|
-| **Q1** | **« Kliz »** : quel est ce service ou paquet (lien, documentation) ? Aucun paquet Python ni fournisseur camerounais de ce nom n'a été trouvé. Paiement ? SMS ? Autre ? | lot 1 ou 8 selon la réponse |
+| ~~Q1~~ | ~~« Kliz »~~ → **résolu** : paquet Python d'indexation, adopté (ADR-0007) | — |
 | Q2 | Nom et domaine définitifs (ModulisCard, Tapo, MonPro, KartPro…). Le domaine **des cartes** doit être neutre (sans pays) à cause de l'expansion prévue ; ADR à écrire | lot 5 (impression) — le dev peut commencer avant |
-| Q3 | Fournisseur OTP : SMS (agrégateur local) et/ou WhatsApp Business API | mise en ligne |
+| Q3 | Fournisseur **SMS** (agrégateur local) pour les OTP : SMS seulement, décidé. Reste à choisir le prestataire et à écrire son backend dans `apps/accounts/sms.py` | mise en ligne |
 | Q4 | Fournisseur Mobile Money | lot 8 |
 | Q5 | Fournisseur des cartes NFC (puce NTAG213/215/216, quantité, délai) | lot 5 |
 | Q6 | Hébergeur du VPS (Hetzner, OVH, Contabo…) | lot 9 |

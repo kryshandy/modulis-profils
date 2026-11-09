@@ -97,7 +97,7 @@ AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
 LOGIN_URL = "dashboard:login"
 LOGIN_REDIRECT_URL = "dashboard:home"
-LOGOUT_REDIRECT_URL = "public:home"
+LOGOUT_REDIRECT_URL = "dashboard:login"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -210,6 +210,9 @@ ANALYTICS_SALT = env("ANALYTICS_SALT", default=SECRET_KEY)
 TRUST_CF_CONNECTING_IP = env.bool("TRUST_CF_CONNECTING_IP", default=False)
 
 ADMIN_URL = env("ADMIN_URL", default="gestion/")
+
+# Support contact shown in the pro space help page (E.164, WhatsApp). Empty = hidden.
+SUPPORT_WHATSAPP = env("SUPPORT_WHATSAPP", default="")
 
 LOGGING = {
     "version": 1,

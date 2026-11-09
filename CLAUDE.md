@@ -3,30 +3,36 @@
 Ce fichier est lu par Claude et par ses sous-agents à chaque session. La référence produit est `docs/00-PLAN-COMPLET.md`.
 
 ## Langue
-Code, noms de variables et commits en anglais ; interface, documentation et explications en français.
+Code, noms et commentaires de code en anglais ; interface (avec gettext, en tutoyant), documentation et commits en français.
 
 ## Pile
-Python 3.13 · Django 5.2 LTS · PostgreSQL 17 · Huey · HTMX · pytest. Aucun framework JS sur les pages publiques.
+Python 3.13 (Docker) / 3.14 (venv WSL) · Django 5.2 LTS · PostgreSQL 17 · Redis 7 · Huey · HTMX · pytest · kliz (indexation).
+Aucun framework JS. Aucune ressource externe (CDN, polices) sur les pages publiques.
+
+## Commandes (toujours dans WSL Ubuntu, à la racine du projet)
+- `make test` : tests rapides (venv, SQLite en mémoire) · `make check` : lint + checks Django + migrations + tests + couverture ≥ 80 %
+- `make up` / `make logs` / `make down` : environnement Docker (web, worker, PostgreSQL, Redis). Les SMS de dev s'affichent dans `make logs`.
+- `make dtest` : tests sur PostgreSQL dans Docker · `make fmt` : formatage Ruff
+- Depuis PowerShell : `wsl -e bash -lc 'cd /mnt/c/Users/HP/Desktop/modulis-profils && make test'` (guillemets simples).
 
 ## Règles non négociables
-- **Aucune interaction avec GitHub** (ni remote, ni push, ni `pre-commit` qui télécharge depuis GitHub). Git local seulement.
-- Rendu serveur pour toute page publique ; aucun contenu indexable injecté en JavaScript.
-- Une application ne touche pas aux modèles d'une autre directement : passer par son `services.py`.
-- Toute création de profil passe par `profiles.services.get_or_create_profile` (anti-doublon par téléphone E.164).
-- `/c/<code>` répond en **302** et `noindex`. Les **301** servent uniquement aux anciens slugs.
-- Le format d'URL des cartes `https://DOMAINE/c/XXXXXXX` est figé à vie.
-- Secrets dans `.env` uniquement ; jamais de vraies données personnelles dans les fixtures.
-- Chaque changement est accompagné de tests ; `scripts/check.ps1` doit passer avant un commit.
-- Unicité des slugs : uniquement via la table `SlugRegistry`.
-- Activation de carte : vérifier le code d'activation **avant** d'envoyer un OTP.
-- JSON-LD construit à partir de données utilisateur : toujours échappé (`<`, `>`, `&`).
-- Liens saisis par les utilisateurs : schémas `https:`, `tel:`, `mailto:` et `wa.me` uniquement, avec `rel="ugc nofollow"` sur les profils gratuits.
-- Une décision qui change le plan = un ADR dans `docs/adr/` + mise à jour du plan.
+- **Aucune interaction avec GitHub** (ni remote, ni push, ni hook `pre-commit` téléchargé). Git local uniquement, commits réguliers.
+- Rendu serveur pour toute page publique ; aucun contenu indexable injecté en JavaScript ; CSP stricte, donc aucun script ni style en ligne.
+- Une application ne modifie pas les modèles d'une autre : elle passe par le `services.py` de celle-ci.
+- Toute création de profil passe par `profiles.services.create_profile` / `get_or_create_profile` (anti-doublon par téléphone E.164).
+- Unicité des slugs : uniquement via `SlugRegistry`. `/c/<code>` répond en **302** + `noindex` ; les **301** sont réservées aux anciens slugs ; profil effacé = **410**.
+- OTP **par SMS uniquement**, stocké en HMAC. Activation de carte : vérifier le code d'activation **avant** d'envoyer un OTP.
+- `ATOMIC_REQUESTS=True` : une vue doit **attraper** les exceptions métier (`OTPError`, `CardError`, `ValidationError`) et réafficher le formulaire. Une exception qui remonte annule les compteurs d'essais (faille de force brute). De même, un service ne lève jamais d'exception à l'intérieur de son propre `transaction.atomic()` après avoir incrémenté un compteur.
+- JSON-LD échappé (`<`, `>`, `&`) ; liens utilisateurs : `https:`, `tel:`, `mailto:`, `wa.me` uniquement, avec `rel="ugc nofollow"`.
+- Chaque vue de `/espace/` filtre par `request.user` (pas d'IDOR).
+- Secrets uniquement dans `.env` ; jamais de vraies données personnelles dans les fixtures.
+- Toute décision qui change le plan = un ADR dans `docs/adr/` + mise à jour du plan.
 
-## Supervision
-- La session principale planifie, délègue aux sous-agents, **relit tout** et seule elle commite.
-- Les sous-agents travaillent sur une tâche précise tirée de la fiche de lot, avec ses critères d'acceptation.
-- Fusion dans `main` uniquement après revue et accord de l'utilisateur.
+## Équipe d'agents (`.claude/agents/`)
+`backend-django`, `frontend-ux`, `seo-expert`, `devops-docker` (écriture) · `code-reviewer`, `security-auditor` (lecture seule).
+- La session principale planifie, délègue chaque tâche avec un **périmètre de fichiers exclusif**, relit tout, lance `make check` et **seule elle commite**.
+- Les agents qui travaillent en parallèle ne touchent pas aux mêmes fichiers et ne formatent que leurs propres fichiers.
+- Fin de lot : revue `code-reviewer` + `security-auditor` (+ `seo-expert` si des pages publiques ont changé), corrections, puis commit.
 
 ## Commits
-Conventional Commits : `feat(scope): …`, `fix(scope): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`.
+Conventional Commits en français : `feat(cards): activation par code secret`, `fix(accounts): …`, `docs: …`, `test: …`.

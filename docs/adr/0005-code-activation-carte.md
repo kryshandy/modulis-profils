@@ -8,7 +8,9 @@ que ce code, une personne pourrait scanner une carte invendue (en boutique, chez
 
 ## Décision
 Chaque carte reçoit à la génération un code d'activation de 8 caractères, imprimé sous une zone à gratter ou sur un encart
-dans l'emballage. Il est stocké **haché** (comme un mot de passe). Il est vérifié **avant** tout envoi d'OTP, pour qu'une
+dans l'emballage. Il est stocké sous forme d'**HMAC-SHA256 avec la clé secrète du serveur**. Un hachage lent de type
+PBKDF2 aurait demandé plusieurs minutes pour générer un lot de 1 000 cartes ; la clé secrète suffit à rendre impossible une
+attaque hors ligne. Il est vérifié **avant** tout envoi d'OTP, pour qu'une
 carte invendue ne puisse pas servir à faire envoyer des SMS payants. Limite par couple (carte, IP) : 5 essais par heure.
 Un seuil global par carte déclenche une alerte mais pas de blocage, sinon quiconque connaît le code public pourrait
 bloquer le propriétaire légitime.
