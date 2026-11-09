@@ -1,0 +1,9 @@
+{% load i18n %}{% if breadcrumb %}
+<nav class="breadcrumb" aria-label="{% translate 'Fil d’Ariane' %}">
+  <ol>
+    {% for name, path in breadcrumb %}
+      <li>{% if path and not forloop.last %}<a href="{{ path }}">{{ name }}</a>{% else %}<span aria-current="page">{{ name }}</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+</nav>
+{% endif %}

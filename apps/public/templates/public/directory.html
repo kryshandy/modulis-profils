@@ -1,0 +1,13 @@
+{% extends "public/base_public.html" %}
+{% load i18n %}
+{% block content %}
+{% include "public/_breadcrumb.html" %}
+<h1>{{ heading }}</h1>
+{% if page.object_list %}
+  <ul class="pro-list">{% for p in page.object_list %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+  {% include "public/_pagination.html" %}
+{% else %}
+  <p>{% blocktranslate with plural=trade.plural_name|lower city=city.name %}Aucun {{ plural }} pour l’instant à {{ city }}.{% endblocktranslate %}</p>
+{% endif %}
+<p class="section"><a href="/villes/{{ city.slug }}">{% blocktranslate with city=city.name %}Tous les professionnels à {{ city }}{% endblocktranslate %}</a></p>
+{% endblock %}

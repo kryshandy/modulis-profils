@@ -1,0 +1,18 @@
+<meta name="description" content="{{ meta.description }}">
+  <link rel="canonical" href="{{ meta.canonical }}">
+  <meta name="robots" content="{{ meta.robots }}">
+  <meta property="og:type" content="{{ meta.og.type }}">
+  <meta property="og:site_name" content="{{ meta.og.site_name }}">
+  <meta property="og:locale" content="{{ meta.og.locale }}">
+  <meta property="og:title" content="{{ meta.og.title }}">
+  <meta property="og:description" content="{{ meta.og.description }}">
+  <meta property="og:url" content="{{ meta.og.url }}">
+  {% if meta.og.image %}<meta property="og:image" content="{{ meta.og.image }}">
+  <meta property="og:image:type" content="image/png">
+  {% if meta.og.image_width %}<meta property="og:image:width" content="{{ meta.og.image_width }}">
+  <meta property="og:image:height" content="{{ meta.og.image_height }}">{% endif %}
+  <meta property="og:image:alt" content="{{ meta.og.title }}">{% endif %}
+  <meta name="twitter:card" content="{{ meta.twitter_card }}">
+  <meta name="twitter:title" content="{{ meta.og.title }}">
+  <meta name="twitter:description" content="{{ meta.og.description }}">
+  {% if meta.og.image %}<meta name="twitter:image" content="{{ meta.og.image }}">{% endif %}

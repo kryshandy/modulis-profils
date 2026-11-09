@@ -1,0 +1,11 @@
+{% extends "public/base_public.html" %}
+{% load i18n %}
+{% block title %}{% translate "Page supprimée" %} – {{ SITE_NAME }}{% endblock %}
+{% block seo %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block content %}
+<section class="error-page">
+  <h1>{% translate "Cette page a été supprimée" %}</h1>
+  <p>{% translate "Son propriétaire l’a supprimée définitivement. Elle ne reviendra pas." %}</p>
+  <p><a class="btn btn--primary" href="/">{% translate "Retour à l’accueil" %}</a></p>
+</section>
+{% endblock %}

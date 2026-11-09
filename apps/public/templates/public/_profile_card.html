@@ -1,0 +1,9 @@
+<li class="pro-card">
+  <a class="pro-card__link" href="{{ p.get_absolute_url }}">
+    {% if p.photo %}<img class="pro-card__photo" src="{{ p.photo.url }}" alt="" width="56" height="56" loading="lazy" decoding="async">{% else %}<span class="pro-card__initial" aria-hidden="true">{{ p.display_name|first|upper }}</span>{% endif %}
+    <span class="pro-card__text">
+      <span class="pro-card__name">{{ p.display_name }}</span>
+      <span class="pro-card__meta">{{ p.title }}{% if p.title and p.city %} · {% endif %}{{ p.city.name }}</span>
+    </span>
+  </a>
+</li>

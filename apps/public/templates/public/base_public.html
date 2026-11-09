@@ -1,0 +1,30 @@
+{% load static i18n %}<!doctype html>
+{# Public pages only (ultra-light, no blocking JS). The dashboard uses templates/base.html. #}
+<html lang="{% block lang %}{{ meta.lang|default:'fr' }}{% endblock %}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ meta.title|default:SITE_NAME }}{% endblock %}</title>
+  {% block seo %}{% if meta %}{% include "public/_seo_head.html" %}{% else %}<meta name="robots" content="noindex, follow">{% endif %}{% endblock %}
+  <meta name="theme-color" content="#0A7F7D">
+  <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+  {% block head %}{% endblock %}
+  {% if jsonld %}<script type="application/ld+json">{{ jsonld }}</script>{% endif %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% block header %}
+  <header class="site-header">
+    <a class="site-header__brand" href="/">{{ SITE_NAME }}</a>
+  </header>
+  {% endblock %}
+  <main id="main" class="page">
+    {% block content %}{% endblock %}
+  </main>
+  {% block footer %}
+  <footer class="site-footer">
+    <p><a href="/">{{ SITE_NAME }}</a> · {% translate "Pages pros gratuites" %}</p>
+  </footer>
+  {% endblock %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,11 @@
+{% extends "public/base_public.html" %}
+{% load i18n %}
+{% block title %}{% translate "Page introuvable" %} – {{ SITE_NAME }}{% endblock %}
+{% block seo %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block content %}
+<section class="error-page">
+  <h1>{% translate "Cette page n’existe pas ou n’est plus disponible" %}</h1>
+  <p>{% translate "Vérifie l’adresse, ou découvre les professionnels présents sur la plateforme." %}</p>
+  <p><a class="btn btn--primary" href="/">{% translate "Retour à l’accueil" %}</a></p>
+</section>
+{% endblock %}

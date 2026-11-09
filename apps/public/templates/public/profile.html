@@ -1,0 +1,87 @@
+{% extends "public/base_public.html" %}
+{% load i18n static %}
+{% block body_class %}profile{% endblock %}
+{% block head %}{% if profile.photo %}<link rel="preload" as="image" href="{{ profile.photo.url }}">{% endif %}{% endblock %}
+{% block content %}
+{% if owner_private %}
+<p class="banner banner--private" role="status">{% translate "Ta page est privée : toi seul la vois. Rends-la publique depuis ton espace pour que tes clients la trouvent." %}</p>
+{% endif %}
+<article class="profile-card" data-profile-id="{{ profile.pk }}">
+  <header class="profile-head">
+    {% if profile.photo %}<img class="profile-head__photo" src="{{ profile.photo.url }}" alt="{{ photo_alt }}" width="160" height="160" fetchpriority="high" decoding="async">{% else %}<span class="profile-head__initial" aria-hidden="true">{{ profile.display_name|first|upper }}</span>{% endif %}
+    <h1 class="profile-head__name">{{ profile.display_name }}</h1>
+    {% if profile.is_verified %}<p class="badge badge--verified">✓ {% translate "Profil vérifié" %}</p>{% endif %}
+    {% if subtitle %}<h2 class="profile-head__title">{{ subtitle }}</h2>{% endif %}
+    {% if profile.district or profile.service_area %}<p class="profile-head__area">{{ profile.district }}{% if profile.district and profile.service_area %} · {% endif %}{{ profile.service_area }}</p>{% endif %}
+  </header>
+
+  <nav class="actions" aria-label="{% translate 'Contacter' %}">
+    {% if phone %}<a class="btn btn--primary" href="tel:{{ phone }}" data-track="call">{% translate "Appeler" %}</a>{% endif %}
+    {% if whatsapp_url %}<a class="btn btn--whatsapp" href="{{ whatsapp_url }}" rel="noopener" data-track="whatsapp">WhatsApp</a>{% endif %}
+    {% if email %}<a class="btn" href="mailto:{{ email }}" data-track="email">{% translate "Email" %}</a>{% endif %}
+    {% if maps_url %}<a class="btn" href="{{ maps_url }}" rel="noopener nofollow" data-track="maps">{% translate "Itinéraire" %}</a>{% endif %}
+    <a class="btn btn--ghost" href="/{{ profile.slug }}/contact.vcf" rel="nofollow" data-track="vcard">{% translate "Enregistrer le contact" %}</a>
+  </nav>
+
+  {% if profile.bio %}
+  <section class="section">
+    <h2>{% translate "Présentation" %}</h2>
+    <div class="bio">{{ profile.bio|linebreaks }}</div>
+  </section>
+  {% endif %}
+
+  {% if services %}
+  <section class="section">
+    <h2>{% translate "Prestations" %}</h2>
+    <ul class="services">
+      {% for s in services %}
+      <li class="service"><span class="service__title">{{ s.title }}</span>{% if s.price_label %} <span class="service__price">{{ s.price_label }}</span>{% endif %}{% if s.description %}<p class="service__desc">{{ s.description }}</p>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if gallery %}
+  <section class="section">
+    <h2>{% translate "Réalisations" %}</h2>
+    <ul class="gallery">
+      {% for g in gallery %}<li><img src="{{ g.url }}" alt="{{ g.alt }}" width="{{ g.width }}" height="{{ g.height }}"{% if g.lazy %} loading="lazy"{% endif %} decoding="async"></li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if links %}
+  <section class="section">
+    <h2>{% translate "Liens" %}</h2>
+    <ul class="links">
+      {% for l in links %}<li><a href="{{ l.url }}" rel="ugc nofollow noopener" data-track="link">{{ l.label }}</a></li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <p class="share"><a class="btn btn--whatsapp" href="{{ share_url }}" rel="nofollow noopener" data-track="share">{% translate "Partager sur WhatsApp" %}</a></p>
+</article>
+
+{% if similar %}
+<section class="section similar">
+  <h2>{{ similar_title }}</h2>
+  <ul class="pro-list">{% for p in similar %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% include "public/_breadcrumb.html" %}
+
+<img class="pixel" src="/p/{{ profile.pk }}.gif" width="1" height="1" alt="" loading="eager">
+{% endblock %}
+{% block footer %}
+{% if show_branding %}
+<aside class="growth-banner">
+  <a href="{{ signup_url }}">{% translate "Crée ta page pro gratuite" %}</a>
+  <span>{% blocktranslate with site=SITE_NAME %}avec {{ site }}{% endblocktranslate %}</span>
+</aside>
+{% endif %}
+<footer class="site-footer">
+  <p><a href="/">{{ SITE_NAME }}</a> · <a href="{{ report_url }}" rel="nofollow">{% translate "Signaler cette page" %}</a></p>
+</footer>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/profile.js' %}" defer></script>{% endblock %}
