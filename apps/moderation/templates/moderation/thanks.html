@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Merci pour ton signalement" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}page-report{% endblock %}
+{% block content %}
+<section class="report-flow">
+  <h1>{% translate "Merci pour ton signalement" %}</h1>
+  <p>{% translate "Notre équipe va l'examiner rapidement. Si la page enfreint nos règles, elle sera suspendue." %}</p>
+  <p><a class="btn" href="{{ profile.get_absolute_url }}">{% translate "Revenir à la page" %}</a></p>
+</section>
+{% endblock %}

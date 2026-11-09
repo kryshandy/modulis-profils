@@ -14,6 +14,12 @@ def _clean_state(settings):
 
 
 @pytest.fixture
+def admin_user(db, django_user_model):
+    """pytest-django's default uses phone="admin", which violates the E.164 CHECK constraint."""
+    return django_user_model.objects.create_superuser(phone="+237699999999", password="admin-password-123")
+
+
+@pytest.fixture
 def sms_outbox():
     return MemorySmsBackend.outbox
 

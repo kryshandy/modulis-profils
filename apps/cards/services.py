@@ -130,3 +130,50 @@ def disable_cards_for_profile(profile: Profile, reason: str = Card.DisabledReaso
 
 def record_scan(card: Card) -> None:
     Card.objects.filter(pk=card.pk).update(scan_count=F("scan_count") + 1, last_scan_at=timezone.now())
+
+
+def mark_sold(card: Card) -> bool:
+    """Stock → sold (sale by an agent or a shop). Returns False if the card is not in stock."""
+    return bool(
+        Card.objects.filter(pk=card.pk, status=Card.Status.STOCK).update(
+            status=Card.Status.SOLD, sold_at=timezone.now()
+        )
+    )
+
+
+def batch_export_rows(pairs: list[tuple[str, str]]) -> list[tuple[str, str, str]]:
+    """Rows of the printer export: (public_code, printed URL, activation code in clear)."""
+    base = f"{settings.SITE_URL}/c/"
+    return [(public, base + public, activation) for public, activation in pairs]
+
+
+TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+
+def verify_turnstile(token: str, remote_ip: str = "") -> bool:
+    """Server-side check of a Cloudflare Turnstile token. Always True when Turnstile is disabled."""
+    if not settings.TURNSTILE_SITE_KEY:
+        return True
+    if not token:
+        return False
+    import requests  # local import: only needed when Turnstile is enabled
+
+    data = {"secret": settings.TURNSTILE_SECRET_KEY, "response": token}
+    if remote_ip:
+        data["remoteip"] = remote_ip
+    try:
+        response = requests.post(TURNSTILE_VERIFY_URL, data=data, timeout=5)
+        return bool(response.json().get("success"))
+    except (requests.RequestException, ValueError):
+        return False  # fail closed: no SMS can be triggered without a valid challenge
+
+
+def active_card_code(profile: Profile) -> str | None:
+    """Public code of the profile's first active card (QR target, plan §4), or None."""
+    card = (
+        Card.objects.filter(profile=profile, status=Card.Status.ACTIVE)
+        .order_by("activated_at", "pk")
+        .only("public_code")
+        .first()
+    )
+    return card.public_code if card else None

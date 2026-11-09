@@ -1,5 +1,10 @@
-from django.urls import path  # noqa: F401
+from django.urls import path
+
+from . import views
 
 app_name = "analytics"
 
-urlpatterns: list = []
+urlpatterns = [
+    path("p/<int:profile_id>.gif", views.pixel, name="pixel"),
+    path("a/<int:profile_id>/<slug:kind>", views.click, name="click"),
+]

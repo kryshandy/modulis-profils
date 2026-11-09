@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate "Accueil" %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; <a href="{% url opts|admin_urlname:'change' original.pk %}">{{ original }}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>{% blocktranslate with slug=original.slug %}Adresse actuelle : /{{ slug }}. L'ancienne adresse redirigera en 301 pour toujours et ne pourra plus être attribuée.{% endblocktranslate %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row{% if field.errors %} errors{% endif %}">
+          {{ field.errors }}
+          <div>{{ field.label_tag }} {{ field }}</div>
+        </div>
+      {% endfor %}
+    </fieldset>
+    <div class="submit-row"><input type="submit" class="default" value="{% translate 'Changer l’adresse' %}"></div>
+  </form>
+</div>
+{% endblock %}

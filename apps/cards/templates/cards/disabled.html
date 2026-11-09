@@ -1,0 +1,12 @@
+{% extends "cards/_layout.html" %}
+{% load i18n %}
+{% block title %}{% translate "Carte désactivée" %} — {{ SITE_NAME }}{% endblock %}
+{% block card_content %}
+<h1>{% translate "Carte désactivée" %}</h1>
+<p>{% translate "Cette carte a été désactivée par son propriétaire ou par notre équipe. Elle ne mène plus à une page." %}</p>
+{% if profile %}
+  <p>{% blocktranslate with name=profile.display_name %}La page de {{ name }} est toujours en ligne :{% endblocktranslate %}</p>
+  <p><a class="btn btn--primary" href="{{ profile.get_absolute_url }}">{% translate "Voir la page" %}</a></p>
+{% endif %}
+<p><a class="btn" href="/">{% translate "Aller à l'accueil" %}</a></p>
+{% endblock %}

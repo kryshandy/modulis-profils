@@ -1,0 +1,14 @@
+{% extends "cards/_layout.html" %}
+{% load i18n %}
+{% block title %}{{ profile.display_name }} — {{ SITE_NAME }}{% endblock %}
+{% block card_content %}
+<article class="contact-card">
+  <h1>{{ profile.display_name }}</h1>
+  {% if profile.title %}<p class="contact-card__title">{{ profile.title }}{% if profile.city %} · {{ profile.city.name }}{% endif %}</p>{% endif %}
+  <ul class="contact-card__actions">
+    {% if profile.phone_public %}<li><a class="btn btn--primary" href="tel:{{ profile.phone_public }}">{% translate "Appeler" %}</a></li>{% endif %}
+    {% if profile.whatsapp %}<li><a class="btn" href="https://wa.me/{{ profile.whatsapp|cut:'+' }}" rel="nofollow noopener">{% translate "WhatsApp" %}</a></li>{% endif %}
+    {% if profile.email_public %}<li><a class="btn" href="mailto:{{ profile.email_public }}">{% translate "Email" %}</a></li>{% endif %}
+  </ul>
+</article>
+{% endblock %}

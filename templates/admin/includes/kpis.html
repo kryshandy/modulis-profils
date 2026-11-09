@@ -1,0 +1,46 @@
+{% load i18n %}
+<section class="mp-kpis" aria-label="{% translate 'Indicateurs clés' %}">
+  <div class="mp-kpi">
+    <h2>{% translate "Pages pros" %}</h2>
+    <p class="mp-kpi__value">{{ kpis.profiles_total }}</p>
+    <p>{% blocktranslate with n7=kpis.profiles_last_7 n30=kpis.profiles_last_30 %}+{{ n7 }} sur 7 jours · +{{ n30 }} sur 30 jours{% endblocktranslate %}</p>
+    <p><a href="{% url 'admin:profiles_profile_changelist' %}?status__exact=suspended">{% blocktranslate with n=kpis.profiles_suspended %}{{ n }} suspendue(s){% endblocktranslate %}</a></p>
+  </div>
+  <div class="mp-kpi">
+    <h2>{% translate "Indexables par Google" %}</h2>
+    <p class="mp-kpi__value">{{ kpis.indexable_pct }} %</p>
+    <p>{% blocktranslate with n=kpis.profiles_indexable %}{{ n }} page(s) indexable(s){% endblocktranslate %}</p>
+  </div>
+  <div class="mp-kpi">
+    <h2>{% translate "Cartes" %}</h2>
+    <ul>
+      {% for row in kpis.cards %}
+        <li><a href="{% url 'admin:cards_card_changelist' %}?status__exact={{ row.status }}">{{ row.label }}</a> : <strong>{{ row.count }}</strong></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="mp-kpi">
+    <h2>{% translate "Abonnements actifs" %}</h2>
+    {% if kpis.subscriptions %}
+      <ul>{% for row in kpis.subscriptions %}<li>{{ row.plan }} : <strong>{{ row.count }}</strong></li>{% endfor %}</ul>
+    {% else %}
+      <p>{% translate "Aucun abonnement payant actif." %}</p>
+    {% endif %}
+  </div>
+  <div class="mp-kpi{% if kpis.open_reports %} mp-kpi--alert{% endif %}">
+    <h2>{% translate "Signalements à traiter" %}</h2>
+    <p class="mp-kpi__value"><a href="{% url 'admin:moderation_report_changelist' %}?status__exact=open">{{ kpis.open_reports }}</a></p>
+  </div>
+  <div class="mp-kpi mp-kpi--wide">
+    <h2>{% translate "Derniers échecs d'indexation" %}</h2>
+    {% if kpis.indexing_failures %}
+      <ul>
+        {% for log in kpis.indexing_failures %}
+          <li>{{ log.created_at|date:"d/m/Y H:i" }} — {{ log.provider }}{% if log.status_code %} ({{ log.status_code }}){% endif %} : {{ log.error|truncatechars:120 }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>{% translate "Aucun échec récent." %}</p>
+    {% endif %}
+  </div>
+</section>

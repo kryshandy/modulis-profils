@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Signaler une page" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}page-report{% endblock %}
+{% block content %}
+<section class="report-flow">
+  <h1>{% translate "Signaler une page" %}</h1>
+  <p>{% blocktranslate with name=profile.display_name %}Tu signales la page de <strong>{{ name }}</strong>. Notre équipe examine chaque signalement.{% endblocktranslate %}</p>
+  {% if limited %}
+    <p class="alert alert--error" role="alert">{% translate "Tu as envoyé beaucoup de signalements. Réessaie plus tard." %}</p>
+  {% endif %}
+  <form method="post" class="report-flow__form" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-field{% if field.name == 'website' %} form-field--hp{% endif %}{% if field.errors %} form-field--error{% endif %}"{% if field.name == 'website' %} aria-hidden="true"{% endif %}>
+        {% if field.field.widget.input_type == "radio" %}
+          <fieldset><legend>{{ field.label }}</legend>{{ field }}</fieldset>
+        {% else %}
+          {{ field.label_tag }}
+          {{ field }}
+        {% endif %}
+        {% if field.help_text %}<p class="form-field__help">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="form-field__error" role="alert">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn btn--primary">{% translate "Envoyer le signalement" %}</button>
+  </form>
+  <p><a href="{{ profile.get_absolute_url }}">{% translate "Revenir à la page" %}</a></p>
+</section>
+{% endblock %}

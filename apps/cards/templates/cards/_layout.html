@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}page-card{% endblock %}
+{% block content %}
+<section class="card-flow">
+  {% block card_content %}{% endblock %}
+</section>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "cards/_layout.html" %}
+{% load i18n %}
+{% block title %}{% translate "Activation impossible" %} — {{ SITE_NAME }}{% endblock %}
+{% block card_content %}
+<h1>{% translate "Activation impossible" %}</h1>
+<p class="alert alert--error" role="alert">{{ error }}</p>
+<p><a class="btn" href="{% url 'cards:scan' card.public_code %}">{% translate "Réessayer" %}</a></p>
+{% endblock %}

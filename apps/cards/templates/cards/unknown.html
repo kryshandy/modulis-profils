@@ -1,0 +1,8 @@
+{% extends "cards/_layout.html" %}
+{% load i18n %}
+{% block title %}{% translate "Carte introuvable" %} — {{ SITE_NAME }}{% endblock %}
+{% block card_content %}
+<h1>{% translate "Carte introuvable" %}</h1>
+<p>{% blocktranslate %}Aucune carte ne correspond au code « {{ code }} ». Vérifie l'adresse imprimée sous le QR code.{% endblocktranslate %}</p>
+<p><a class="btn" href="/">{% translate "Aller à l'accueil" %}</a></p>
+{% endblock %}

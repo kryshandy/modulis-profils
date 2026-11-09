@@ -13,3 +13,4 @@ segno
 nh3
 whitenoise
 kliz==0.3.1
+requests  # Turnstile verification (also pulled by kliz)
