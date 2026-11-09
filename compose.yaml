@@ -1,0 +1,63 @@
+# Environnement de développement. Lancer depuis WSL Ubuntu : make up
+name: modulis-profils
+
+x-django: &django
+  build:
+    context: .
+    dockerfile: docker/django/Dockerfile
+    target: dev
+  env_file: .env
+  volumes:
+    - .:/app
+    - media:/app/media
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  web:
+    <<: *django
+    environment:
+      RUN_MIGRATIONS: "1"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    <<: *django
+    command: ["python", "manage.py", "run_huey"]
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: modulis_profils
+      POSTGRES_USER: modulis
+      POSTGRES_PASSWORD: modulis
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U modulis -d modulis_profils"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  media:

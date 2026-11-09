@@ -1,0 +1,36 @@
+[project]
+name = "modulis-profils"
+version = "0.1.0"
+description = "Plateforme de profils pros & cartes NFC — Modulis Tech"
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "S", "SIM", "C4", "RUF"]
+ignore = [
+  "RUF001", "RUF002", "RUF003",  # French typography (’ « » …) is intentional
+  "RUF012",                      # Django Meta / class attributes
+  "S101",                        # assert in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S105", "S106", "S311"]
+"config/settings/*" = ["S105"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+addopts = "-q --strict-markers --reuse-db"
+filterwarnings = ["ignore::DeprecationWarning:huey.*"]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true

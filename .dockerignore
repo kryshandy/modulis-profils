@@ -1,0 +1,17 @@
+.git
+.claude
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+media
+staticfiles
+exports
+*.sqlite3
+.env
+.env.*
+docs

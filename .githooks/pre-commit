@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Hook local (pas de framework pre-commit qui télécharge depuis GitHub).
+# Lancé par git dans WSL : vérifie le style des fichiers Python indexés.
+VENV="${HOME}/.venvs/modulis-profils"
+if [ ! -x "$VENV/bin/ruff" ]; then
+  echo "pre-commit: venv absent ($VENV) — lancez 'make venv' dans WSL. Hook ignoré." >&2
+  exit 0
+fi
+FILES=$(git diff --cached --name-only --diff-filter=ACM -- '*.py')
+[ -z "$FILES" ] && exit 0
+# --force-exclude: honour extend-exclude (migrations) even for explicitly passed paths.
+"$VENV/bin/ruff" check --force-exclude $FILES || { echo "pre-commit: corrigez avec 'make fmt'." >&2; exit 1; }
+"$VENV/bin/ruff" format --check --force-exclude $FILES || { echo "pre-commit: formatez avec 'make fmt'." >&2; exit 1; }

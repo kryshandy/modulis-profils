@@ -1,0 +1,15 @@
+# Dépendances directes (intention). Les versions exactes sont figées dans base.txt (pip freeze).
+Django>=5.2,<5.3
+django-environ
+psycopg[binary]>=3.2
+huey>=2.5
+redis>=5
+django-htmx
+django-csp>=4
+django-ratelimit>=4.1
+phonenumbers
+Pillow
+segno
+nh3
+whitenoise
+kliz==0.3.1
