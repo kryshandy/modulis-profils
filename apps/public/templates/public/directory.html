@@ -9,5 +9,5 @@
 {% else %}
   <p>{% blocktranslate with plural=trade.plural_name|lower city=city.name %}Aucun {{ plural }} pour l’instant à {{ city }}.{% endblocktranslate %}</p>
 {% endif %}
-<p class="section"><a href="/villes/{{ city.slug }}">{% blocktranslate with city=city.name %}Tous les professionnels à {{ city }}{% endblocktranslate %}</a></p>
+{% if city_url %}<p class="section"><a href="{{ city_url }}">{% blocktranslate with city=city.name %}Tous les professionnels à {{ city }}{% endblocktranslate %}</a></p>{% endif %}
 {% endblock %}

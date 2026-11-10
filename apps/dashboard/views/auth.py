@@ -18,7 +18,8 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django_ratelimit.decorators import ratelimit
 
 from apps.accounts.services import OTPError, display_phone, get_or_create_user, normalize_phone, request_otp, verify_otp
-from apps.core.utils import client_ip, hash_ip, ratelimit_ip_key
+from apps.core.turnstile import verify_turnstile
+from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
 
 from ..forms import CodeForm, PhoneForm
 from ..services import SESSION_PROFILE_KEY, user_profiles
@@ -27,14 +28,11 @@ SESSION_PHONE = "otp_phone"
 SESSION_SENT_AT = "otp_sent_at"
 SESSION_NEXT = "login_next"
 RESEND_DELAY = 60
-
-
-def _ip_hash(request) -> str:
-    return hash_ip(client_ip(request))
+TURNSTILE_FIELD = "cf-turnstile-response"
 
 
 def _send_code(request, phone: str) -> None:
-    request_otp(phone, "login", ip_hash=_ip_hash(request))
+    request_otp(phone, "login", ip_hash=security_ip_hash(request))
     request.session[SESSION_PHONE] = phone
     request.session[SESSION_SENT_AT] = int(time.time())
 
@@ -57,6 +55,8 @@ def login_view(request):
     if request.method == "POST":
         if getattr(request, "limited", False):
             error = _("Trop de tentatives depuis cet appareil. Réessaie dans une heure.")
+        elif not verify_turnstile(request.POST.get(TURNSTILE_FIELD, ""), client_ip(request)):
+            error = _("La vérification anti-robot a échoué. Réessaie.")
         elif form.is_valid():
             try:
                 phone = normalize_phone(form.cleaned_data["phone"])
@@ -65,7 +65,8 @@ def login_view(request):
                 error = str(exc)
             else:
                 return redirect("dashboard:verify")
-    return render(request, "dashboard/auth/login.html", {"form": form, "error": error}, status=200)
+    context = {"form": form, "error": error, "turnstile_site_key": settings.TURNSTILE_SITE_KEY}
+    return render(request, "dashboard/auth/login.html", context, status=200)
 
 
 @require_http_methods(["GET", "POST"])
@@ -95,10 +96,9 @@ def verify_view(request):
         elif form.is_valid():
             try:
                 verify_otp(phone, "login", form.cleaned_data["code"])
-            except OTPError as exc:
-                error = str(exc)
-            else:
                 return _complete_login(request, phone)
+            except OTPError as exc:  # wrong code, or AccountNotAllowed (staff / disabled account)
+                error = str(exc)
     context = {
         "form": form,
         "error": error,
@@ -110,7 +110,10 @@ def verify_view(request):
 
 
 def _complete_login(request, phone: str):
+    """Log the verified phone in. Raises OTPError (AccountNotAllowed) for staff or disabled accounts."""
     user, _created = get_or_create_user(phone)
+    if not user.is_active:  # get_or_create_user already refuses it: never rely on a single check
+        raise OTPError(_("Ce compte ne peut pas se connecter par SMS. Contacte le support Modulis."))
     nxt = request.session.get(SESSION_NEXT, "")
     login(request, user)  # rotates the session key
     for key in (SESSION_PHONE, SESSION_SENT_AT, SESSION_NEXT, SESSION_PROFILE_KEY):

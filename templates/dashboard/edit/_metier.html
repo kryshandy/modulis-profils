@@ -9,6 +9,8 @@
     {% include "partials/field.html" with field=form.city %}
     {% include "partials/field.html" with field=form.district %}
     {% include "partials/field.html" with field=form.service_area %}
+    {% include "partials/field.html" with field=form.price_range %}
+    <p class="small muted">{% translate "Ta position GPS se règle dans « Contact » (bouton « Ma position »)." %}</p>
     <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
   </form>
 </div>

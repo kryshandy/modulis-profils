@@ -169,7 +169,7 @@ class CardAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False  # a printed code must never disappear: disable it instead
 
-    @admin.action(description=_("Marquer comme vendues"))
+    @admin.action(permissions=["change"], description=_("Marquer comme vendues"))
     def mark_sold(self, request, queryset):
         count = sum(services.mark_sold(card) for card in queryset)
         self.message_user(request, _("%(n)d carte(s) marquée(s) comme vendue(s).") % {"n": count})
@@ -181,15 +181,15 @@ class CardAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, _("%(n)d carte(s) désactivée(s).") % {"n": count}, messages.SUCCESS)
 
-    @admin.action(description=_("Désactiver : perdue"))
+    @admin.action(permissions=["change"], description=_("Désactiver : perdue"))
     def disable_lost(self, request, queryset):
         self._disable(request, queryset, "lost")
 
-    @admin.action(description=_("Désactiver : remplacée"))
+    @admin.action(permissions=["change"], description=_("Désactiver : remplacée"))
     def disable_replaced(self, request, queryset):
         self._disable(request, queryset, "replaced")
 
-    @admin.action(description=_("Désactiver : fraude"))
+    @admin.action(permissions=["change"], description=_("Désactiver : fraude"))
     def disable_fraud(self, request, queryset):
         self._disable(request, queryset, "fraud")
 

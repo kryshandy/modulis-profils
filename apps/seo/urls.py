@@ -5,7 +5,7 @@ from django.urls import path, re_path
 from django.views.decorators.cache import cache_page
 
 from . import views
-from .sitemaps import SITEMAPS
+from .sitemaps import SITEMAP_TEMPLATE, SITEMAPS
 
 app_name = "seo"
 
@@ -22,7 +22,7 @@ urlpatterns = [
     path(
         "sitemap-<slug:section>.xml",
         cache_page(SITEMAP_CACHE_SECONDS)(sitemap_views.sitemap),
-        {"sitemaps": SITEMAPS},
+        {"sitemaps": SITEMAPS, "template_name": SITEMAP_TEMPLATE},
         name="sitemap_section",
     ),
     re_path(r"^(?P<key>[A-Za-z0-9-]{8,128})\.txt$", views.indexnow_key, name="indexnow_key"),

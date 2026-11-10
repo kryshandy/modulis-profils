@@ -1,0 +1,10 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% block title %}{% translate "Trop de tentatives" %} | {{ site_title|default:_("Administration") }}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content %}
+<div id="content-main">
+  <h1>{% translate "Trop de tentatives de connexion" %}</h1>
+  <p>{% translate "Pour protéger les comptes de l'équipe, les connexions depuis cet appareil sont bloquées pendant une heure. Réessaie plus tard ou contacte un administrateur." %}</p>
+</div>
+{% endblock %}

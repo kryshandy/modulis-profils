@@ -14,7 +14,12 @@
     </div>
     {% for e in form.phone.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
   </div>
+  {% if turnstile_site_key %}<div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>{% endif %}
   <button class="btn btn--primary btn--block btn--lg" type="submit" data-busy="{% translate 'Envoi du code…' %}">{% translate "Recevoir mon code" %}</button>
 </form>
 <p class="small muted">{% translate "En continuant, tu acceptes de recevoir un SMS de Modulis Profils. Ton numéro n'est jamais affiché sans ton accord." %}</p>
+{% endblock %}
+{% block scripts %}
+  {{ block.super }}
+  {% if turnstile_site_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
 {% endblock %}

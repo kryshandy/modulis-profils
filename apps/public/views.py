@@ -8,6 +8,7 @@ from urllib.parse import quote, urlencode
 
 from django.conf import settings
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db import DatabaseError, transaction
 from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
@@ -20,6 +21,7 @@ from apps.profiles.models import Profile, SlugRegistry
 from apps.profiles.services import resolve_slug
 from apps.seo import jsonld, selectors
 from apps.seo.meta import (
+    absolute_url,
     clean_text,
     job_at_city,
     page_meta,
@@ -28,13 +30,23 @@ from apps.seo.meta import (
     truncate,
 )
 
-from . import images
+from . import images, responsive
+from .http import (
+    language_independent,
+    mark_language_independent,
+    set_error_cache,
+    set_private_no_store,
+    set_public_cache,
+)
 from .vcard import build_vcard
 
 logger = logging.getLogger(__name__)
 
 DIRECTORY_PAGE_SIZE = 24
 NOINDEX = "noindex"
+CONTACT_REL = "nofollow noopener"  # WhatsApp / maps / share: outbound, not UGC, passes no equity
+USER_LINK_REL = "ugc nofollow noopener"  # links typed by the pro
+VCARD_MAX_AGE = 300
 _DIGITS_RE = re.compile(r"\D+")
 
 
@@ -61,17 +73,17 @@ def directory_path(trade, city) -> str:
 
 
 def gone(request) -> HttpResponse:
-    response = render(request, "410.html", status=410)
+    with translation.override(settings.LANGUAGE_CODE):
+        response = render(request, "410.html", status=410)
     response["X-Robots-Tag"] = NOINDEX
-    return response
+    mark_language_independent(response)
+    return set_error_cache(response)
 
 
 def _set_public_cache(request, response, *, private: bool = False) -> HttpResponse:
     if private:
-        patch_cache_control(response, private=True, no_store=True)
-    else:
-        patch_cache_control(response, public=True, max_age=300)
-    return response
+        return set_private_no_store(response)
+    return set_public_cache(response)
 
 
 def _is_owner(request, profile: Profile) -> bool:
@@ -138,34 +150,52 @@ def _maps_url(profile: Profile) -> str:
 
 
 def _hide_branding(profile: Profile) -> bool:
+    """Paid entitlement lookup. Under ATOMIC_REQUESTS a failed query must not poison the request
+    transaction: it runs in a savepoint, and only the expected failures are swallowed."""
     try:
         from apps.billing.services import has
-
-        return has(profile, "hide_branding")
-    except Exception:  # billing unavailable: keep the growth banner
-        logger.exception("hide_branding lookup failed for profile %s", profile.pk)
+    except ImportError:  # billing not installed: keep the growth banner
         return False
+    try:
+        with transaction.atomic():
+            return bool(has(profile, "hide_branding"))
+    except (DatabaseError, LookupError) as exc:  # billing tables or plan data unavailable
+        logger.warning("hide_branding lookup failed for profile %s: %s", profile.pk, exc.__class__.__name__)
+        return False
+
+
+def _crumbs_for_jsonld(crumbs: list[tuple[str, str]], current_path: str) -> list[tuple[str, str]]:
+    """BreadcrumbList: the linked levels only (pages meeting the threshold), then the current page."""
+    *parents, (name, _path) = crumbs
+    return [(n, p) for n, p in parents if p] + [(name, current_path)]
+
+
+def _city_crumb(city, minimum: int) -> tuple[str, str]:
+    """The city level is linked only when /villes/<city> is indexable (like the home `linked`)."""
+    return (city.name, city_path(city) if selectors.city_count(city) >= minimum else "")
 
 
 # --- home, cities, directory -----------------------------------------------------------------
 
 
 @require_safe
+@language_independent
 def home(request):
     minimum = selectors.directory_min()
     cities = selectors.city_stats()
     combos = selectors.directory_combos()
-    context = {
-        "meta": page_meta(
-            title=_("Crée ta page pro gratuite – %(site)s") % {"site": settings.SITE_NAME},
-            description=_(
-                "Artisans, commerçants, freelances : crée gratuitement ta page professionnelle, "
-                "partage-la sur WhatsApp et sois trouvé sur Google par tes clients, dans ta ville."
-            ),
-            path="/",
-            indexable=True,
+    meta = page_meta(
+        title=_("Crée ta page pro gratuite – %(site)s") % {"site": settings.SITE_NAME},
+        description=_(
+            "Artisans, commerçants, freelances : crée gratuitement ta page professionnelle, "
+            "partage-la sur WhatsApp et sois trouvé sur Google par tes clients, dans ta ville."
         ),
-        "jsonld": jsonld.dumps(jsonld.website()),
+        path="/",
+        indexable=True,
+    )
+    context = {
+        "meta": meta,
+        "jsonld": jsonld.dumps(jsonld.page_graph(path="/", name=meta["title"])),
         "signup_url": signup_url(),
         "cities": [{**c, "linked": c["count"] >= minimum, "url": city_path(c["city"])} for c in cities],
         "combos": [
@@ -184,13 +214,12 @@ def _page_number(request) -> int:
 
 
 def _paginate(queryset, request):
+    """A listing with no indexable profile is a soft 404: answer a real 404 (SEO audit 2026-11-10 #3)."""
     number = _page_number(request)
-    paginator = Paginator(queryset, DIRECTORY_PAGE_SIZE)
+    paginator = Paginator(queryset, DIRECTORY_PAGE_SIZE, allow_empty_first_page=False)
     try:
         return paginator.page(number)
     except (EmptyPage, PageNotAnInteger):
-        if number == 1:
-            return paginator.page(1)  # empty first page is still a page (allow_empty_first_page)
         raise Http404 from None
 
 
@@ -198,7 +227,21 @@ def _paged_path(path: str, page) -> str:
     return path if page.number == 1 else f"{path}?page={page.number}"
 
 
+def _listing_jsonld(path: str, name: str, page, crumbs) -> str:
+    url = absolute_url(path)
+    entity = jsonld.item_list(page.object_list, node_id=f"{url}#list")
+    graph = jsonld.page_graph(
+        path=path,
+        name=name,
+        page_type="CollectionPage",
+        entity=entity,
+        crumbs=_crumbs_for_jsonld(crumbs, path),
+    )
+    return jsonld.dumps(graph)
+
+
 @require_safe
+@language_independent
 def city(request, city):
     city_obj = selectors.find_city(city)
     if city_obj is None:
@@ -212,33 +255,36 @@ def city(request, city):
     title = _("Professionnels à %(city)s") % {"city": city_obj.name}
     if page.number > 1:
         title = _("%(title)s – page %(n)d") % {"title": title, "n": page.number}
-    context = {
-        "meta": page_meta(
-            title=truncate(f"{title} – {settings.SITE_NAME}", 60),
-            description=truncate(
-                _(
-                    "Trouve un professionnel à %(city)s : artisans, commerçants et freelances, avec leurs "
-                    "services, leurs réalisations et un contact direct par WhatsApp ou par téléphone."
-                )
-                % {"city": city_obj.name},
-                160,
-            ),
-            path=_paged_path(path, page),
-            indexable=indexable,
+    meta = page_meta(
+        title=truncate(f"{title} – {settings.SITE_NAME}", 60),
+        description=truncate(
+            _(
+                "Trouve un professionnel à %(city)s : artisans, commerçants et freelances, avec leurs "
+                "services, leurs réalisations et un contact direct par WhatsApp ou par téléphone."
+            )
+            % {"city": city_obj.name},
+            160,
         ),
+        path=_paged_path(path, page),
+        indexable=indexable,
+    )
+    breadcrumb = [(_("Accueil"), "/"), (city_obj.name, "")]
+    context = {
+        "meta": meta,
         "city": city_obj,
         "page": page,
         "trades": [
             {**c, "linked": c["count"] >= minimum, "url": directory_path(c["trade"], c["city"])}
             for c in selectors.trades_in_city(city_obj)
         ],
-        "breadcrumb": [(_("Accueil"), "/"), (city_obj.name, "")],
+        "breadcrumb": breadcrumb,
+        "jsonld": _listing_jsonld(_paged_path(path, page), title, page, breadcrumb),
     }
-    context["jsonld"] = jsonld.dumps(jsonld.breadcrumb(context["breadcrumb"]))
     return _set_public_cache(request, render(request, "public/city.html", context))
 
 
 @require_safe
+@language_independent
 def directory(request, trade_plural, city):
     trade = selectors.find_trade_by_plural(trade_plural)
     city_obj = selectors.find_city(city) if trade else None
@@ -247,35 +293,98 @@ def directory(request, trade_plural, city):
     path = directory_path(trade, city_obj)
     if request.path != path:
         return HttpResponsePermanentRedirect(path + (f"?{request.GET.urlencode()}" if request.GET else ""))
+    minimum = selectors.directory_min()
     page = _paginate(selectors.directory_profiles(trade, city_obj), request)
-    indexable = page.paginator.count >= selectors.directory_min()
+    indexable = page.paginator.count >= minimum
     heading = _("%(plural)s à %(city)s") % {"plural": trade.plural_name, "city": city_obj.name}
     title = heading if page.number == 1 else _("%(title)s – page %(n)d") % {"title": heading, "n": page.number}
-    context = {
-        "meta": page_meta(
-            title=truncate(f"{title} – {settings.SITE_NAME}", 60),
-            description=truncate(
-                _(
-                    "%(plural)s à %(city)s : compare les profils, les prestations et les réalisations, puis "
-                    "contacte directement le professionnel de ton choix par WhatsApp ou par téléphone."
-                )
-                % {"plural": trade.plural_name, "city": city_obj.name},
-                160,
-            ),
-            path=_paged_path(path, page),
-            indexable=indexable,
+    meta = page_meta(
+        title=truncate(f"{title} – {settings.SITE_NAME}", 60),
+        description=truncate(
+            _(
+                "%(plural)s à %(city)s : compare les profils, les prestations et les réalisations, puis "
+                "contacte directement le professionnel de ton choix par WhatsApp ou par téléphone."
+            )
+            % {"plural": trade.plural_name, "city": city_obj.name},
+            160,
         ),
+        path=_paged_path(path, page),
+        indexable=indexable,
+    )
+    city_crumb = _city_crumb(city_obj, minimum)
+    breadcrumb = [(_("Accueil"), "/"), city_crumb, (heading, "")]
+    context = {
+        "meta": meta,
         "heading": heading,
         "trade": trade,
         "city": city_obj,
+        "city_url": city_crumb[1],
         "page": page,
-        "breadcrumb": [(_("Accueil"), "/"), (city_obj.name, city_path(city_obj)), (heading, "")],
+        "breadcrumb": breadcrumb,
+        "jsonld": _listing_jsonld(_paged_path(path, page), title, page, breadcrumb),
     }
-    context["jsonld"] = jsonld.dumps(jsonld.breadcrumb(context["breadcrumb"]))
     return _set_public_cache(request, render(request, "public/directory.html", context))
 
 
+def _query_suffix(request) -> str:
+    return f"?{request.GET.urlencode()}" if request.GET else ""
+
+
+@require_safe
+def city_trailing_slash(request, city):
+    city_obj = selectors.find_city(city)
+    if city_obj is None:
+        raise Http404
+    return HttpResponsePermanentRedirect(city_path(city_obj) + _query_suffix(request))
+
+
+@require_safe
+def directory_trailing_slash(request, trade_plural, city):
+    trade = selectors.find_trade_by_plural(trade_plural)
+    city_obj = selectors.find_city(city) if trade else None
+    if trade is None or city_obj is None:
+        raise Http404
+    return HttpResponsePermanentRedirect(directory_path(trade, city_obj) + _query_suffix(request))
+
+
 # --- profile page ----------------------------------------------------------------------------
+
+
+def _profile_breadcrumb(profile: Profile, name: str) -> list[tuple[str, str]]:
+    """Accueil > Ville > Métiers à Ville > Nom; a level is linked only if that page is indexable."""
+    city = profile.city
+    crumbs = [(_("Accueil"), "/")]
+    if city:
+        minimum = selectors.directory_min()
+        crumbs.append(_city_crumb(city, minimum))
+        if profile.trade:
+            linked = selectors.directory_count(profile.trade, city) >= minimum
+            crumbs.append(
+                (
+                    _("%(plural)s à %(city)s") % {"plural": profile.trade.plural_name, "city": city.name},
+                    directory_path(profile.trade, city) if linked else "",
+                )
+            )
+    crumbs.append((name, ""))
+    return crumbs
+
+
+def _gallery(media, alt: str) -> list[dict]:
+    gallery = []
+    for index, m in enumerate(media):
+        if not m.image:
+            continue
+        width, height = m.width or 800, m.height or 600
+        image = responsive.responsive_image(
+            m.image,
+            display_width=320,
+            width=width,
+            height=height,
+            sizes=responsive.GALLERY_SIZES,
+            original_width=m.width or None,
+        )
+        gallery.append({**image, "url": image["src"], "alt": clean_text(m.caption) or alt, "lazy": index > 0})
+    return gallery
 
 
 def _profile_context(request, profile: Profile, *, owner_private: bool) -> dict:
@@ -291,35 +400,24 @@ def _profile_context(request, profile: Profile, *, owner_private: bool) -> dict:
         if _http_url(link.url)
     ]
     alt = profile_alt(name, job, city.name if city else "")
-    gallery = [
-        {
-            "url": m.image.url,
-            "alt": clean_text(m.caption) or alt,
-            "width": m.width or 800,
-            "height": m.height or 600,
-            "lazy": index > 0,
-        }
-        for index, m in enumerate(media)
-        if m.image
-    ]
     og_version = images.og_fingerprint(profile)[:8]
     meta = profile_meta(profile, indexable=False if owner_private else None, og_version=og_version)
 
-    crumbs = [(_("Accueil"), "/")]
-    if city:
-        crumbs.append((city.name, city_path(city)))
-        if profile.trade:
-            crumbs.append(
-                (
-                    _("%(plural)s à %(city)s") % {"plural": profile.trade.plural_name, "city": city.name},
-                    directory_path(profile.trade, city),
-                )
-            )
-    crumbs.append((name, ""))
-    crumbs_ld = [*crumbs[:-1], (name, profile.get_absolute_url())]
-
-    image_url = profile.photo.url if profile.photo else f"/{profile.slug}/og.png"
-    graph = [jsonld.profile_entity(profile, image_url=image_url), jsonld.breadcrumb(crumbs_ld)]
+    crumbs = _profile_breadcrumb(profile, name)
+    photo = None
+    if profile.photo:
+        photo = responsive.responsive_image(
+            profile.photo, display_width=responsive.AVATAR_SIZE, max_width=responsive.AVATAR_MAX_VARIANT
+        )
+    # JSON-LD image: the real photo only (og.png is noindex), never a placeholder (audit #1)
+    entity = jsonld.profile_entity(profile, image_url=profile.photo.url if profile.photo else "")
+    graph = jsonld.page_graph(
+        path=profile.get_absolute_url(),
+        name=meta["title"],
+        lang=profile.language or settings.LANGUAGE_CODE,
+        entity=entity,
+        crumbs=_crumbs_for_jsonld(crumbs, profile.get_absolute_url()),
+    )
 
     share_text = _("Découvre %(name)s%(job)s : %(url)s") % {
         "name": name,
@@ -336,13 +434,16 @@ def _profile_context(request, profile: Profile, *, owner_private: bool) -> dict:
         "subtitle": job_at_city(job, city.name if city else ""),
         "breadcrumb": crumbs,
         "services": services,
-        "gallery": gallery,
+        "gallery": _gallery(media, alt),
+        "photo": photo,
         "links": links,
         "phone": profile.phone_public,
         "whatsapp_url": f"https://wa.me/{whatsapp}" if whatsapp else "",
         "email": profile.email_public,
         "maps_url": _maps_url(profile),
         "share_url": "https://wa.me/?text=" + quote(share_text),
+        "contact_rel": CONTACT_REL,
+        "user_link_rel": USER_LINK_REL,
         "similar": similar,
         "similar_title": (
             _("Autres %(plural)s à %(city)s") % {"plural": profile.trade.plural_name.lower(), "city": city.name}
@@ -358,6 +459,7 @@ def _profile_context(request, profile: Profile, *, owner_private: bool) -> dict:
 
 
 @require_safe
+@language_independent
 def profile(request, slug):
     profile_obj, outcome = _lookup(request, slug)
     if outcome == "gone":
@@ -370,9 +472,11 @@ def profile(request, slug):
         .get(pk=profile_obj.pk)
     )
     owner_private = outcome == "owner_private"
-    with translation.override(profile_obj.language or settings.LANGUAGE_CODE):
+    lang = profile_obj.language or settings.LANGUAGE_CODE
+    with translation.override(lang):
         context = _profile_context(request, profile_obj, owner_private=owner_private)
         response = render(request, "public/profile.html", context)
+    mark_language_independent(response, lang)  # the language comes from the profile, not the browser
     if owner_private:
         response["X-Robots-Tag"] = NOINDEX
     return _set_public_cache(request, response, private=owner_private)
@@ -387,6 +491,7 @@ def profile_trailing_slash(request, slug):
 
 
 @require_safe
+@language_independent
 def vcard(request, slug):
     profile_obj, response = _profile_resource(request, slug, "contact.vcf")
     if response:
@@ -394,6 +499,10 @@ def vcard(request, slug):
     body = build_vcard(profile_obj, url=profile_obj.absolute_url)
     response = HttpResponse(body.encode(), content_type="text/vcard; charset=utf-8")
     response["Content-Disposition"] = f'attachment; filename="{profile_obj.slug}.vcf"'
+    if profile_obj.is_publicly_visible:
+        patch_cache_control(response, public=True, max_age=VCARD_MAX_AGE)
+    else:  # the owner downloading the card of a private page
+        set_private_no_store(response)
     return _noindex(response)
 
 

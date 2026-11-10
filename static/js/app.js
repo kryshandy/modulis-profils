@@ -48,7 +48,9 @@
   doc.addEventListener("htmx:sendError", function () {
     toast(doc.documentElement.lang === "en" ? "No connection. Try again." : "Pas de connexion. Réessaie dans un instant.", "error");
   });
-  doc.addEventListener("htmx:responseError", function () {
+  doc.addEventListener("htmx:responseError", function (e) {
+    var xhr = e.detail && e.detail.xhr;
+    if (xhr && xhr.getResponseHeader("HX-Trigger")) { return; } // the server already sent its own message
     toast(doc.documentElement.lang === "en" ? "Something went wrong." : "Oups, une erreur. Réessaie.", "error");
   });
   doc.addEventListener("htmx:afterSwap", function (e) { init(e.detail.target || doc); });
@@ -204,12 +206,37 @@
     tick();
   }
 
+  /* "Ma position" button: fills latitude/longitude from navigator.geolocation -------------- */
+  function geolocate(btn) {
+    var root = btn.closest("[data-geo-root]") || doc;
+    var lat = $('[data-geo="lat"]', root);
+    var lng = $('[data-geo="lng"]', root);
+    var status = $("[data-geo-status]", root);
+    var say = function (key) { if (status) { status.textContent = btn.getAttribute(key) || ""; } };
+    if (!lat || !lng) { return; }
+    if (!("geolocation" in navigator)) { say("data-geo-unsupported"); return; }
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      say("data-geo-busy");
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        lat.value = pos.coords.latitude.toFixed(6);
+        lng.value = pos.coords.longitude.toFixed(6);
+        btn.disabled = false;
+        say("data-geo-ok");
+      }, function () {
+        btn.disabled = false;
+        say("data-geo-error");
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    });
+  }
+
   /* Init (on load and after every HTMX swap) ---------------------------------------------- */
   function init(root) {
     $$(".js-only[hidden]", root).forEach(function (el) { el.hidden = false; });
     $$("textarea[data-counter]", root).forEach(counter);
     $$("[data-show-when]", root).forEach(showWhen);
     $$("[data-countdown]", root).forEach(countdown);
+    $$("[data-geolocate]", root).forEach(geolocate);
   }
   if (doc.readyState === "loading") { doc.addEventListener("DOMContentLoaded", function () { init(doc); }); }
   else { init(doc); }

@@ -151,7 +151,7 @@ class TestActivation:
             {"action": "create", "display_name": "Paul Test", "trade": trade.pk, "city": city.pk},
         )
         assert response.status_code == 302
-        assert response["Location"] == "/espace/"  # dashboard:onboarding not wired yet → fallback
+        assert response["Location"] == reverse("dashboard:onboarding", kwargs={"step": "nom"})
         card.refresh_from_db()
         user = User.objects.get(phone=PHONE)
         assert card.status == Card.Status.ACTIVE
@@ -272,8 +272,133 @@ class TestActivation:
         assert calls[-1]["secret"] == "secret"
 
 
+class TestActivationHardening:
+    def _url(self, card):
+        return reverse("cards:activate", args=[card.public_code])
+
+    def _to_profile_step(self, client, card, sms_outbox, capture):
+        client.post(self._url(card), {"activation_code": GOOD_CODE})
+        with capture(execute=True):
+            client.post(self._url(card), {"phone": PHONE_RAW})
+        response = client.post(self._url(card), {"code": _sms_code(sms_outbox)})
+        assert response.status_code == 302
+
+    def test_end_to_end_activation_then_onboarding(self, client, sms_outbox, django_capture_on_commit_callbacks):
+        card = CardFactory()
+        trade, city = TradeFactory(), CityFactory()
+        self._to_profile_step(client, card, sms_outbox, django_capture_on_commit_callbacks)
+        response = client.post(
+            self._url(card),
+            {"action": "create", "display_name": "Paul Test", "trade": trade.pk, "city": city.pk},
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert response.redirect_chain[-1][0] == reverse("dashboard:onboarding", kwargs={"step": "nom"})
+        profile = Profile.objects.get(user__phone=PHONE)
+        assert client.session["dashboard_profile_id"] == profile.pk
+        response = client.post(
+            reverse("dashboard:onboarding", kwargs={"step": "nom"}), {"display_name": "Paul Nkoulou", "kind": "person"}
+        )
+        assert response.status_code == 302
+        assert response["Location"] == reverse("dashboard:onboarding", kwargs={"step": "metier"})
+        profile.refresh_from_db()
+        assert profile.display_name == "Paul Nkoulou"
+        assert Profile.objects.filter(user__phone=PHONE).count() == 1
+
+    def test_onboarded_profile_goes_to_dashboard_home(self, client, sms_outbox, django_capture_on_commit_callbacks):
+        from django.utils import timezone
+
+        profile = ProfileFactory(user=UserFactory(phone=PHONE), onboarding_completed_at=timezone.now())
+        card = CardFactory()
+        self._to_profile_step(client, card, sms_outbox, django_capture_on_commit_callbacks)
+        response = client.post(self._url(card), {"action": "choose", "profile": profile.pk})
+        assert response.status_code == 302
+        assert response["Location"] == reverse("dashboard:home")
+
+    def test_failed_activation_leaves_no_orphan_page(
+        self, client, sms_outbox, django_capture_on_commit_callbacks, monkeypatch
+    ):
+        card = CardFactory()
+        trade, city = TradeFactory(), CityFactory()
+        self._to_profile_step(client, card, sms_outbox, django_capture_on_commit_callbacks)
+
+        def boom(card, profile):
+            raise services.CardError("Cette carte est déjà activée ou désactivée.")
+
+        monkeypatch.setattr(services, "activate_card", boom)
+        response = client.post(
+            self._url(card), {"action": "create", "display_name": "Paul Test", "trade": trade.pk, "city": city.pk}
+        )
+        assert response.status_code == 409
+        assert not Profile.objects.filter(user__phone=PHONE).exists()  # rolled back with the activation
+        assert "_auth_user_id" not in client.session
+
+    def test_resend_cooldown(self, client, sms_outbox, django_capture_on_commit_callbacks):
+        card = CardFactory()
+        client.post(self._url(card), {"activation_code": GOOD_CODE})
+        with django_capture_on_commit_callbacks(execute=True):
+            client.post(self._url(card), {"phone": PHONE_RAW})
+            response = client.post(self._url(card), {"action": "resend"})
+        assert response.status_code == 200
+        assert "Patiente encore" in response.content.decode()
+        assert len(sms_outbox) == 1 and OTPChallenge.objects.count() == 1
+        session = client.session
+        key = f"card_activation:{card.public_code}"
+        state = session[key]
+        state["sent_at"] -= 61
+        session[key] = state
+        session.save()
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(self._url(card), {"action": "resend"})
+        assert "nouveau code" in response.content.decode()
+        assert len(sms_outbox) == 2
+
+    def test_suspended_page_is_never_offered_nor_replaced(self, client, sms_outbox, django_capture_on_commit_callbacks):
+        owner = UserFactory(phone=PHONE)
+        ProfileFactory(user=owner, status=Profile.Status.SUSPENDED)
+        card = CardFactory()
+        self._to_profile_step(client, card, sms_outbox, django_capture_on_commit_callbacks)
+        response = client.get(self._url(card))
+        assert response.status_code == 403
+        assert "suspendue" in response.content.decode()
+        card.refresh_from_db()
+        assert card.status == Card.Status.STOCK
+        assert Profile.objects.filter(user=owner).count() == 1
+
+    def test_existing_profiles_excludes_suspended(self):
+        from apps.cards.views import _existing_profiles
+
+        owner = UserFactory(phone=PHONE)
+        active = ProfileFactory(user=owner)
+        ProfileFactory(user=owner, status=Profile.Status.SUSPENDED)
+        assert _existing_profiles(PHONE) == [active]
+
+    def test_account_not_allowed_is_a_message_not_a_500(self, client, sms_outbox, django_capture_on_commit_callbacks):
+        owner = UserFactory(phone=PHONE)
+        profile = ProfileFactory(user=owner)
+        card = CardFactory()
+        self._to_profile_step(client, card, sms_outbox, django_capture_on_commit_callbacks)
+        User.objects.filter(pk=owner.pk).update(is_staff=True)  # became staff in the meantime
+        response = client.post(self._url(card), {"action": "choose", "profile": profile.pk})
+        assert response.status_code == 403
+        assert "support" in response.content.decode()
+        card.refresh_from_db()
+        assert card.status == Card.Status.STOCK
+        assert "_auth_user_id" not in client.session
+
+    def test_attempts_use_the_stable_security_hash(self, client):
+        from apps.core.utils import hash_ip, rate_key_ip
+
+        card = CardFactory()
+        client.post(self._url(card), {"activation_code": "WRONG999"})
+        attempt = CardActivationAttempt.objects.get()
+        assert attempt.ip_hash == hash_ip(rate_key_ip("127.0.0.1"), daily=False)
+
+
 def test_verify_turnstile_disabled_by_default():
-    assert services.verify_turnstile("") is True
+    from apps.core.turnstile import verify_turnstile
+
+    assert verify_turnstile("") is True
 
 
 def test_mark_sold_only_from_stock():

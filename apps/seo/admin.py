@@ -13,7 +13,7 @@ class ReadOnlyAdmin(admin.ModelAdmin):
 
 @admin.register(IndexingQueue)
 class IndexingQueueAdmin(ReadOnlyAdmin):
-    list_display = ("url", "queued_at")
+    list_display = ("url", "queued_at", "not_before")
     search_fields = ("url",)
     date_hierarchy = "queued_at"
 

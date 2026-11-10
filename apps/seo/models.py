@@ -7,6 +7,9 @@ class IndexingQueue(models.Model):
 
     url = models.URLField(max_length=300, unique=True)
     queued_at = models.DateTimeField(auto_now=True)
+    not_before = models.DateTimeField(
+        _("pas avant"), null=True, blank=True, db_index=True, help_text=_("Nouvelle tentative (Retry-After).")
+    )
 
     class Meta:
         verbose_name = _("URL à notifier")
@@ -23,6 +26,7 @@ class IndexingLog(models.Model):
     success = models.BooleanField()
     url_count = models.PositiveIntegerField(default=1)
     sample_url = models.URLField(max_length=300, blank=True)
+    urls = models.JSONField(_("URL du lot"), default=list, blank=True, help_text=_("10 000 au maximum."))
     status_code = models.PositiveSmallIntegerField(null=True, blank=True)
     error = models.TextField(blank=True)
     attempts = models.PositiveSmallIntegerField(default=1)

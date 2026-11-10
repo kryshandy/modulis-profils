@@ -47,6 +47,8 @@ class Profile(TimeStampedModel):
     language = models.CharField(_("langue"), max_length=2, choices=Language.choices, default=Language.FR)
     bio = models.TextField(_("présentation"), max_length=1500, blank=True)
     photo = models.ImageField(_("photo"), upload_to=profile_photo_path, blank=True)
+    photo_width = models.PositiveIntegerField(default=0, editable=False)
+    photo_height = models.PositiveIntegerField(default=0, editable=False)
     cover_color = models.CharField(_("couleur"), max_length=7, default="#0A7F7D")
 
     # Contact (shown as action buttons)
@@ -55,6 +57,19 @@ class Profile(TimeStampedModel):
     email_public = models.EmailField(_("email affiché"), blank=True)
     address = models.CharField(_("adresse postale"), max_length=200, blank=True)
     maps_url = models.URLField(_("lien Google Maps"), blank=True)
+
+    # Local SEO (schema.org LocalBusiness: geo, openingHoursSpecification, priceRange).
+    latitude = models.DecimalField(_("latitude"), max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(_("longitude"), max_digits=9, decimal_places=6, null=True, blank=True)
+    opening_hours = models.JSONField(
+        _("horaires d'ouverture"),
+        default=dict,
+        blank=True,
+        help_text=_('ex. {"mo": [["08:00", "18:00"]], "su": []} — jour absent ou liste vide = fermé'),
+    )
+    price_range = models.CharField(
+        _("gamme de prix"), max_length=20, blank=True, help_text=_("ex. « $$ » ou « 5 000–50 000 FCFA »")
+    )
 
     visibility = models.CharField(_("visibilité"), max_length=10, choices=Visibility.choices, default=Visibility.PUBLIC)
     status = models.CharField(_("statut"), max_length=10, choices=Status.choices, default=Status.ACTIVE, db_index=True)
@@ -83,8 +98,20 @@ class Profile(TimeStampedModel):
         verbose_name_plural = _("profils")
         ordering = ["-created_at"]
         indexes = [models.Index(fields=["city", "trade", "is_indexable"])]
+        permissions = [
+            ("grant_subscription", _("Peut offrir un abonnement depuis l'administration")),
+            ("erase_profile", _("Peut effacer définitivement un profil (droit à l'effacement)")),
+        ]
         constraints = [
             models.CheckConstraint(condition=models.Q(slug=Lower("slug")), name="profile_slug_lowercase"),
+            models.CheckConstraint(
+                condition=models.Q(latitude__isnull=True) | models.Q(latitude__gte=-90, latitude__lte=90),
+                name="profile_latitude_range",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(longitude__isnull=True) | models.Q(longitude__gte=-180, longitude__lte=180),
+                name="profile_longitude_range",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -135,6 +162,7 @@ class SlugRegistry(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True, related_name="slugs")
     reason = models.CharField(max_length=60, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    retired_at = models.DateTimeField(_("devenue ancienne le"), null=True, blank=True, db_index=True)
 
     class Meta:
         verbose_name = _("adresse réservée / historique")
@@ -147,6 +175,10 @@ class SlugRegistry(models.Model):
                     | models.Q(kind__in=["reserved", "erased"], profile__isnull=True)
                 ),
                 name="slug_profile_consistency",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(kind="old") | models.Q(retired_at__isnull=True),
+                name="slug_retired_only_when_old",
             ),
         ]
 

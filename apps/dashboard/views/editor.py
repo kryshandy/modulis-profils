@@ -1,19 +1,23 @@
-"""Page editor: one section per screen, saved with HTMX (or a plain POST/redirect without JS)."""
+"""Page editor: one section per screen, saved with HTMX (or a plain POST/redirect without JS).
+
+Views validate with forms and write ONLY through `apps.profiles.services` (CLAUDE.md rule).
+"""
 
 from __future__ import annotations
 
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
 
-from apps.profiles.services import refresh_seo_state
+from apps.profiles import services as profiles
 
 from ..content import bio_suggestions, service_examples
 from ..forms import (
+    HOURS_PRESETS,
     AppearanceForm,
     BioForm,
     CaptionForm,
@@ -21,28 +25,19 @@ from ..forms import (
     IdentityForm,
     LinkForm,
     MediaUploadForm,
+    OpeningHoursForm,
     ServiceForm,
     TradeCityForm,
+    profile_values,
 )
-from ..services import (
-    COVER_COLORS,
-    MAX_LINKS,
-    MAX_MEDIA,
-    MAX_SERVICES,
-    add_link,
-    add_media,
-    add_service,
-    delete_media,
-    move_item,
-    remove_profile_photo,
-    set_profile_photo,
-)
+from ..services import COVER_COLORS, MAX_LINKS, MAX_MEDIA, MAX_SERVICES
 from .common import dash_render, edit_url, profile_required, with_toast
 
 SECTIONS = [
     ("identite", gettext_lazy("Identité"), "user"),
     ("metier", gettext_lazy("Métier et zone"), "briefcase"),
     ("contact", gettext_lazy("Contact"), "phone"),
+    ("horaires", gettext_lazy("Horaires"), "clock"),
     ("presentation", gettext_lazy("Présentation"), "text"),
     ("prestations", gettext_lazy("Prestations"), "list"),
     ("galerie", gettext_lazy("Galerie"), "image"),
@@ -99,6 +94,9 @@ def _section_context(request, section: str, form=None, **extra) -> dict:
         )
     elif section == "apparence":
         ctx["colors"] = COVER_COLORS
+    elif section == "horaires":
+        ctx["form"] = form or OpeningHoursForm(hours=profile.opening_hours)
+        ctx["presets"] = [(key, label) for key, (label, _hours) in HOURS_PRESETS.items()]
     return ctx
 
 
@@ -136,29 +134,65 @@ def edit(request, section: str):
     action = request.POST.get("action", "save")
     if section == "identite" and action in ("photo", "remove_photo"):
         return _photo(request, action)
+    if section == "horaires":
+        return _hours(request)
     if section not in FORM_SECTIONS:
         raise Http404
     form = _make_form(section, profile, request.POST)
     if form.is_valid():
-        form.save()
-        refresh_seo_state(profile)
+        try:
+            profiles.update_profile(profile, **profile_values(form))
+        except ValidationError as exc:
+            profile.refresh_from_db()
+            return _respond(request, section, ok=False, form=form, message=exc.messages[0])
         profile.refresh_from_db()
         return _respond(request, section, form=_make_form(section, profile))
+    profile.refresh_from_db()  # the bound ModelForm mutated the instance: drop the invalid values
     return _respond(request, section, ok=False, form=form)
+
+
+def _hours(request):
+    profile = request.profile
+    preset = request.POST.get("preset", "")
+    if preset:
+        if preset not in HOURS_PRESETS:
+            raise Http404
+        profiles.update_profile(profile, opening_hours=HOURS_PRESETS[preset][1])
+        return _respond(request, "horaires", message=_("Horaires enregistrés ✓"))
+    form = OpeningHoursForm(request.POST, hours=profile.opening_hours)
+    if not form.is_valid():
+        return _respond(request, "horaires", ok=False, form=form)
+    try:
+        profiles.update_profile(profile, opening_hours=form.hours())
+    except ValidationError as exc:
+        return _respond(request, "horaires", ok=False, form=form, message=exc.messages[0])
+    return _respond(request, "horaires", message=_("Horaires enregistrés ✓"))
 
 
 def _photo(request, action: str):
     profile = request.profile
     form = IdentityForm(instance=profile)
     if action == "remove_photo":
-        remove_profile_photo(profile)
+        profiles.remove_photo(profile)
         return _respond(request, "identite", form=form, message=_("Photo retirée."))
     uploaded = next((f for f in request.FILES.getlist("photo") if f), None)
     try:
-        set_profile_photo(profile, uploaded)
+        profiles.set_photo(profile, uploaded)
     except ValidationError as exc:
         return _respond(request, "identite", ok=False, form=form, photo_error=exc.messages[0], message=exc.messages[0])
     return _respond(request, "identite", form=form, message=_("Photo enregistrée ✓"))
+
+
+def _owned(func, *args, **kwargs):
+    """Call a profiles service on an item of request.profile; a foreign or unknown id is a 404."""
+    try:
+        return func(*args, **kwargs)
+    except ObjectDoesNotExist as exc:
+        raise Http404 from exc
+
+
+def _direction(request) -> str:
+    return "down" if request.POST.get("direction") == "down" else "up"
 
 
 # --- Services ---------------------------------------------------------------------------------
@@ -171,7 +205,7 @@ def service_add(request):
     if not form.is_valid():
         return _respond(request, "prestations", ok=False, service_form=form)
     try:
-        add_service(request.profile, **form.cleaned_data)
+        profiles.add_service(request.profile, **form.cleaned_data)
     except ValidationError as exc:
         return _respond(request, "prestations", ok=False, message=exc.messages[0], service_form=form)
     return _respond(request, "prestations", message=_("Prestation ajoutée ✓"))
@@ -180,29 +214,28 @@ def service_add(request):
 @profile_required
 @require_POST
 def service_update(request, pk: int):
-    service = get_object_or_404(request.profile.services, pk=pk)
-    form = ServiceForm(request.POST, instance=service)
+    _owned(request.profile.services.get, pk=pk)
+    form = ServiceForm(request.POST)
     if not form.is_valid():
         return _respond(request, "prestations", ok=False, message=_("Le nom de la prestation est obligatoire."))
-    form.save()
-    refresh_seo_state(request.profile)
+    try:
+        profiles.update_service(request.profile, pk, **form.cleaned_data)
+    except ValidationError as exc:
+        return _respond(request, "prestations", ok=False, message=exc.messages[0])
     return _respond(request, "prestations")
 
 
 @profile_required
 @require_POST
 def service_delete(request, pk: int):
-    service = get_object_or_404(request.profile.services, pk=pk)
-    service.delete()
-    refresh_seo_state(request.profile)
+    _owned(profiles.delete_service, request.profile, pk)
     return _respond(request, "prestations", message=_("Prestation supprimée."))
 
 
 @profile_required
 @require_POST
 def service_move(request, pk: int):
-    service = get_object_or_404(request.profile.services, pk=pk)
-    move_item(request.profile.services.all(), service, request.POST.get("direction", "up"))
+    _owned(profiles.move_item, request.profile, "service", pk, _direction(request))
     return _respond(request, "prestations", message=_("Ordre enregistré ✓"))
 
 
@@ -219,7 +252,7 @@ def media_add(request):
     added, errors = 0, []
     for uploaded in files:
         try:
-            add_media(request.profile, uploaded, caption if len(files) == 1 else "")
+            profiles.add_media(request.profile, uploaded, caption if len(files) == 1 else "")
             added += 1
         except ValidationError as exc:
             errors.append(f"{uploaded.name[:40]} : {exc.messages[0]}")
@@ -234,27 +267,24 @@ def media_add(request):
 @profile_required
 @require_POST
 def media_update(request, pk: int):
-    media = get_object_or_404(request.profile.media, pk=pk)
+    _owned(request.profile.media.get, pk=pk)
     form = CaptionForm(request.POST)
     if form.is_valid():
-        media.caption = form.cleaned_data["caption"].strip()
-        media.save(update_fields=["caption"])
+        profiles.update_media(request.profile, pk, caption=form.cleaned_data["caption"])
     return _respond(request, "galerie")
 
 
 @profile_required
 @require_POST
 def media_delete(request, pk: int):
-    media = get_object_or_404(request.profile.media, pk=pk)
-    delete_media(media)
+    _owned(profiles.delete_media, request.profile, pk)
     return _respond(request, "galerie", message=_("Photo supprimée."))
 
 
 @profile_required
 @require_POST
 def media_move(request, pk: int):
-    media = get_object_or_404(request.profile.media, pk=pk)
-    move_item(request.profile.media.all(), media, request.POST.get("direction", "up"))
+    _owned(profiles.move_item, request.profile, "media", pk, _direction(request))
     return _respond(request, "galerie", message=_("Ordre enregistré ✓"))
 
 
@@ -268,7 +298,7 @@ def link_add(request):
     if not form.is_valid():
         return _respond(request, "liens", ok=False, link_form=form)
     try:
-        add_link(request.profile, form.cleaned_data["kind"], form.cleaned_data["url"])
+        profiles.add_link(request.profile, form.cleaned_data["kind"], form.cleaned_data["url"])
     except ValidationError as exc:
         return _respond(request, "liens", ok=False, message=exc.messages[0], link_form=form)
     return _respond(request, "liens", message=_("Lien ajouté ✓"))
@@ -277,15 +307,12 @@ def link_add(request):
 @profile_required
 @require_POST
 def link_delete(request, pk: int):
-    link = get_object_or_404(request.profile.links, pk=pk)
-    link.delete()
-    refresh_seo_state(request.profile)
+    _owned(profiles.delete_link, request.profile, pk)
     return _respond(request, "liens", message=_("Lien supprimé."))
 
 
 @profile_required
 @require_POST
 def link_move(request, pk: int):
-    link = get_object_or_404(request.profile.links, pk=pk)
-    move_item(request.profile.links.all(), link, request.POST.get("direction", "up"))
+    _owned(profiles.move_item, request.profile, "link", pk, _direction(request))
     return _respond(request, "liens", message=_("Ordre enregistré ✓"))

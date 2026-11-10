@@ -11,9 +11,10 @@ import time
 
 from django.conf import settings
 from django.contrib.auth import login
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import NoReverseMatch, reverse
+from django.urls import reverse
 from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext as _
 from django_ratelimit.core import is_ratelimited
@@ -24,7 +25,8 @@ from apps.accounts.models import OTPChallenge, User
 from apps.analytics import services as analytics
 from apps.analytics.models import Event
 from apps.billing import services as billing
-from apps.core.utils import client_ip, hash_ip, ratelimit_ip_key
+from apps.core.turnstile import verify_turnstile
+from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
 from apps.profiles import services as profiles
 from apps.profiles.models import Profile
 
@@ -35,7 +37,9 @@ SCAN_RATE = "60/m"
 UNKNOWN_CODE_RATE = "20/10m"  # an IP probing many unknown codes is blocked for a while
 ACTIVATION_POST_RATE = "20/m"
 STATE_TTL_SECONDS = 30 * 60
+RESEND_DELAY = 60  # seconds between two SMS codes, as on the dashboard login
 STEPS = ("code", "phone", "otp", "profile")
+SESSION_PROFILE_KEY = "dashboard_profile_id"  # == apps.dashboard.services.SESSION_PROFILE_KEY
 
 
 def _protect(response):
@@ -51,11 +55,6 @@ def _page(request, template: str, context: dict | None = None, status: int = 200
 
 def _redirect(url: str):
     return _protect(HttpResponseRedirect(url))
-
-
-def _ip_hash(request) -> str:
-    # Stable (non daily) hash: these counters protect hourly limits and must not reset at midnight.
-    return hash_ip(client_ip(request), daily=False)
 
 
 def _unknown_code_blocked(request, *, increment: bool) -> bool:
@@ -121,25 +120,31 @@ def _clear_state(request, card: Card) -> None:
     request.session.pop(_state_key(card), None)
 
 
-def _onboarding_url() -> str:
-    try:
-        return reverse("dashboard:onboarding")
-    except NoReverseMatch:
-        return "/espace/"
+def _resend_wait(state: dict) -> int:
+    return max(0, RESEND_DELAY - int(time.time() - state.get("sent_at", 0)))
 
 
-def _existing_profiles(phone: str) -> list[Profile]:
-    user = User.objects.filter(phone=phone).first()
+def _live_profiles(user: User | None) -> list[Profile]:
     if user is None:
         return []
     return list(user.profiles.exclude(status=Profile.Status.DELETED).select_related("trade", "city"))
 
 
-def _may_create_another(profiles_list: list[Profile]) -> bool:
-    if not profiles_list:
+def _existing_profiles(phone: str) -> list[Profile]:
+    """Pages a card may be linked to: active ones only (a suspended page never gets a card)."""
+    user = User.objects.filter(phone=phone).first()
+    return [p for p in _live_profiles(user) if p.status == Profile.Status.ACTIVE]
+
+
+def _may_create_another(profiles_list: list[Profile], *, total: int | None = None) -> bool:
+    """`total` counts every live page of the account, suspended ones included (no ban evasion)."""
+    count = len(profiles_list) if total is None else total
+    if not count:
         return True
+    if not profiles_list:
+        return False
     allowed = max(int(billing.entitlements(p).get("max_profiles", 1) or 1) for p in profiles_list)
-    return len(profiles_list) < allowed
+    return count < allowed
 
 
 @ratelimit(key=ratelimit_ip_key, rate=SCAN_RATE, block=False, group="cards.scan")
@@ -174,18 +179,24 @@ def _render_step(request, card: Card, state: dict, form, **extra):
         "form": form,
         "turnstile_site_key": settings.TURNSTILE_SITE_KEY if state["step"] == "code" else "",
         "phone_display": accounts.display_phone(state["phone"]) if state.get("phone") else "",
+        "resend_wait": _resend_wait(state) if state["step"] == "otp" else 0,
         **extra,
     }
     return _page(request, "cards/activate.html", context)
 
 
+def _failed(request, card: Card, error: str, status: int):
+    _clear_state(request, card)
+    return _page(request, "cards/activate_failed.html", {"card": card, "error": error}, status=status)
+
+
 def _step_code(request, card: Card, state: dict):
     form = forms.ActivationCodeForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        if not services.verify_turnstile(request.POST.get("cf-turnstile-response", ""), client_ip(request)):
+        if not verify_turnstile(request.POST.get("cf-turnstile-response", ""), client_ip(request)):
             form.add_error(None, _("La vérification anti-robot a échoué. Réessaie."))
             return _render_step(request, card, state, form)
-        ip_hash = _ip_hash(request)
+        ip_hash = security_ip_hash(request)
         try:
             ok = services.check_activation_code(card, form.cleaned_data["activation_code"], ip_hash)
         except services.CardError as exc:
@@ -211,11 +222,11 @@ def _step_phone(request, card: Card, state: dict):
     if request.method == "POST" and form.is_valid():
         try:
             phone = accounts.normalize_phone(form.cleaned_data["phone"])
-            accounts.request_otp(phone, OTPChallenge.Purpose.CARD_ACTIVATION, ip_hash=_ip_hash(request))
+            accounts.request_otp(phone, OTPChallenge.Purpose.CARD_ACTIVATION, ip_hash=security_ip_hash(request))
         except accounts.OTPError as exc:
             form.add_error("phone", str(exc))
             return _render_step(request, card, state, form)
-        state.update(step="otp", phone=phone)
+        state.update(step="otp", phone=phone, sent_at=time.time())
         _save_state(request, card, state)
         return _redirect(request.path)
     return _render_step(request, card, state, form)
@@ -229,11 +240,18 @@ def _step_otp(request, card: Card, state: dict):
         return _redirect(request.path)
     if request.method == "POST" and request.POST.get("action") == "resend":
         form = forms.OTPForm()
+        wait = _resend_wait(state)
+        if wait:
+            notice = _("Patiente encore %(n)d secondes avant de redemander un code.") % {"n": wait}
+            return _render_step(request, card, state, form, notice=notice)
         try:
-            accounts.request_otp(phone, OTPChallenge.Purpose.CARD_ACTIVATION, ip_hash=_ip_hash(request))
-            notice = _("Un nouveau code vient d'être envoyé.")
+            accounts.request_otp(phone, OTPChallenge.Purpose.CARD_ACTIVATION, ip_hash=security_ip_hash(request))
         except accounts.OTPError as exc:
             notice = str(exc)
+        else:
+            notice = _("Un nouveau code vient d'être envoyé.")
+            state["sent_at"] = time.time()
+            _save_state(request, card, state)
         return _render_step(request, card, state, form, notice=notice)
     if request.method == "POST" and request.POST.get("action") == "change_phone":
         state.update(step="phone")
@@ -265,8 +283,16 @@ def _step_profile(request, card: Card, state: dict):
         _clear_state(request, card)
         return _page(request, "cards/unavailable.html", {"account_disabled": True}, status=403)
 
-    existing = _existing_profiles(phone)
-    allow_new = _may_create_another(existing)
+    live = _live_profiles(user)
+    existing = [p for p in live if p.status == Profile.Status.ACTIVE]
+    if live and not existing:  # only suspended page(s): never a card, never a replacement page
+        return _failed(
+            request,
+            card,
+            _("Ta page est suspendue : tu ne peux pas y lier de carte. Contacte le support Modulis."),
+            status=403,
+        )
+    allow_new = _may_create_another(existing, total=len(live))
     action = request.POST.get("action") if request.method == "POST" else None
 
     if existing and action != "create":
@@ -277,7 +303,14 @@ def _step_profile(request, card: Card, state: dict):
             profile = form.selected_profile()
             if profile is None:  # "create a new page" was chosen
                 return _render_step(request, card, state, forms.NewProfileForm(), creating=True)
-            user, _created = accounts.get_or_create_user(phone)  # marks the phone verified, updates last_seen
+            try:
+                with transaction.atomic():
+                    user, _created = accounts.get_or_create_user(phone)  # marks the phone verified
+                    services.activate_card(card, profile)
+            except accounts.OTPError as exc:  # AccountNotAllowed: staff or disabled account
+                return _failed(request, card, str(exc), status=403)
+            except services.CardError as exc:
+                return _failed(request, card, str(exc), status=409)
             return _finish(request, card, user, profile)
         return _render_step(request, card, state, form, creating=False)
 
@@ -286,24 +319,35 @@ def _step_profile(request, card: Card, state: dict):
     form = forms.NewProfileForm(request.POST if action == "create" else None)
     if action == "create" and form.is_valid():
         data = form.cleaned_data
-        if existing:  # another page for an account whose plan allows several
-            user, _created = accounts.get_or_create_user(phone)
-            profile = profiles.create_profile(user, data["display_name"], trade=data["trade"], city=data["city"])
-        else:  # single entry point for automatic page creation (plan §5.1, entry B)
-            user, profile, _created = profiles.get_or_create_profile(
-                phone, data["display_name"], trade=data["trade"], city=data["city"]
-            )
+        try:
+            # One savepoint: if the card cannot be activated, the new page is rolled back too.
+            with transaction.atomic():
+                if existing:  # another page for an account whose plan allows several
+                    user, _created = accounts.get_or_create_user(phone)
+                    profile = profiles.create_profile(
+                        user, data["display_name"], trade=data["trade"], city=data["city"]
+                    )
+                else:  # single entry point for automatic page creation (plan §5.1, entry B)
+                    user, profile, _created = profiles.get_or_create_profile(
+                        phone, data["display_name"], trade=data["trade"], city=data["city"]
+                    )
+                if profile.status != Profile.Status.ACTIVE:
+                    raise services.CardError(_("Ta page est suspendue : tu ne peux pas y lier de carte."))
+                services.activate_card(card, profile)
+        except accounts.OTPError as exc:  # AccountNotAllowed: staff or disabled account
+            return _failed(request, card, str(exc), status=403)
+        except services.CardError as exc:
+            return _failed(request, card, str(exc), status=409)
         return _finish(request, card, user, profile)
     return _render_step(request, card, state, form, creating=True)
 
 
 def _finish(request, card: Card, user, profile: Profile):
-    try:
-        services.activate_card(card, profile)
-    except services.CardError as exc:
-        _clear_state(request, card)
-        return _page(request, "cards/activate_failed.html", {"card": card, "error": str(exc)}, status=409)
+    """Card activated: log in and continue in the pro space (onboarding if the page is new)."""
     _clear_state(request, card)
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")  # rotates the session key
     request.session["activated_card"] = card.public_code
-    return _redirect(_onboarding_url())
+    request.session[SESSION_PROFILE_KEY] = profile.pk  # the dashboard opens on the page just linked
+    if profile.onboarding_completed_at is None:
+        return _redirect(reverse("dashboard:onboarding", kwargs={"step": "nom"}))
+    return _redirect(reverse("dashboard:home"))

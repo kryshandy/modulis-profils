@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate "Accueil" %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p><strong>{% translate "Cette action est irréversible." %}</strong>
+    {% translate "Pour chaque profil : tout le contenu, la photo et la galerie sont supprimés, les cartes liées sont désactivées, les adresses répondent 410 (elles ne sont gardées que sous forme de hachage) et le compte est anonymisé s'il n'a plus aucune page." %}</p>
+  <ul>
+    {% for profile in profiles %}
+      <li>{{ profile.display_name }} — /{{ profile.slug }} ({{ profile.user.phone }})</li>
+    {% endfor %}
+  </ul>
+  <form method="post">
+    {% csrf_token %}
+    {% for profile in profiles %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ profile.pk }}">
+    {% endfor %}
+    <input type="hidden" name="action" value="{{ action_name }}">
+    <input type="hidden" name="confirm_erase" value="yes">
+    <div class="submit-row">
+      <input type="submit" class="default" value="{% translate 'Oui, effacer définitivement' %}">
+      <a href="{% url opts|admin_urlname:'changelist' %}" class="button cancel-link">{% translate "Non, annuler" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

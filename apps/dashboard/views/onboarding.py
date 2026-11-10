@@ -1,4 +1,7 @@
-"""Five short onboarding steps. Each step saves immediately; steps 3 to 5 can be skipped."""
+"""Five short onboarding steps. Each step saves immediately; steps 3 to 5 can be skipped.
+
+Writes go through `apps.profiles.services` only. A suspended page can be looked at, never changed.
+"""
 
 from __future__ import annotations
 
@@ -6,24 +9,18 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.shortcuts import redirect, render
-from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods
 
+from apps.accounts.services import OTPError
+from apps.profiles import services as profiles
 from apps.profiles.models import Profile
-from apps.profiles.services import completeness_items, get_or_create_profile, refresh_seo_state
 
 from ..content import bio_suggestions, service_examples
-from ..forms import BioForm, ContactForm, IdentityForm, QuickServicesForm, TradeCityForm
-from ..services import (
-    MAX_SERVICES,
-    SESSION_PROFILE_KEY,
-    active_profile,
-    add_service,
-    set_profile_photo,
-    whatsapp_share_url,
-)
+from ..forms import BioForm, ContactForm, IdentityForm, QuickServicesForm, TradeCityForm, profile_values
+from ..services import MAX_SERVICES, SESSION_PROFILE_KEY, active_profile, whatsapp_share_url
+from .common import SAFE_METHODS, is_suspended, suspended_response
 
 STEPS = [
     ("nom", gettext_lazy("Ton nom")),
@@ -52,6 +49,8 @@ def onboarding(request, step: str):
     if step != FINISH and step not in STEP_SLUGS:
         raise Http404
     profile = active_profile(request)
+    if is_suspended(profile) and (request.method not in SAFE_METHODS or step == FINISH):
+        return suspended_response(request, profile)  # never a second page, never a change
     if profile is None and step != "nom":
         return _go("nom")
     needs_trade = step in [*STEP_SLUGS[SKIPPABLE_FROM:], FINISH]
@@ -96,14 +95,18 @@ def _step_name(request, profile: Profile | None):
         name, kind = form.cleaned_data["display_name"], form.cleaned_data["kind"]
         if profile is None:
             # Single entry point for page creation: never a duplicate for the same phone.
-            _user, profile, created = get_or_create_profile(request.user.phone, name, kind=kind)
+            try:
+                _user, profile, created = profiles.get_or_create_profile(request.user.phone, name, kind=kind)
+            except OTPError as exc:  # AccountNotAllowed: disabled or staff account
+                form.add_error(None, str(exc))
+                return {"form": form}
+            if is_suspended(profile):
+                return suspended_response(request, profile)
             if not created:
-                profile.display_name, profile.kind = name, kind
-                profile.save(update_fields=["display_name", "kind", "updated_at"])
+                profiles.update_profile(profile, display_name=name, kind=kind)
         else:
-            form.save()
+            profiles.update_profile(profile, **profile_values(form))
         request.session[SESSION_PROFILE_KEY] = profile.pk
-        refresh_seo_state(profile)
         return _go(_next("nom"))
     if profile is None and not form.is_bound and request.user.full_name:
         form.initial["display_name"] = request.user.full_name
@@ -113,8 +116,7 @@ def _step_name(request, profile: Profile | None):
 def _step_trade(request, profile: Profile):
     form = TradeCityForm(request.POST or None, instance=profile, show_area=False)
     if request.method == "POST" and form.is_valid():
-        form.save()
-        refresh_seo_state(profile)
+        profiles.update_profile(profile, **profile_values(form))
         return _go(_next("metier"))
     return {"form": form}
 
@@ -122,8 +124,7 @@ def _step_trade(request, profile: Profile):
 def _step_contact(request, profile: Profile):
     form = ContactForm(request.POST or None, instance=profile, short=True)
     if request.method == "POST" and form.is_valid():
-        form.save()
-        refresh_seo_state(profile)
+        profiles.update_profile(profile, **profile_values(form))
         return _go(_next("contact"))
     return {"form": form}
 
@@ -136,7 +137,7 @@ def _step_photo(request, profile: Profile):
             error = _("Choisis une photo, ou appuie sur « Passer ».")
         else:
             try:
-                set_profile_photo(profile, uploaded)
+                profiles.set_photo(profile, uploaded)
             except ValidationError as exc:
                 error = exc.messages[0]
             else:
@@ -148,12 +149,14 @@ def _step_bio(request, profile: Profile):
     form = BioForm(request.POST or None, instance=profile)
     services_form = QuickServicesForm(request.POST or None)
     if request.method == "POST" and form.is_valid() and services_form.is_valid():
-        form.save()
+        profiles.update_profile(profile, **profile_values(form))
         for title, price in services_form.items():
             if profile.services.count() >= MAX_SERVICES:
                 break
-            add_service(profile, title, price_label=price)
-        refresh_seo_state(profile)
+            try:
+                profiles.add_service(profile, title, price_label=price)
+            except ValidationError:
+                break
         return _go(FINISH)
     return {
         "form": form,
@@ -165,11 +168,9 @@ def _step_bio(request, profile: Profile):
 
 
 def _finish(request, profile: Profile):
-    if profile.onboarding_completed_at is None:
-        profile.onboarding_completed_at = timezone.now()
-        profile.save(update_fields=["onboarding_completed_at", "updated_at"])
-    refresh_seo_state(profile, content_changed=False)
-    items = completeness_items(profile)
+    profiles.mark_onboarding_completed(profile)
+    profiles.refresh_seo_state(profile, content_changed=False)
+    items = profiles.completeness_items(profile)
     return render(
         request,
         "dashboard/onboarding/finish.html",

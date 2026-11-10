@@ -1,14 +1,14 @@
 {% extends "public/base_public.html" %}
-{% load i18n static %}
+{% load i18n static public_images %}
 {% block body_class %}profile{% endblock %}
-{% block head %}{% if profile.photo %}<link rel="preload" as="image" href="{{ profile.photo.url }}">{% endif %}{% endblock %}
+{% block head %}{% if photo %}<link rel="preload" as="image" {% preload_attrs photo %} fetchpriority="high">{% endif %}{% endblock %}
 {% block content %}
 {% if owner_private %}
 <p class="banner banner--private" role="status">{% translate "Ta page est privée : toi seul la vois. Rends-la publique depuis ton espace pour que tes clients la trouvent." %}</p>
 {% endif %}
 <article class="profile-card" data-profile-id="{{ profile.pk }}">
   <header class="profile-head">
-    {% if profile.photo %}<img class="profile-head__photo" src="{{ profile.photo.url }}" alt="{{ photo_alt }}" width="160" height="160" fetchpriority="high" decoding="async">{% else %}<span class="profile-head__initial" aria-hidden="true">{{ profile.display_name|first|upper }}</span>{% endif %}
+    {% if photo %}<img class="profile-head__photo" {% img_attrs photo %} alt="{{ photo_alt }}" fetchpriority="high" decoding="async">{% else %}<span class="profile-head__initial" aria-hidden="true">{{ profile.display_name|first|upper }}</span>{% endif %}
     <h1 class="profile-head__name">{{ profile.display_name }}</h1>
     {% if profile.is_verified %}<p class="badge badge--verified">✓ {% translate "Profil vérifié" %}</p>{% endif %}
     {% if subtitle %}<h2 class="profile-head__title">{{ subtitle }}</h2>{% endif %}
@@ -17,9 +17,9 @@
 
   <nav class="actions" aria-label="{% translate 'Contacter' %}">
     {% if phone %}<a class="btn btn--primary" href="tel:{{ phone }}" data-track="call">{% translate "Appeler" %}</a>{% endif %}
-    {% if whatsapp_url %}<a class="btn btn--whatsapp" href="{{ whatsapp_url }}" rel="noopener" data-track="whatsapp">WhatsApp</a>{% endif %}
+    {% if whatsapp_url %}<a class="btn btn--whatsapp" href="{{ whatsapp_url }}" rel="{{ contact_rel }}" data-track="whatsapp">WhatsApp</a>{% endif %}
     {% if email %}<a class="btn" href="mailto:{{ email }}" data-track="email">{% translate "Email" %}</a>{% endif %}
-    {% if maps_url %}<a class="btn" href="{{ maps_url }}" rel="noopener nofollow" data-track="maps">{% translate "Itinéraire" %}</a>{% endif %}
+    {% if maps_url %}<a class="btn" href="{{ maps_url }}" rel="{{ contact_rel }}" data-track="maps">{% translate "Itinéraire" %}</a>{% endif %}
     <a class="btn btn--ghost" href="/{{ profile.slug }}/contact.vcf" rel="nofollow" data-track="vcard">{% translate "Enregistrer le contact" %}</a>
   </nav>
 
@@ -45,7 +45,7 @@
   <section class="section">
     <h2>{% translate "Réalisations" %}</h2>
     <ul class="gallery">
-      {% for g in gallery %}<li><img src="{{ g.url }}" alt="{{ g.alt }}" width="{{ g.width }}" height="{{ g.height }}"{% if g.lazy %} loading="lazy"{% endif %} decoding="async"></li>{% endfor %}
+      {% for g in gallery %}<li><img {% img_attrs g %} alt="{{ g.alt }}"{% if g.lazy %} loading="lazy"{% endif %} decoding="async"></li>{% endfor %}
     </ul>
   </section>
   {% endif %}
@@ -54,12 +54,12 @@
   <section class="section">
     <h2>{% translate "Liens" %}</h2>
     <ul class="links">
-      {% for l in links %}<li><a href="{{ l.url }}" rel="ugc nofollow noopener" data-track="link">{{ l.label }}</a></li>{% endfor %}
+      {% for l in links %}<li><a href="{{ l.url }}" rel="{{ user_link_rel }}" data-track="link">{{ l.label }}</a></li>{% endfor %}
     </ul>
   </section>
   {% endif %}
 
-  <p class="share"><a class="btn btn--whatsapp" href="{{ share_url }}" rel="nofollow noopener" data-track="share">{% translate "Partager sur WhatsApp" %}</a></p>
+  <p class="share"><a class="btn btn--whatsapp" href="{{ share_url }}" rel="{{ contact_rel }}" data-track="share">{% translate "Partager sur WhatsApp" %}</a></p>
 </article>
 
 {% if similar %}

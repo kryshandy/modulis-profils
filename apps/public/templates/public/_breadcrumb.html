@@ -2,7 +2,8 @@
 <nav class="breadcrumb" aria-label="{% translate 'Fil d’Ariane' %}">
   <ol>
     {% for name, path in breadcrumb %}
-      <li>{% if path and not forloop.last %}<a href="{{ path }}">{{ name }}</a>{% else %}<span aria-current="page">{{ name }}</span>{% endif %}</li>
+      {# A level is linked only when its page is indexable (directory threshold, SEO audit 2026-11-10 #3). #}
+      <li>{% if forloop.last %}<span aria-current="page">{{ name }}</span>{% elif path %}<a href="{{ path }}">{{ name }}</a>{% else %}<span>{{ name }}</span>{% endif %}</li>
     {% endfor %}
   </ol>
 </nav>

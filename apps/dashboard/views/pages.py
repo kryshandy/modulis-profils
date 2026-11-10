@@ -8,26 +8,20 @@ from django.contrib.auth import logout
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django_ratelimit.decorators import ratelimit
 
+from apps.accounts.services import set_email
 from apps.cards.services import CardError, activate_card, check_activation_code, disable_card, get_card
-from apps.core.utils import client_ip, hash_ip, ratelimit_ip_key
-from apps.profiles.services import (
-    change_slug,
-    completeness_items,
-    delete_profile,
-    indexability_blockers,
-    is_generic_slug,
-    is_slug_available,
-    validate_slug_format,
-)
+from apps.core.turnstile import verify_turnstile
+from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
+from apps.profiles import services as profiles
 
 from ..forms import DeleteProfileForm, LanguageForm, LinkCardForm, RecoveryEmailForm, SlugForm
 from ..services import (
     SESSION_PROFILE_KEY,
+    series_rows,
     set_active_profile,
     share_text,
     stat_rows,
@@ -40,6 +34,7 @@ from .editor import ITEM_SECTIONS
 RING_RADIUS = 52
 SITE_HOST = settings.SITE_URL.split("://", 1)[-1]
 RING_CIRCUMFERENCE = 326.73  # 2 * pi * 52
+TURNSTILE_FIELD = "cf-turnstile-response"
 
 
 def gauge(score: int) -> dict:
@@ -52,7 +47,7 @@ def gauge(score: int) -> dict:
 @require_GET
 def home(request):
     profile = request.profile
-    items = completeness_items(profile)
+    items = profiles.completeness_items(profile)
     for item in items:
         item["section"] = ITEM_SECTIONS.get(item["key"], "identite")
     stats = stats_30_days(profile)
@@ -61,7 +56,7 @@ def home(request):
         "items": items,
         "todo_count": sum(1 for i in items if not i["done"]),
         "gauge": gauge(profile.completeness_score),
-        "blockers": [] if profile.is_indexable else indexability_blockers(profile),
+        "blockers": [] if profile.is_indexable else profiles.indexability_blockers(profile),
         "stats": stats,
         "whatsapp_share": whatsapp_share_url(profile),
         "tour_autostart": tour_auto or request.GET.get("visite") == "1",
@@ -73,16 +68,13 @@ def home(request):
 @profile_required
 @require_POST
 def tour_done(request):
-    profile = request.profile
-    if profile.tour_completed_at is None:
-        profile.tour_completed_at = timezone.now()
-        profile.save(update_fields=["tour_completed_at", "updated_at"])
+    profiles.mark_tour_completed(request.profile)
     if request.htmx or request.headers.get("X-Requested-With") == "fetch":
         return HttpResponse(status=204)
     return redirect("dashboard:home")
 
 
-@profile_required
+@profile_required(allow_suspended=True)
 @require_POST
 def switch_profile(request):
     if not set_active_profile(request, request.POST.get("profile_id")):
@@ -119,6 +111,7 @@ def _cards_context(request, form=None, error=""):
         "cards": list(request.profile.cards.order_by("-activated_at", "-created_at")),
         "form": form or LinkCardForm(),
         "error": error,
+        "turnstile_site_key": settings.TURNSTILE_SITE_KEY,
     }
 
 
@@ -136,13 +129,15 @@ def card_link(request):
     error = ""
     if getattr(request, "limited", False):
         error = _("Trop d'essais depuis cet appareil. Réessaie dans une heure.")
+    elif not verify_turnstile(request.POST.get(TURNSTILE_FIELD, ""), client_ip(request)):
+        error = _("La vérification anti-robot a échoué. Réessaie.")
     elif form.is_valid():
         card = get_card(form.cleaned_data["public_code"])
         if card is None:
             error = _("Aucune carte ne porte ce code. Vérifie les 7 caractères au dos de la carte.")
         else:
             try:
-                ok = check_activation_code(card, form.cleaned_data["activation_code"], hash_ip(client_ip(request)))
+                ok = check_activation_code(card, form.cleaned_data["activation_code"], security_ip_hash(request))
                 if not ok:
                     error = _("Le code d'activation ne correspond pas. Vérifie-le sous la zone à gratter.")
                 else:
@@ -175,11 +170,10 @@ def card_lost(request, pk: int):
 @require_GET
 def stats(request):
     data = stats_30_days(request.profile)
-    rows = stat_rows(data)
     return dash_render(
         request,
         "dashboard/stats.html",
-        {"stats": data, "rows": rows, "daily": (data or {}).get("daily") or [], "available": data is not None},
+        {"stats": data, "rows": stat_rows(data), "daily": series_rows(data), "available": data is not None},
     )
 
 
@@ -196,6 +190,13 @@ def _settings_context(request, **forms):
     }
 
 
+def _saved(request, url_name: str = "dashboard:settings"):
+    if request.htmx:
+        return with_toast(HttpResponse(status=204))
+    messages.success(request, _("Enregistré ✓"))
+    return redirect(url_name)
+
+
 @profile_required
 def settings_view(request):
     profile = request.profile
@@ -206,7 +207,7 @@ def settings_view(request):
         form = SlugForm(request.POST)
         if form.is_valid():
             try:
-                change_slug(profile, form.cleaned_data["slug"])
+                profiles.change_slug(profile, form.cleaned_data["slug"])
             except ValidationError as exc:
                 form.add_error("slug", exc.messages[0])
             else:
@@ -216,26 +217,20 @@ def settings_view(request):
     if action == "language":
         form = LanguageForm(request.POST, instance=profile)
         if form.is_valid():
-            form.save()
-            if request.htmx:
-                return with_toast(HttpResponse(status=204))
-            messages.success(request, _("Enregistré ✓"))
-            return redirect("dashboard:settings")
+            profiles.set_language(profile, form.cleaned_data["language"])
+            return _saved(request)
+        profile.refresh_from_db()
         return dash_render(request, "dashboard/settings.html", _settings_context(request, language_form=form))
     if action == "email":
         form = RecoveryEmailForm(request.POST)
         if form.is_valid():
-            request.user.email = form.cleaned_data["email"]
-            request.user.save(update_fields=["email"])
-            if request.htmx:
-                return with_toast(HttpResponse(status=204))
-            messages.success(request, _("Enregistré ✓"))
-            return redirect("dashboard:settings")
+            set_email(request.user, form.cleaned_data["email"])
+            return _saved(request)
         return dash_render(request, "dashboard/settings.html", _settings_context(request, email_form=form))
     if action == "delete":
         form = DeleteProfileForm(request.POST, expected=profile.slug)
         if form.is_valid():
-            delete_profile(profile)
+            profiles.delete_profile(profile)
             request.session.pop(SESSION_PROFILE_KEY, None)
             logout(request)
             messages.info(request, _("Ta page a été supprimée. Merci d'avoir utilisé Modulis Profils."))
@@ -258,13 +253,16 @@ def slug_check(request):
         state, message = "neutral", _("C'est ton adresse actuelle.")
     else:
         try:
-            validate_slug_format(slug)
+            profiles.validate_slug_format(slug)
         except ValidationError as exc:
             message = exc.messages[0]
         else:
-            if not is_slug_available(slug):
+            own_old = profile.slugs.filter(slug=slug, kind="old").exists()
+            if own_old:
+                state, message = "ok", _("C'est une de tes anciennes adresses : tu peux la reprendre.")
+            elif not profiles.is_slug_available(slug):
                 message = _("Cette adresse est déjà prise. Essaie d'ajouter ton quartier ou ton métier.")
-            elif not profile.is_indexable and is_generic_slug(slug):
+            elif not profile.is_indexable and profiles.is_generic_slug(slug):
                 message = _("Trop générique pour l'instant : ajoute ton prénom (ex. paul-plombier).")
             else:
                 state, message = "ok", _("Libre ! Ta page serait : %(url)s") % {"url": f"{SITE_HOST}/{slug}"}

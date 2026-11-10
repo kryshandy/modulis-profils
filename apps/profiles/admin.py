@@ -7,7 +7,9 @@ recomputed with services.refresh_seo_state after an edit.
 
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.core.exceptions import ValidationError
+from django.db.models import OuterRef, Subquery
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -125,6 +127,15 @@ class ChangeSlugForm(forms.Form):
         return self.cleaned_data["new_slug"].strip().lower()
 
 
+class ProfileAdminForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ["opening_hours"]  # the ModelAdmin passes the real list from its fieldsets
+
+    def clean_opening_hours(self):
+        return services.normalize_opening_hours(self.cleaned_data.get("opening_hours"))
+
+
 # --- Profile admin ---------------------------------------------------------------------------
 
 
@@ -137,7 +148,6 @@ class ProfileAdmin(admin.ModelAdmin):
         "trade",
         "city",
         "status",
-        "visibility",
         "completeness_score",
         "is_indexable",
         "verified",
@@ -172,14 +182,16 @@ class ProfileAdmin(admin.ModelAdmin):
         "content_updated_at",
         "verified_at",
         "current_plan",
+        "photo_size",
         "created_at",
         "updated_at",
     )
     fieldsets = (
         (None, {"fields": ("user", "slug_with_change_link", "display_name", "kind", "language")}),
         (_("Métier et zone"), {"fields": ("trade", "is_feminine", "custom_title", "city", "district", "service_area")}),
-        (_("Présentation"), {"fields": ("bio", "photo", "cover_color")}),
+        (_("Présentation"), {"fields": ("bio", "photo", "photo_size", "cover_color")}),
         (_("Contact"), {"fields": ("whatsapp", "phone_public", "email_public", "address", "maps_url")}),
+        (_("SEO local"), {"fields": ("latitude", "longitude", "opening_hours", "price_range")}),
         (
             _("Statut et modération"),
             {"fields": ("visibility", "status", "suspended_reason", "verified_at", "current_plan")},
@@ -210,7 +222,24 @@ class ProfileAdmin(admin.ModelAdmin):
         "grant_essentiel",
         "grant_pro",
         "queue_indexing",
+        "erase_permanently",
     )
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs.setdefault("form", ProfileAdminForm)
+        return super().get_form(request, obj, **kwargs)
+
+    def get_queryset(self, request):
+        """Current plan annotated in SQL (one subquery instead of one query per row)."""
+        now = timezone.now()
+        current_plan = (
+            Subscription.objects.filter(
+                profile=OuterRef("pk"), status=Subscription.Status.ACTIVE, starts_at__lte=now, ends_at__gt=now
+            )
+            .order_by("-ends_at")
+            .values("plan__code")[:1]
+        )
+        return super().get_queryset(request).annotate(_plan_code=Subquery(current_plan))
 
     # Columns ------------------------------------------------------------------------------
 
@@ -226,13 +255,23 @@ class ProfileAdmin(admin.ModelAdmin):
     def verified(self, obj):
         return obj.verified_at is not None
 
+    @staticmethod
+    def _plan_of(obj) -> str:
+        if hasattr(obj, "_plan_code"):
+            return obj._plan_code or Plan.Code.FREE
+        return billing.current_plan_code(obj)
+
     @admin.display(description=_("offre"))
     def plan(self, obj):
-        return billing.current_plan_code(obj)
+        return self._plan_of(obj)
 
     @admin.display(description=_("offre actuelle"))
     def current_plan(self, obj):
-        return billing.current_plan_code(obj) if obj.pk else "—"
+        return self._plan_of(obj) if obj.pk else "—"
+
+    @admin.display(description=_("taille de la photo"))
+    def photo_size(self, obj):
+        return f"{obj.photo_width} × {obj.photo_height} px" if obj.photo_width else "—"
 
     @admin.display(description=_("adresse"))
     def slug_with_change_link(self, obj):
@@ -260,6 +299,12 @@ class ProfileAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False  # a hard delete would free the slug: erasure goes through services.delete_profile
+
+    def has_grant_subscription_permission(self, request):
+        return request.user.has_perm("profiles.grant_subscription")
+
+    def has_erase_permission(self, request):
+        return request.user.has_perm("profiles.erase_profile")
 
     # Saving -------------------------------------------------------------------------------
 
@@ -305,17 +350,17 @@ class ProfileAdmin(admin.ModelAdmin):
 
     # Actions ------------------------------------------------------------------------------
 
-    @admin.action(description=_("Donner le badge vérifié"))
+    @admin.action(permissions=["change"], description=_("Donner le badge vérifié"))
     def verify(self, request, queryset):
         count = queryset.filter(verified_at__isnull=True).update(verified_at=timezone.now())
         self.message_user(request, _("%(n)d profil(s) vérifié(s).") % {"n": count}, messages.SUCCESS)
 
-    @admin.action(description=_("Retirer le badge vérifié"))
+    @admin.action(permissions=["change"], description=_("Retirer le badge vérifié"))
     def unverify(self, request, queryset):
         count = queryset.update(verified_at=None)
         self.message_user(request, _("Badge retiré sur %(n)d profil(s).") % {"n": count}, messages.SUCCESS)
 
-    @admin.action(description=_("Suspendre"))
+    @admin.action(permissions=["change"], description=_("Suspendre"))
     def suspend(self, request, queryset):
         count = 0
         for profile in queryset.filter(status=Profile.Status.ACTIVE):
@@ -323,7 +368,7 @@ class ProfileAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, _("%(n)d profil(s) suspendu(s).") % {"n": count}, messages.SUCCESS)
 
-    @admin.action(description=_("Réactiver"))
+    @admin.action(permissions=["change"], description=_("Réactiver"))
     def reactivate(self, request, queryset):
         count = 0
         for profile in queryset.filter(status=Profile.Status.SUSPENDED):
@@ -331,7 +376,7 @@ class ProfileAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, _("%(n)d profil(s) réactivé(s).") % {"n": count}, messages.SUCCESS)
 
-    @admin.action(description=_("Recalculer le SEO"))
+    @admin.action(permissions=["change"], description=_("Recalculer le SEO"))
     def recompute_seo(self, request, queryset):
         for profile in queryset:
             services.refresh_seo_state(profile, content_changed=False)
@@ -357,19 +402,46 @@ class ProfileAdmin(admin.ModelAdmin):
             request, _("%(plan)s attribué pour 1 an à %(n)d profil(s).") % {"plan": plan.name, "n": count}
         )
 
-    @admin.action(description=_("Offrir Essentiel pour 1 an"))
+    @admin.action(permissions=["grant_subscription"], description=_("Offrir Essentiel pour 1 an"))
     def grant_essentiel(self, request, queryset):
         self._grant(request, queryset, Plan.Code.ESSENTIEL)
 
-    @admin.action(description=_("Offrir Pro pour 1 an"))
+    @admin.action(permissions=["grant_subscription"], description=_("Offrir Pro pour 1 an"))
     def grant_pro(self, request, queryset):
         self._grant(request, queryset, Plan.Code.PRO)
 
-    @admin.action(description=_("Notifier les moteurs de recherche"))
+    @admin.action(permissions=["change"], description=_("Notifier les moteurs de recherche"))
     def queue_indexing(self, request, queryset):
         urls = [p.absolute_url for p in queryset.filter(is_indexable=True)]
         queue_urls(urls)
         self.message_user(request, _("%(n)d URL ajoutée(s) à la file d'indexation.") % {"n": len(urls)})
+
+    @admin.action(permissions=["erase"], description=_("Effacer définitivement (droit à l'effacement)"))
+    def erase_permanently(self, request, queryset):
+        """Right to erasure, with an intermediate confirmation page (irreversible)."""
+        profiles = list(queryset.exclude(status=Profile.Status.DELETED).select_related("user"))
+        if not profiles:
+            self.message_user(request, _("Aucun profil à effacer."), messages.WARNING)
+            return None
+        if request.POST.get("confirm_erase") == "yes":
+            for profile in profiles:
+                services.delete_profile(profile)
+            self.message_user(
+                request,
+                _("%(n)d profil(s) effacé(s) définitivement. Leurs adresses répondent maintenant 410.")
+                % {"n": len(profiles)},
+                messages.SUCCESS,
+            )
+            return None
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "title": _("Effacer définitivement ces profils ?"),
+            "profiles": profiles,
+            "action_name": "erase_permanently",
+            "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+        }
+        return TemplateResponse(request, "admin/profiles/profile/erase_confirmation.html", context)
 
 
 @admin.register(SlugRegistry)

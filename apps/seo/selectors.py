@@ -45,6 +45,14 @@ def city_profiles(city: City) -> QuerySet[Profile]:
     return indexable_profiles().filter(city=city).order_by("-content_updated_at", "-pk")
 
 
+def city_count(city: City) -> int:
+    return indexable_profiles().filter(city=city).count()
+
+
+def directory_count(trade: Trade, city: City) -> int:
+    return indexable_profiles().filter(trade=trade, city=city).count()
+
+
 def directory_combos(min_count: int = 1) -> list[dict]:
     """[{trade, city, count, lastmod}] for every trade×city with at least `min_count` indexable profiles."""
     rows = (

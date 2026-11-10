@@ -59,7 +59,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
 
-    @admin.action(description=_("Expirer maintenant (retour au gratuit)"))
+    @admin.action(permissions=["change"], description=_("Expirer maintenant (retour au gratuit)"))
     def expire_now(self, request, queryset):
         count = queryset.filter(status=Subscription.Status.ACTIVE).update(status=Subscription.Status.EXPIRED)
         self.message_user(request, _("%(n)d abonnement(s) expiré(s).") % {"n": count}, messages.SUCCESS)

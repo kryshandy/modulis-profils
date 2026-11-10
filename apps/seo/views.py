@@ -14,6 +14,7 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_safe
 
 INDEXNOW_KEY_RE = re.compile(r"^[A-Za-z0-9-]{8,128}$")
+TRACKING_PREFIXES = ("p", "a")  # /p/<pk>.gif view pixel, /a/<pk>/<kind> click beacons (apps.analytics)
 
 
 def robots_lines() -> list[str]:
@@ -23,6 +24,7 @@ def robots_lines() -> list[str]:
         prefix = prefix.strip("/")
         if prefix:  # an empty prefix would produce "Disallow: /"
             lines.append(f"Disallow: /{prefix}/")
+    lines += [f"Disallow: /{prefix}/" for prefix in TRACKING_PREFIXES]
     lines += ["", f"Sitemap: {settings.SITE_URL}{reverse('seo:sitemap')}"]
     return lines
 
@@ -50,6 +52,8 @@ def sitemap_index(request, sitemaps, sitemap_url_name="seo:sitemap_section"):
     items = []
     for section, site in sitemaps.items():
         site = site() if callable(site) else site
+        if not site.paginator.count:
+            continue  # an empty section is not listed (SEO audit 2026-11-10 #9)
         url = f"{settings.SITE_URL}{reverse(sitemap_url_name, kwargs={'section': section})}"
         lastmod = site.get_latest_lastmod()
         items.append(SitemapIndexItem(url, lastmod))

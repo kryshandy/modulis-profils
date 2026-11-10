@@ -14,7 +14,6 @@ from apps.accounts.models import User
 from apps.cards.services import create_batch
 from apps.core.models import City, Trade
 from apps.profiles import services as profiles
-from apps.profiles.models import ProfileService
 
 DEMO = [
     # phone, name, trade slug, city slug, feminine, bio, services
@@ -55,6 +54,17 @@ DEMO = [
 ]
 
 
+# Local SEO sample (fictitious position in central Douala) to exercise geo / openingHours / priceRange.
+LOCAL_SEO = {
+    "+237690000101": {
+        "latitude": "4.048300",
+        "longitude": "9.704300",
+        "opening_hours": {day: [["08:00", "18:00"]] for day in ("mo", "tu", "we", "th", "fr", "sa")},
+        "price_range": "5 000–50 000 FCFA",
+    },
+}
+
+
 class Command(BaseCommand):
     help = "Crée des données de démonstration (profils fictifs, lot de cartes, compte admin)."
 
@@ -77,13 +87,10 @@ class Command(BaseCommand):
             trade = Trade.objects.filter(slug=trade_slug).first()
             city = City.objects.filter(slug=city_slug).first()
             _user, profile, created = profiles.get_or_create_profile(phone, name, trade=trade, city=city)
-            if created:
-                profile.bio = bio
-                profile.is_feminine = feminine
-                profile.save()
-                for order, (title, desc) in enumerate(services):
-                    ProfileService.objects.create(profile=profile, title=title, description=desc, order=order)
-                profiles.refresh_seo_state(profile)
+            if created:  # every write goes through the profiles services (SEO state kept in sync)
+                profiles.update_profile(profile, bio=bio, is_feminine=feminine, **LOCAL_SEO.get(phone, {}))
+                for title, desc in services:
+                    profiles.add_service(profile, title, description=desc)
             profile.refresh_from_db()
             state = "indexable" if profile.is_indexable else "non indexable"
             self.stdout.write(f"  /{profile.slug}  ({profile.completeness_score} %, {state})")

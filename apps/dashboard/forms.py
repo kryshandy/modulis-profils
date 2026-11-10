@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from urllib.parse import urlsplit
 
 from django import forms
@@ -11,10 +12,22 @@ from django.utils.translation import gettext_lazy as _
 from apps.accounts.services import InvalidPhone, normalize_phone
 from apps.core.models import City, Trade
 from apps.profiles.models import Profile, ProfileLink, ProfileService
+from apps.profiles.services import OPENING_DAYS, TIME_RE
 
 from .services import COVER_COLORS
 
 OTHER_TRADE = "other"
+
+
+def profile_values(form: forms.ModelForm) -> dict:
+    """Values of a validated profile ModelForm, ready for `profiles.services.update_profile`.
+
+    The form is only used for validation (`save(commit=False)`): the service writes.
+    """
+    instance = form.save(commit=False)
+    names = [name for name in form._meta.fields if name in form.fields]
+    names += getattr(form, "extra_model_fields", [])
+    return {name: getattr(instance, name) for name in names}
 
 
 def _clean_phone(value: str) -> str:
@@ -94,21 +107,25 @@ class TradeCityForm(forms.ModelForm):
     """Métier (list or free title) + ville + quartier."""
 
     trade_choice = forms.ChoiceField(label=_("Ton métier"), required=False)
+    extra_model_fields = ["trade"]
 
     class Meta:
         model = Profile
-        fields = ["custom_title", "is_feminine", "city", "district", "service_area"]
+        fields = ["custom_title", "is_feminine", "city", "district", "service_area", "price_range"]
         labels = {
             "custom_title": _("Ton métier, en quelques mots"),
             "is_feminine": _("Afficher mon métier au féminin (ex. « Plombière »)"),
             "city": _("Ta ville"),
             "district": _("Ton quartier"),
             "service_area": _("Où travailles-tu ? (facultatif)"),
+            "price_range": _("Tes prix, en gros (facultatif)"),
         }
+        help_texts = {"price_range": _("ex. « 5 000–50 000 FCFA ». Google peut l'afficher dans ses résultats.")}
         widgets = {
             "custom_title": forms.TextInput(attrs={"placeholder": _("ex. Réparatrice de téléphones")}),
             "district": forms.TextInput(attrs={"placeholder": _("ex. Akwa, Bonamoussadi…")}),
             "service_area": forms.TextInput(attrs={"placeholder": _("ex. Tout Douala et environs")}),
+            "price_range": forms.TextInput(attrs={"placeholder": _("ex. 5 000–50 000 FCFA"), "maxlength": 20}),
         }
 
     def __init__(self, *args, show_area: bool = True, **kwargs):
@@ -132,6 +149,7 @@ class TradeCityForm(forms.ModelForm):
         self.fields["custom_title"].required = False
         if not show_area:
             del self.fields["service_area"]
+            del self.fields["price_range"]
 
     def clean(self):
         data = super().clean()
@@ -149,11 +167,10 @@ class TradeCityForm(forms.ModelForm):
             self.add_error("trade_choice", _("Choisis ton métier, ou écris-le dans « Autre »."))
         return data
 
-    def save(self, commit=True):
+    def save(self, commit=False):
+        """Validation only: never writes (profiles.services.update_profile does)."""
         profile = super().save(commit=False)
         profile.trade = self._trade
-        if commit:
-            profile.save()
         return profile
 
 
@@ -179,10 +196,25 @@ class ContactForm(forms.ModelForm):
         assume_scheme="https",
         widget=forms.URLInput(attrs={"placeholder": "https://maps.app.goo.gl/…", "inputmode": "url"}),
     )
+    # GPS position (schema.org geo): filled by the "Ma position" button or typed by hand.
+    latitude = forms.DecimalField(
+        label=_("Latitude"),
+        required=False,
+        min_value=-90,
+        max_value=90,
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "4.051056", "data-geo": "lat"}),
+    )
+    longitude = forms.DecimalField(
+        label=_("Longitude"),
+        required=False,
+        min_value=-180,
+        max_value=180,
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "9.767869", "data-geo": "lng"}),
+    )
 
     class Meta:
         model = Profile
-        fields = ["whatsapp", "phone_public", "email_public", "address", "maps_url"]
+        fields = ["whatsapp", "phone_public", "email_public", "address", "maps_url", "latitude", "longitude"]
         labels = {
             "whatsapp": _("Ton numéro WhatsApp"),
             "phone_public": _("Numéro à appeler"),
@@ -204,8 +236,8 @@ class ContactForm(forms.ModelForm):
     def __init__(self, *args, short: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         if short:
-            del self.fields["address"]
-            del self.fields["maps_url"]
+            for name in ("address", "maps_url", "latitude", "longitude"):
+                del self.fields[name]
         if self.instance and self.instance.pk:
             from apps.accounts.services import display_phone
 
@@ -225,8 +257,20 @@ class ContactForm(forms.ModelForm):
             raise forms.ValidationError(_("Le lien doit commencer par https://"))
         return url
 
+    def _clean_coordinate(self, name):
+        value = self.cleaned_data.get(name)
+        return None if value is None else value.quantize(Decimal("0.000001"))
+
+    def clean_latitude(self):
+        return self._clean_coordinate("latitude")
+
+    def clean_longitude(self):
+        return self._clean_coordinate("longitude")
+
     def clean(self):
         data = super().clean()
+        if ("latitude" in self.fields) and (data.get("latitude") is None) != (data.get("longitude") is None):
+            self.add_error("longitude", _("Indique la latitude ET la longitude, ou laisse les deux vides."))
         if not self.errors and not data.get("whatsapp") and not data.get("phone_public"):
             raise forms.ValidationError(
                 _("Mets au moins un numéro (WhatsApp ou appel) pour que tes clients te joignent.")
@@ -288,11 +332,61 @@ class ServiceForm(forms.ModelForm):
         }
 
 
-class PhotoForm(forms.Form):
-    photo = forms.FileField(
-        label=_("Ta photo"),
-        widget=forms.FileInput(attrs={"accept": "image/*", "capture": "user", "data-preview": "1"}),
-    )
+DAY_LABELS = {
+    "mo": _("Lundi"),
+    "tu": _("Mardi"),
+    "we": _("Mercredi"),
+    "th": _("Jeudi"),
+    "fr": _("Vendredi"),
+    "sa": _("Samedi"),
+    "su": _("Dimanche"),
+}
+_WEEKDAYS = OPENING_DAYS[:5]
+_MON_SAT = OPENING_DAYS[:6]
+HOURS_PRESETS = {
+    "mon_sat_8_18": (_("Lun–Sam 8h–18h"), {day: [["08:00", "18:00"]] for day in _MON_SAT}),
+    "mon_fri_8_17": (_("Lun–Ven 8h–17h"), {day: [["08:00", "17:00"]] for day in _WEEKDAYS}),
+    "every_day_7_20": (_("Tous les jours 7h–20h"), {day: [["07:00", "20:00"]] for day in OPENING_DAYS}),
+}
+
+
+class OpeningHoursForm(forms.Form):
+    """One opening range per day (open/closed + from/to). Stored as profile.opening_hours."""
+
+    def __init__(self, *args, hours: dict | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        hours = hours or {}
+        self.days = []
+        for day in OPENING_DAYS:
+            ranges = hours.get(day) or []
+            first = ranges[0] if ranges else ["08:00", "18:00"]
+            self.fields[f"{day}_open"] = forms.BooleanField(label=DAY_LABELS[day], required=False, initial=bool(ranges))
+            self.fields[f"{day}_from"] = forms.CharField(
+                label=_("de"), required=False, initial=first[0], widget=forms.TimeInput(attrs={"type": "time"})
+            )
+            self.fields[f"{day}_to"] = forms.CharField(
+                label=_("à"), required=False, initial=first[1], widget=forms.TimeInput(attrs={"type": "time"})
+            )
+            self.days.append((day, self[f"{day}_open"], self[f"{day}_from"], self[f"{day}_to"]))
+
+    def clean(self):
+        data = super().clean()
+        self._hours = {}
+        for day in OPENING_DAYS:
+            if not data.get(f"{day}_open"):
+                continue
+            start = (data.get(f"{day}_from") or "").strip()[:5]
+            end = (data.get(f"{day}_to") or "").strip()[:5]
+            if not (TIME_RE.match(start) and TIME_RE.match(end)) or start >= end:
+                self.add_error(
+                    f"{day}_to", _("Indique l'heure d'ouverture puis celle de fermeture (ex. 08:00 → 18:00).")
+                )
+                continue
+            self._hours[day] = [[start, end]]
+        return data
+
+    def hours(self) -> dict:
+        return self._hours
 
 
 class MultipleImageInput(forms.ClearableFileInput):

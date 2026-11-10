@@ -47,13 +47,17 @@ class ReportAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
+    def has_suspend_permission(self, request):
+        """Suspending a page needs the right to handle reports AND to change profiles."""
+        return request.user.has_perm("moderation.change_report") and request.user.has_perm("profiles.change_profile")
+
     def save_model(self, request, obj, form, change):
         if change and "status" in form.changed_data:
             obj.handled_by = request.user
             obj.handled_at = timezone.now()
         super().save_model(request, obj, form, change)
 
-    @admin.action(description=_("Suspendre le profil"))
+    @admin.action(permissions=["suspend"], description=_("Suspendre le profil"))
     def suspend_profile(self, request, queryset):
         profiles = set()
         for report in queryset.select_related("profile"):
@@ -63,13 +67,13 @@ class ReportAdmin(admin.ModelAdmin):
             profiles.add(report.profile_id)
         self.message_user(request, _("%(n)d profil(s) suspendu(s).") % {"n": len(profiles)}, messages.SUCCESS)
 
-    @admin.action(description=_("Classer sans suite"))
+    @admin.action(permissions=["change"], description=_("Classer sans suite"))
     def dismiss(self, request, queryset):
         for report in queryset:
             services.close_report(report, Report.Status.DISMISSED, by=request.user)
         self.message_user(request, _("Signalement(s) classé(s) sans suite."), messages.SUCCESS)
 
-    @admin.action(description=_("Mesure prise"))
+    @admin.action(permissions=["change"], description=_("Mesure prise"))
     def mark_actioned(self, request, queryset):
         for report in queryset:
             services.close_report(report, Report.Status.ACTIONED, by=request.user)

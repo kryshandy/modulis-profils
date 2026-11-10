@@ -24,8 +24,20 @@
       </li>
       {% endfor %}
     </ul>
+    <div class="kpis">
+      <div class="kpi"><span class="kpi__value">{{ stats.unique_visitors }}</span><span class="kpi__label">{% translate "visiteurs différents" %}</span></div>
+      <div class="kpi"><span class="kpi__value">{{ stats.contacts }}</span><span class="kpi__label">{% translate "contacts (WhatsApp, appels, email…)" %}</span></div>
+    </div>
     {% if not stats.totals.visit %}<p class="tip">{% translate "Pas encore de visite : envoie ton lien à 5 clients aujourd'hui, c'est le meilleur début." %}</p>{% endif %}
   </section>
+  {% if plan_code != "free" and daily %}
+  <section class="card stack">
+    <h2 class="h2">{% translate "Visites jour par jour" %}</h2>
+    <svg class="daily" viewBox="0 0 300 60" preserveAspectRatio="none" role="img" aria-label="{% translate 'Visites par jour sur 30 jours' %}">
+      {% for d in daily %}<rect class="daily__bar" x="{{ d.x }}" y="{{ d.y }}" width="8" height="{{ d.h }}" rx="1"><title>{{ d.day|date:"j M" }} : {{ d.visits }}</title></rect>{% endfor %}
+    </svg>
+  </section>
+  {% endif %}
 {% endif %}
 {% if plan_code == "free" %}
   <p class="tip">{% translate "Avec l'offre Pro, tu verras aussi d'où viennent tes visiteurs et l'évolution jour par jour." %}</p>

@@ -11,6 +11,13 @@ from django.urls import reverse
 
 from . import selectors
 
+SITEMAP_TEMPLATE = "seo/sitemap.xml"  # lastmod as a full W3C datetime (SEO audit 2026-11-10 #9)
+
+
+def _seconds(value):
+    """W3C datetime without microseconds (rendered with the time zone by the template)."""
+    return value.replace(microsecond=0) if value is not None else None
+
 
 class SiteUrlSitemap(Sitemap):
     """Always build URLs on the canonical host, whatever host the request came from."""
@@ -33,11 +40,11 @@ class ProfileSitemap(SiteUrlSitemap):
         return item.get_absolute_url()
 
     def lastmod(self, item):
-        return item.content_updated_at
+        return _seconds(item.content_updated_at)
 
     def get_latest_lastmod(self):
         """One aggregate query instead of loading every profile for the sitemap index."""
-        return selectors.indexable_profiles().aggregate(latest=Max("content_updated_at"))["latest"]
+        return _seconds(selectors.indexable_profiles().aggregate(latest=Max("content_updated_at"))["latest"])
 
 
 class DirectorySitemap(SiteUrlSitemap):
@@ -64,7 +71,7 @@ class DirectorySitemap(SiteUrlSitemap):
         return item["path"]
 
     def lastmod(self, item):
-        return item["lastmod"]
+        return _seconds(item["lastmod"])
 
 
 class StaticPagesSitemap(SiteUrlSitemap):

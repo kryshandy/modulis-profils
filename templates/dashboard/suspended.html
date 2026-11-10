@@ -1,0 +1,19 @@
+{% extends "dashboard_base.html" %}
+{% load i18n dashboard_tags %}
+{% block page_title %}{% translate "Page suspendue" %}{% endblock %}
+{% block dash_content %}
+<h1 class="h1">{% translate "Ta page est suspendue" %}</h1>
+<section class="card stack">
+  <p class="alert alert--error" role="alert">{% translate "L'équipe Modulis a suspendu ta page après un signalement ou une vérification. Elle n'est plus visible et tu ne peux pas la modifier ni y lier une carte pour le moment." %}</p>
+  {% if suspended_reason %}
+    <p><strong>{% translate "Motif :" %}</strong> {{ suspended_reason }}</p>
+  {% endif %}
+  <p class="muted">{% translate "Si tu penses que c'est une erreur, contacte le support : on vérifie avec toi et on réactive ta page si tout est en ordre." %}</p>
+  {% if support_whatsapp %}
+    <a class="btn btn--whatsapp" href="https://wa.me/{{ support_whatsapp }}" target="_blank" rel="noopener">{% icon "whatsapp" %}<span>{% translate "Écrire au support" %}</span></a>
+  {% else %}
+    <p class="muted">{% translate "Écris-nous depuis la page Aide de ton espace." %}</p>
+  {% endif %}
+  <a class="btn btn--ghost" href="{% url 'dashboard:home' %}">{% translate "Retour à l'accueil" %}</a>
+</section>
+{% endblock %}

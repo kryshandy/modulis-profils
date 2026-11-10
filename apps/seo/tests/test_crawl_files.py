@@ -39,12 +39,38 @@ def test_robots_uses_admin_url():
     assert "Disallow: /back-office-x/" in robots_lines()
 
 
-def test_sitemap_index_lists_sections(client):
+def test_sitemap_index_lists_sections(client, settings):
+    for _ in range(settings.SEO_DIRECTORY_MIN_PROFILES):
+        indexable_profile()
     response = client.get("/sitemap.xml")
     body = response.content.decode()
     assert response.status_code == 200
     for section in ("profils", "annuaire", "pages"):
         assert f"<loc>https://profils.test/sitemap-{section}.xml</loc>" in body
+
+
+def test_sitemap_index_omits_empty_sections(client):
+    indexable_profile()  # below the directory threshold: the « annuaire » section is empty
+    body = client.get("/sitemap.xml").content.decode()
+    assert "sitemap-profils.xml" in body
+    assert "sitemap-pages.xml" in body
+    assert "sitemap-annuaire.xml" not in body
+
+
+def test_sitemap_lastmod_is_full_w3c_datetime(client):
+    profile = indexable_profile()
+    body = client.get("/sitemap-profils.xml").content.decode()
+    (lastmod,) = re.findall(r"<lastmod>(.*?)</lastmod>", body)
+    assert re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d", lastmod), lastmod
+    from datetime import datetime
+
+    assert datetime.fromisoformat(lastmod) == profile.content_updated_at.replace(microsecond=0)
+
+
+def test_robots_disallows_tracking_endpoints(client):
+    lines = client.get("/robots.txt").content.decode().splitlines()
+    assert "Disallow: /p/" in lines
+    assert "Disallow: /a/" in lines
 
 
 def test_profile_sitemap_lists_only_indexable_profiles(client):

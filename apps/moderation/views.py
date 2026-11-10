@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils.cache import add_never_cache_headers
 from django_ratelimit.decorators import ratelimit
 
-from apps.core.utils import client_ip, hash_ip, ratelimit_ip_key
+from apps.core.utils import ratelimit_ip_key, security_ip_hash
 from apps.profiles import services as profile_services
 from apps.profiles.models import SlugRegistry
 
@@ -45,7 +45,7 @@ def report(request, slug: str):
                     form.cleaned_data["reason"],
                     message=form.cleaned_data["message"],
                     contact=form.cleaned_data["contact"],
-                    ip_hash=hash_ip(client_ip(request), daily=False),
+                    ip_hash=security_ip_hash(request),
                 )
             return _noindex(HttpResponseRedirect(reverse("moderation:report_thanks", args=[profile.slug])))
     return _noindex(render(request, "moderation/report.html", {"profile": profile, "form": form}))

@@ -10,6 +10,7 @@ import re
 from collections.abc import Iterable
 
 from django.conf import settings
+from django.templatetags.static import static
 from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
 
@@ -19,6 +20,8 @@ DESCRIPTION_MAX = 160
 ELLIPSIS = "…"
 OG_IMAGE_WIDTH = 1200
 OG_IMAGE_HEIGHT = 630
+OG_TERRITORY = "CM"
+DEFAULT_OG_IMAGE = "img/og-default.png"
 
 _SPACES_RE = re.compile(r"\s+")
 
@@ -131,19 +134,34 @@ def profile_alt(name: str, job: str = "", city: str = "") -> str:
     return _("Réalisation de %(name)s") % {"name": name}
 
 
+def og_locale(lang: str) -> str:
+    """Open Graph locale: language of the page, territory of the market (Cameroon)."""
+    return f"{'en' if lang == 'en' else 'fr'}_{OG_TERRITORY}"
+
+
+def default_og_image() -> str:
+    """Site-wide share card (static/img/og-default.png, 1200×630), hashed name in production."""
+    return static(DEFAULT_OG_IMAGE)
+
+
 def page_meta(
     *,
     title: str,
     description: str,
     path: str,
     indexable: bool,
-    image_url: str = "",
+    image_url: str | None = None,
     og_type: str = "website",
     lang: str = "fr",
     image_size: tuple[int, int] | None = None,
 ) -> dict:
-    """Everything the <head> needs, ready for templates/public/_seo_head.html."""
+    """Everything the <head> needs, ready for templates/public/_seo_head.html.
+
+    `image_url=None` uses the site-wide 1200×630 card (home, cities, directories); "" means no image.
+    """
     canonical = absolute_url(path)
+    if image_url is None:
+        image_url, image_size = default_og_image(), (OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT)
     return {
         "title": title,
         "description": description,
@@ -159,7 +177,7 @@ def page_meta(
             "image_width": image_size[0] if image_size else None,
             "image_height": image_size[1] if image_size else None,
             "site_name": settings.SITE_NAME,
-            "locale": "en_US" if lang == "en" else "fr_FR",
+            "locale": og_locale(lang),
         },
         "twitter_card": "summary_large_image" if image_url else "summary",
     }

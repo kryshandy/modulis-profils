@@ -3,7 +3,7 @@
 import pytest
 from django.test import override_settings
 
-from apps.seo.tests.utils import indexable_profile, jsonld_blocks, meta_content
+from apps.seo.tests.utils import graph_node, indexable_profile, meta_content
 from tests.factories import ProfileFactory
 
 pytestmark = pytest.mark.django_db
@@ -19,7 +19,7 @@ def test_home_renders(client):
     assert '<link rel="canonical" href="https://profils.test/">' in body
     assert f'href="/{profile.slug}"' in body
     assert "Douala" in body
-    assert jsonld_blocks(body)[0]["@type"] == "WebSite"
+    assert graph_node(body, "WebSite")["name"] == "Modulis Profils"
 
 
 def test_home_does_not_list_non_indexable_profiles(client):
@@ -44,7 +44,7 @@ def test_directory_at_threshold_is_indexable(client, settings):
     assert "<h1>Plombiers à Douala</h1>" in body
     for profile in profiles:
         assert f'href="/{profile.slug}"' in body
-    crumbs = jsonld_blocks(body)[0]
+    crumbs = graph_node(body, "BreadcrumbList")
     assert [i["name"] for i in crumbs["itemListElement"]] == ["Accueil", "Douala", "Plombiers à Douala"]
 
 

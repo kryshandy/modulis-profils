@@ -10,6 +10,20 @@
     {% include "partials/field.html" with field=form.email_public %}
     {% include "partials/field.html" with field=form.address %}
     {% include "partials/field.html" with field=form.maps_url %}
+    <fieldset class="form-field geo" data-geo-root>
+      <legend class="form-field__label">{% translate "Position de ton atelier ou de ta boutique (facultatif)" %}</legend>
+      <p class="form-field__help">{% translate "Aide Google à te montrer aux clients proches. Mets-toi à ton lieu de travail, appuie sur « Ma position » et accepte la demande du téléphone. Tu peux aussi taper les chiffres toi-même. Laisse vide si tu te déplaces chez tes clients." %}</p>
+      <button class="btn btn--ghost btn--small js-only" type="button" data-geolocate
+              data-geo-busy="{% translate 'Recherche de ta position…' %}"
+              data-geo-ok="{% translate 'Position trouvée ✓ Pense à enregistrer.' %}"
+              data-geo-error="{% translate 'Position introuvable. Active la localisation ou tape les chiffres.' %}"
+              data-geo-unsupported="{% translate 'Ton téléphone ne donne pas sa position : tape les chiffres.' %}" hidden>{% translate "Ma position" %}</button>
+      <p class="small muted" data-geo-status role="status" aria-live="polite"></p>
+      <div class="geo__fields">
+        {% include "partials/field.html" with field=form.latitude %}
+        {% include "partials/field.html" with field=form.longitude %}
+      </div>
+    </fieldset>
     <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
   </form>
 </div>

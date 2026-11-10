@@ -5,6 +5,9 @@
 <div class="home" data-tour-root{% if tour_autostart %} data-tour-autostart="1"{% endif %} data-tour-done-url="{% url 'dashboard:tour_done' %}"
      data-label-next="{% translate 'Suivant' %}" data-label-prev="{% translate 'Retour' %}" data-label-skip="{% translate 'Passer' %}" data-label-done="{% translate 'Terminer' %}" data-label-of="{% translate 'sur' %}">
 
+  {% if profile_suspended %}
+    <p class="alert alert--error" role="alert">{% translate "Ta page est suspendue par l'équipe Modulis : elle n'est plus visible et tu ne peux pas la modifier." %} <a href="{% url 'dashboard:help' %}">{% translate "Contacter le support" %}</a></p>
+  {% endif %}
   <div class="greeting">
     <h1 class="h1">{% blocktranslate with name=profile.display_name %}Bonjour {{ name }} !{% endblocktranslate %}</h1>
     <span class="badge badge--plan badge--{{ plan_code }}">
@@ -52,8 +55,8 @@
       <h2 class="h2">{% translate "Ces 30 derniers jours" %}</h2>
       <div class="kpis">
         <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.visit }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "visites" %}</span></div>
-        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.whatsapp }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "clics WhatsApp" %}</span></div>
-        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.call }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "appels" %}</span></div>
+        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.unique_visitors }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "visiteurs" %}</span></div>
+        <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.contacts }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "contacts (WhatsApp, appels…)" %}</span></div>
         <div class="kpi"><span class="kpi__value">{% if stats %}{{ stats.totals.scan }}{% else %}—{% endif %}</span><span class="kpi__label">{% translate "scans" %}</span></div>
       </div>
       {% if not stats %}<p class="small muted">{% translate "Tes statistiques apparaîtront ici dès les premières visites." %}</p>{% endif %}

@@ -1,0 +1,32 @@
+{% load i18n %}
+<div class="panel" id="panel">
+  <form class="card stack" method="post" action="{% url 'dashboard:edit' 'horaires' %}" hx-post="{% url 'dashboard:edit' 'horaires' %}" hx-target="#panel" hx-swap="outerHTML" novalidate>
+    {% csrf_token %}
+    <h2 class="h2">{% translate "Tes horaires d'ouverture" %}</h2>
+    <p class="tip">{% translate "Tes clients savent quand t'appeler ou passer, et Google peut afficher « Ouvert maintenant »." %}</p>
+    {% include "partials/form_errors.html" %}
+    <div class="presets" role="group" aria-label="{% translate 'Horaires tout prêts' %}">
+      <span class="small muted">{% translate "En un clic :" %}</span>
+      {% for key, label in presets %}
+        <button class="btn btn--ghost btn--small" type="submit" name="preset" value="{{ key }}">{{ label }}</button>
+      {% endfor %}
+    </div>
+    <ul class="hours">
+      {% for day, open_field, from_field, to_field in form.days %}
+        <li class="hours__row{% if to_field.errors %} form-field--error{% endif %}">
+          <label class="check hours__day">{{ open_field }} <span>{{ open_field.label }}</span></label>
+          <span class="hours__times">
+            <label class="sr-only" for="{{ from_field.id_for_label }}">{{ open_field.label }} — {% translate "ouverture" %}</label>
+            {{ from_field }}
+            <span aria-hidden="true">→</span>
+            <label class="sr-only" for="{{ to_field.id_for_label }}">{{ open_field.label }} — {% translate "fermeture" %}</label>
+            {{ to_field }}
+          </span>
+          {% for error in to_field.errors %}<p class="form-field__error" role="alert">{{ error }}</p>{% endfor %}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="small muted">{% translate "Décoche un jour pour le marquer « fermé ». Laisse tout décoché si tu ne veux pas afficher d'horaires." %}</p>
+    <button class="btn btn--primary" type="submit">{% translate "Enregistrer" %}</button>
+  </form>
+</div>

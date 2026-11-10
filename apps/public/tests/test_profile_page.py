@@ -10,7 +10,7 @@ from PIL import Image
 
 from apps.profiles.models import Profile, ProfileMedia
 from apps.profiles.services import change_slug, delete_profile, refresh_seo_state, suspend_profile
-from apps.seo.tests.utils import indexable_profile, jsonld_blocks, meta_content
+from apps.seo.tests.utils import graph_node, indexable_profile, meta_content
 from tests.factories import CardFactory, ProfileFactory
 
 pytestmark = pytest.mark.django_db
@@ -174,12 +174,14 @@ def test_open_graph_and_twitter_tags(client):
     assert meta_content(body, "name", "twitter:card") == "summary_large_image"
 
 
-def test_jsonld_business_and_breadcrumb(client):
+def test_jsonld_business_and_breadcrumb(client, settings):
     profile = indexable_profile(display_name="Paul Ndongo")
+    for _ in range(settings.SEO_DIRECTORY_MIN_PROFILES - 1):
+        indexable_profile()  # city and directory pages meet the threshold: breadcrumb levels are linked
     profile.services.update(price_label="dès 5 000 FCFA")
     _, body = page(client, f"/{profile.slug}")
-    (graph,) = jsonld_blocks(body)
-    entity, crumbs = graph
+    entity = graph_node(body, "Plumber")
+    crumbs = graph_node(body, "BreadcrumbList")
     assert entity["@type"] == "Plumber"
     assert entity["name"] == "Paul Ndongo"
     assert entity["url"] == f"https://profils.test/{profile.slug}"
@@ -205,7 +207,7 @@ def test_jsonld_escapes_script_injection(client):
     assert ">" not in raw
     assert "&" not in raw
     assert "<script>alert(1)" not in body  # the visible bio is escaped too
-    entity = jsonld_blocks(body)[0][0]
+    entity = graph_node(body, "Plumber")
     assert "alert(1)" in entity["description"]
 
 
