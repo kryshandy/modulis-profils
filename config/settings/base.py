@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "huey.contrib.djhuey",
     # Local apps
     "apps.core",
+    "apps.platform",
     "apps.accounts",
     "apps.profiles",
     "apps.cards",
