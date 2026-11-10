@@ -17,6 +17,7 @@ from datetime import timedelta
 
 import phonenumbers
 from django.conf import settings
+from django.core.cache import cache
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -43,6 +44,10 @@ class TooManyRequests(OTPError):
 
 
 class InvalidCode(OTPError):
+    pass
+
+
+class AccountNotAllowed(OTPError):
     pass
 
 
@@ -99,9 +104,32 @@ def _check_send_limits(phone: str, ip_hash: str) -> None:
         raise TooManyRequests(_("Le service SMS est momentanément saturé. Réessaie un peu plus tard."))
 
 
+def ensure_sms_login_allowed(phone: str) -> None:
+    """Staff and disabled accounts can never authenticate by SMS (security audit B1).
+
+    Staff use /gestion/ with a password: an SMS code (SIM swap, recycled number, provider console)
+    must never grant admin access. Checked BEFORE any SMS is sent.
+    """
+    user = User.objects.filter(phone=phone).only("is_staff", "is_superuser", "is_active").first()
+    if user and (user.is_staff or user.is_superuser or not user.is_active):
+        raise AccountNotAllowed(_("Ce compte ne peut pas se connecter par SMS. Contacte le support Modulis."))
+
+
 def request_otp(phone: str, purpose: str, *, ip_hash: str = "") -> OTPChallenge:
     """Create a challenge and schedule the SMS. `phone` must already be E.164."""
     ensure_phone_allowed(phone)
+    ensure_sms_login_allowed(phone)
+    # Per-phone lock: count-then-insert is racy (parallel POSTs would all pass the limit check).
+    lock_key = f"otp-send-lock:{phone}"
+    if not cache.add(lock_key, 1, timeout=5):
+        raise TooManyRequests(_("Un code est déjà en cours d'envoi. Patiente quelques secondes."))
+    try:
+        return _create_challenge(phone, purpose, ip_hash)
+    finally:
+        cache.delete(lock_key)
+
+
+def _create_challenge(phone: str, purpose: str, ip_hash: str) -> OTPChallenge:
     _check_send_limits(phone, ip_hash)
     code = _generate_code()
     with transaction.atomic():
@@ -175,7 +203,33 @@ def get_or_create_user(phone: str) -> tuple[User, bool]:
         except IntegrityError:  # concurrent sign-up with the same phone
             user = User.objects.get(phone=phone)
             created = False
+    if user.is_staff or user.is_superuser or not user.is_active:  # defence in depth (audit B1, M10)
+        raise AccountNotAllowed(_("Ce compte ne peut pas se connecter par SMS. Contacte le support Modulis."))
     user.phone_verified_at = timezone.now()
     user.last_seen_at = timezone.now()
     user.save(update_fields=["phone_verified_at", "last_seen_at"])
     return user, created
+
+
+def set_full_name(user: User, full_name: str) -> None:
+    if full_name and not user.full_name:
+        User.objects.filter(pk=user.pk).update(full_name=full_name.strip()[:120])
+        user.full_name = full_name.strip()[:120]
+
+
+def set_email(user: User, email: str) -> None:
+    user.email = (email or "").strip()
+    user.save(update_fields=["email"])
+
+
+def anonymize_user(user: User) -> None:
+    """Right to erasure: called when the last profile of an account is deleted."""
+    User.objects.filter(pk=user.pk).update(
+        phone=f"+0{user.pk}",  # keeps the E.164 CHECK and uniqueness, frees the real number
+        email="",
+        full_name="",
+        is_active=False,
+        phone_verified_at=None,
+    )
+    user.set_unusable_password()
+    User.objects.filter(pk=user.pk).update(password=user.password)

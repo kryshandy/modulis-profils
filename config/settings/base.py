@@ -206,8 +206,17 @@ KLIZ_GSC_SERVICE_ACCOUNT_FILE = env("KLIZ_GSC_SERVICE_ACCOUNT_FILE", default="")
 
 # Analytics: salt for daily visitor hashes (never store raw IPs).
 ANALYTICS_SALT = env("ANALYTICS_SALT", default=SECRET_KEY)
-# Trust Cloudflare's CF-Connecting-IP header only behind Cloudflare.
-TRUST_CF_CONNECTING_IP = env.bool("TRUST_CF_CONNECTING_IP", default=False)
+# Direct peers allowed to set CF-Connecting-IP / X-Real-IP (e.g. the local Nginx: 127.0.0.1).
+# Empty = forwarded headers are ignored. See apps.core.utils.client_ip.
+TRUSTED_PROXY_IPS = env.list("TRUSTED_PROXY_IPS", default=[])
+
+# Dedicated keys (rotating SECRET_KEY must never invalidate printed cards or erased-slug hashes).
+CARD_ACTIVATION_KEY = env("CARD_ACTIVATION_KEY", default=SECRET_KEY)
+SLUG_HASH_KEY = env("SLUG_HASH_KEY", default=SECRET_KEY)
+
+# Staff sessions are short (pros stay logged in 30 days on their phone, staff 8 hours).
+STAFF_SESSION_AGE = 8 * 60 * 60
+ADMIN_LOGIN_MAX_ATTEMPTS_PER_HOUR = 10
 
 ADMIN_URL = env("ADMIN_URL", default="gestion/")
 

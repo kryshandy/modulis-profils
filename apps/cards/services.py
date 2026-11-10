@@ -42,7 +42,7 @@ def hash_activation_code(public_code: str, activation_code: str) -> str:
     prevented online by attempt limits and offline by the secret key (30^8 ≈ 6.6e11 codes).
     """
     message = f"{public_code}:{normalize_code(activation_code)}".encode()
-    return hmac.new(settings.SECRET_KEY.encode(), message, hashlib.sha256).hexdigest()
+    return hmac.new(settings.CARD_ACTIVATION_KEY.encode(), message, hashlib.sha256).hexdigest()
 
 
 @transaction.atomic
@@ -87,13 +87,19 @@ def activation_attempts_left(card: Card, ip_hash: str) -> int:
 
 
 def check_activation_code(card: Card, activation_code: str, ip_hash: str) -> bool:
-    """Step 1 of activation (before any OTP). Records the attempt."""
-    if card.status in (Card.Status.ACTIVE, Card.Status.DISABLED):
-        raise CardError(_("Cette carte est déjà activée ou désactivée."))
-    if activation_attempts_left(card, ip_hash) <= 0:
-        raise CardError(_("Trop d'essais. Réessaie dans une heure."))
-    ok = hmac.compare_digest(card.activation_code_hash, hash_activation_code(card.public_code, activation_code))
-    CardActivationAttempt.objects.create(card=card, ip_hash=ip_hash, success=ok)
+    """Step 1 of activation (before any OTP). Records the attempt.
+
+    The card row is locked so that parallel POSTs cannot exceed the attempt limit (code review #7).
+    Errors are raised BEFORE the attempt is recorded, never after (ATOMIC_REQUESTS rule).
+    """
+    with transaction.atomic():
+        card = Card.objects.select_for_update().get(pk=card.pk)
+        if card.status in (Card.Status.ACTIVE, Card.Status.DISABLED):
+            raise CardError(_("Cette carte est déjà activée ou désactivée."))
+        if activation_attempts_left(card, ip_hash) <= 0:
+            raise CardError(_("Trop d'essais. Réessaie dans une heure."))
+        ok = hmac.compare_digest(card.activation_code_hash, hash_activation_code(card.public_code, activation_code))
+        CardActivationAttempt.objects.create(card=card, ip_hash=ip_hash, success=ok)
     return ok
 
 
@@ -147,25 +153,7 @@ def batch_export_rows(pairs: list[tuple[str, str]]) -> list[tuple[str, str, str]
     return [(public, base + public, activation) for public, activation in pairs]
 
 
-TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-
-
-def verify_turnstile(token: str, remote_ip: str = "") -> bool:
-    """Server-side check of a Cloudflare Turnstile token. Always True when Turnstile is disabled."""
-    if not settings.TURNSTILE_SITE_KEY:
-        return True
-    if not token:
-        return False
-    import requests  # local import: only needed when Turnstile is enabled
-
-    data = {"secret": settings.TURNSTILE_SECRET_KEY, "response": token}
-    if remote_ip:
-        data["remoteip"] = remote_ip
-    try:
-        response = requests.post(TURNSTILE_VERIFY_URL, data=data, timeout=5)
-        return bool(response.json().get("success"))
-    except (requests.RequestException, ValueError):
-        return False  # fail closed: no SMS can be triggered without a valid challenge
+from apps.core.turnstile import TURNSTILE_VERIFY_URL, verify_turnstile  # noqa: E402,F401  (re-export)
 
 
 def active_card_code(profile: Profile) -> str | None:

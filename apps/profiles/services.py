@@ -7,13 +7,15 @@ web sign-up, first card scan and field agents all share the same anti-duplicate 
 from __future__ import annotations
 
 import hashlib
+import hmac
 import logging
 import re
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.core.files.storage import default_storage
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
@@ -85,8 +87,12 @@ SYSTEM_RESERVED_SLUGS = {
 
 
 def slug_hash(slug: str) -> str:
-    """Erased slugs are stored hashed (right to erasure): we keep no name in clear."""
-    return "h-" + hashlib.sha256(slug.encode()).hexdigest()[:40]
+    """Erased slugs are stored as a keyed hash (right to erasure).
+
+    HMAC with a dedicated secret: a plain SHA-256 could be reversed with a dictionary of names.
+    """
+    digest = hmac.new(settings.SLUG_HASH_KEY.encode(), slug.encode(), hashlib.sha256).hexdigest()
+    return "h-" + digest[:40]
 
 
 def validate_slug_format(slug: str) -> None:
@@ -242,16 +248,19 @@ def get_or_create_profile(phone_e164: str, display_name: str = "", **kwargs) -> 
     `phone_e164` must have been verified by OTP. If the account already has an active profile,
     it is returned unchanged: one phone never produces a duplicate page.
     """
-    from apps.accounts.services import get_or_create_user
+    from apps.accounts.models import User
+    from apps.accounts.services import get_or_create_user, set_full_name
 
     user, _created = get_or_create_user(phone_e164)
-    existing = user.profiles.exclude(status=Profile.Status.DELETED).order_by("created_at").first()
-    if existing:
-        return user, existing, False
-    if display_name and not user.full_name:
-        user.full_name = display_name[:120]
-        user.save(update_fields=["full_name"])
-    return user, create_profile(user, display_name, **kwargs), True
+    with transaction.atomic():
+        # Lock the account row: a double tap or a login + card activation in parallel must not
+        # both see "no profile" and create two pages (code review #1).
+        User.objects.select_for_update().filter(pk=user.pk).first()
+        existing = user.profiles.exclude(status=Profile.Status.DELETED).order_by("created_at").first()
+        if existing:
+            return user, existing, False
+        set_full_name(user, display_name)
+        return user, create_profile(user, display_name, **kwargs), True
 
 
 # --- Completeness & SEO state (plan §6.6) ----------------------------------------------------
@@ -317,14 +326,36 @@ def simhash(text: str) -> str:
     return f"{value:016x}"
 
 
-def is_bio_duplicated(profile: Profile) -> bool:
+NEAR_DUPLICATE_MAX_DISTANCE = 10  # Hamming distance between two 64-bit SimHashes
+
+
+def hamming(a: str, b: str) -> int:
+    return (int(a, 16) ^ int(b, 16)).bit_count()
+
+
+def find_bio_original(profile: Profile) -> Profile | None:
+    """Return an OLDER active profile whose bio is (nearly) identical, or None.
+
+    The oldest page keeps its indexing: only the copy is penalised (SEO audit #2). Candidates are
+    limited to the same trade or city, which is where copy-pasted bios happen (field agents).
+    """
     if not profile.bio_fingerprint:
-        return False
-    return (
-        Profile.objects.filter(bio_fingerprint=profile.bio_fingerprint, status=Profile.Status.ACTIVE)
+        return None
+    candidates = (
+        Profile.objects.filter(status=Profile.Status.ACTIVE, created_at__lt=profile.created_at)
         .exclude(pk=profile.pk)
-        .exists()
+        .exclude(bio_fingerprint="")
+        .filter(models.Q(trade_id=profile.trade_id) | models.Q(city_id=profile.city_id))
+        .only("pk", "bio_fingerprint", "slug")
     )
+    for other in candidates.iterator():
+        if hamming(profile.bio_fingerprint, other.bio_fingerprint) <= NEAR_DUPLICATE_MAX_DISTANCE:
+            return other
+    return None
+
+
+def is_bio_duplicated(profile: Profile) -> bool:
+    return find_bio_original(profile) is not None
 
 
 def indexability_blockers(profile: Profile) -> list[str]:
@@ -388,7 +419,12 @@ def reactivate_profile(profile: Profile) -> None:
 
 @transaction.atomic
 def delete_profile(profile: Profile) -> None:
-    """Right to erasure: content wiped, URLs answer 410, cards disabled, slugs kept only as hashes."""
+    """Right to erasure: content wiped, URLs answer 410, cards disabled, slugs kept only as hashes.
+
+    Files are deleted only after the transaction commits (a rollback must not lose them), and the
+    account itself is anonymised when its last page is deleted (security audit I6).
+    """
+    from apps.accounts.services import anonymize_user
     from apps.cards.services import disable_cards_for_profile
 
     urls = [f"{settings.SITE_URL}/{entry.slug}" for entry in profile.slugs.all()]
@@ -397,23 +433,43 @@ def delete_profile(profile: Profile) -> None:
         hashed = slug_hash(entry.slug)
         entry.delete()
         SlugRegistry.objects.get_or_create(slug=hashed, defaults={"kind": SlugRegistry.Kind.ERASED, "reason": "erased"})
-    if profile.photo:
-        profile.photo.delete(save=False)
-    for media in profile.media.all():
-        media.image.delete(save=False)
+
+    files = [profile.photo.name] if profile.photo else []
+    files += [m.image.name for m in profile.media.all() if m.image]
+    pk = profile.pk
     profile.media.all().delete()
     profile.services.all().delete()
     profile.links.all().delete()
-    Profile.objects.filter(pk=profile.pk).update(
+    Profile.objects.filter(pk=pk).update(
         status=Profile.Status.DELETED,
         display_name="—",
+        custom_title="",
+        district="",
+        service_area="",
         bio="",
+        photo="",
         whatsapp="",
         phone_public="",
         email_public="",
         address="",
         maps_url="",
+        bio_fingerprint="",
         is_indexable=False,
         slug=slug_hash(profile.slug)[:50],
     )
+    if not profile.user.profiles.exclude(status=Profile.Status.DELETED).exists():
+        anonymize_user(profile.user)
+    transaction.on_commit(lambda: _delete_files(files, og_prefix=f"{pk}-"))
     _queue_indexing(urls)
+
+
+def _delete_files(names: list[str], *, og_prefix: str) -> None:
+    for name in names:
+        default_storage.delete(name)
+    try:  # cached share images og/<pk>-<fingerprint>.png (apps.public.images)
+        _dirs, og_files = default_storage.listdir("og")
+    except (FileNotFoundError, NotImplementedError, OSError):
+        og_files = []
+    for name in og_files:
+        if name.startswith(og_prefix):
+            default_storage.delete(f"og/{name}")
