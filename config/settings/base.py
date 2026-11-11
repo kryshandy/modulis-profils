@@ -38,6 +38,9 @@ INSTALLED_APPS = [
     "django_htmx",
     "csp",
     "huey.contrib.djhuey",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
     # Local apps
     "apps.core",
     "apps.platform",
@@ -50,6 +53,7 @@ INSTALLED_APPS = [
     "apps.billing",
     "apps.themes",
     "apps.dashboard",
+    "apps.security",
     "apps.public",
 ]
 
@@ -63,7 +67,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",  # request.user.is_verified() (staff 2FA, ADR-0010)
     "apps.core.middleware.AdminLoginThrottleMiddleware",
+    "apps.core.middleware.StaffTwoFactorMiddleware",  # after OTPMiddleware: admin locked until 2FA
     "apps.platform.middleware.MaintenanceModeMiddleware",  # after auth: staff bypass
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -243,6 +249,14 @@ STAFF_SESSION_AGE = 8 * 60 * 60
 ADMIN_LOGIN_MAX_ATTEMPTS_PER_HOUR = 10
 
 ADMIN_URL = env("ADMIN_URL", default="gestion/")
+
+# Two-factor authentication (TOTP) of every staff account on the admin (ADR-0010, docs/SECURITE-ADMIN.md).
+# May be switched off in development only: production refuses to start without it (prod.py).
+STAFF_2FA_REQUIRED = env.bool("STAFF_2FA_REQUIRED", default=True)
+OTP_TOTP_ISSUER = "Modulis Profils"
+OTP_ADMIN_HIDE_SENSITIVE_DATA = True  # never show TOTP secrets / QR codes in the device admin
+STAFF_2FA_MAX_ATTEMPTS = 5  # per (user, IP) and per window, then locked
+STAFF_2FA_WINDOW_SECONDS = 10 * 60
 
 # Support contact shown in the pro space help page (E.164, WhatsApp). Empty = hidden.
 SUPPORT_WHATSAPP = env("SUPPORT_WHATSAPP", default="")

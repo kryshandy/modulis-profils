@@ -1,3 +1,5 @@
+import re
+
 from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa: F403
@@ -30,3 +32,30 @@ for _name in ("OTP_HMAC_KEY", "ANALYTICS_SALT", "CARD_ACTIVATION_KEY", "SLUG_HAS
     _value = env(_name, default="")
     if len(_value) < 32 or _value == SECRET_KEY:
         raise ImproperlyConfigured(f"{_name} must be set to a dedicated random value (≥ 32 chars).")
+
+# Staff two-factor authentication can never be disabled in production (ADR-0010).
+STAFF_2FA_REQUIRED = env.bool("STAFF_2FA_REQUIRED", default=True)
+if not STAFF_2FA_REQUIRED:
+    raise ImproperlyConfigured("STAFF_2FA_REQUIRED cannot be disabled in production (ADR-0010).")
+
+# The admin lives at a secret, non-guessable address (docs/SECURITE-ADMIN.md): never the default
+# "gestion/" nor a common word. Expected form: "<word>-<12+ random letters and digits>/".
+ADMIN_URL = env("ADMIN_URL", default="")
+_GUESSABLE_ADMIN_URLS = {"", "gestion", "admin", "administration", "backoffice", "back-office", "staff", "manage"}
+
+
+def _is_secret_admin_url(value: str) -> bool:
+    if not value.endswith("/") or value.startswith("/") or value.strip("/").lower() in _GUESSABLE_ADMIN_URLS:
+        return False
+    segments = value.strip("/").split("/")
+    if not all(re.fullmatch(r"[A-Za-z0-9_-]+", s) for s in segments):
+        return False
+    tokens = [t for s in segments for t in re.split(r"[-_]", s)]
+    return any(len(t) >= 12 and re.search(r"\d", t) and re.search(r"[A-Za-z]", t) for t in tokens)
+
+
+if not _is_secret_admin_url(ADMIN_URL):
+    raise ImproperlyConfigured(
+        "ADMIN_URL must be a secret address ending with '/', containing a random segment of at least "
+        "12 letters and digits (e.g. 'gestion-7k2m9q4x8p3z/'), never the default 'gestion/'."
+    )

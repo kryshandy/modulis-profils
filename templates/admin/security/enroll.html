@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{# Forced enrollment of the staff TOTP 2FA (apps.security.views.enroll). No inline script/style (CSP). #}
+{% block bodyclass %}{{ block.super }} mx-2fa-page mx-2fa-enroll{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content %}
+<div id="content-main" class="mx-2fa">
+  <p class="help">{% translate "La double authentification est obligatoire pour toute l'équipe Modulis. Elle protège l'administration même si ton mot de passe fuit." %}</p>
+
+  <div class="module mx-2fa-step">
+    <h2>{% translate "1. Installe une application d'authentification" %}</h2>
+    <p>{% translate "Sur ton téléphone : Google Authenticator, Microsoft Authenticator, Aegis (Android) ou toute application compatible TOTP." %}</p>
+  </div>
+
+  <div class="module mx-2fa-step">
+    <h2>{% translate "2. Scanne ce QR code avec l'application" %}</h2>
+    <div class="mx-2fa-qr">{{ qr_svg|safe }}</div>
+    <p>{% translate "Impossible de scanner ? Ajoute un compte manuellement avec cette clé (type : basé sur le temps) :" %}</p>
+    <p class="mx-2fa-secret"><code>{{ secret }}</code></p>
+    <p class="help">{% blocktranslate %}Émetteur : {{ issuer }} — compte : {{ account }}. Ne partage jamais cette clé.{% endblocktranslate %}</p>
+  </div>
+
+  <div class="module mx-2fa-step">
+    <h2>{% translate "3. Saisis le code affiché par l'application" %}</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% if form.errors %}<p class="errornote">{% translate "Le code n'a pas été accepté." %}</p>{% endif %}
+      <fieldset class="module aligned">
+        <div class="form-row">
+          {{ form.code.errors }}
+          <div class="flex-container">
+            <label class="required" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+            {{ form.code }}
+          </div>
+        </div>
+      </fieldset>
+      <div class="submit-row">
+        <input type="submit" class="default" value="{% translate 'Activer' %}">
+      </div>
+    </form>
+  </div>
+
+  {% include "admin/security/_logout.html" %}
+</div>
+{% endblock %}

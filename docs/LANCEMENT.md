@@ -32,6 +32,23 @@ La commande affiche :
 
 Mot de passe perdu ? `make dmanage cmd="changepassword +237690000100"`.
 
+## 2 bis. Se connecter à l'administration (double authentification)
+
+L'administration (`/gestion/` en local, adresse **secrète** `ADMIN_URL` en production) exige **mot de passe +
+double authentification (TOTP)** pour tout compte de l'équipe, y compris le compte de démonstration :
+
+1. Créez un compte d'équipe avec `make admin` (ou utilisez celui de `seed_demo`).
+2. Installez une application d'authentification sur votre téléphone : Google Authenticator, Microsoft Authenticator
+   ou Aegis.
+3. Ouvrez http://localhost:8000/gestion/, saisissez le numéro et le mot de passe.
+4. **Première connexion** : scannez le QR code affiché, saisissez le code à 6 chiffres, puis notez ou téléchargez les
+   **10 codes de secours** (affichés une seule fois).
+5. **Connexions suivantes** : saisissez le code à 6 chiffres de l'application après le mot de passe.
+
+Téléphone perdu : un code de secours remplace le code de l'application ; un super-administrateur peut aussi
+« Réinitialiser la double authentification » du compte (liste des utilisateurs). En développement seulement, la 2FA
+peut être coupée avec `STAFF_2FA_REQUIRED=False` dans `.env`. Tout le détail : `docs/SECURITE-ADMIN.md`.
+
 ## 3. Se connecter comme un pro
 
 1. Ouvrez http://localhost:8000/espace/connexion et entrez un numéro camerounais (ex. `690 00 01 01`, le numéro de la page démo d'Ange).
@@ -64,6 +81,7 @@ Activez ensuite les canaux dans le **centre de contrôle**.
 | Commande | Rôle |
 |---|---|
 | `make logs` | journaux du serveur et du worker (codes de connexion en dev) |
+| `make admin` | créer un compte de l'équipe (administration : mot de passe + double authentification) |
 | `make down` | tout arrêter (les données sont conservées) |
 | `make test` | tests rapides (venv WSL, SQLite) |
 | `make dtest` | tests dans Docker, sur PostgreSQL |

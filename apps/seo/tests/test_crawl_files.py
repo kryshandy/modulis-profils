@@ -23,7 +23,7 @@ def test_robots_txt(client):
     lines = body.splitlines()
     assert "User-agent: *" in lines
     assert "Disallow: /espace/" in lines
-    assert "Disallow: /gestion/" in lines
+    assert not any("gestion" in line for line in lines)  # the admin URL is secret (ADR-0010)
     assert "Sitemap: https://profils.test/sitemap.xml" in lines
     assert "Disallow: /" not in lines
     assert "Disallow: /c/" not in lines  # Google must see the noindex of /c/
@@ -34,9 +34,10 @@ def test_robots_never_disallows_everything():
     assert "Disallow: /" not in robots_lines()
 
 
-@override_settings(ADMIN_URL="back-office-x/")
-def test_robots_uses_admin_url():
-    assert "Disallow: /back-office-x/" in robots_lines()
+@override_settings(ADMIN_URL="gestion-7k2m9q4x8p3z/")
+def test_robots_never_reveals_the_secret_admin_url():
+    """Security review 2026-11-11: robots.txt is public, the admin address must stay secret."""
+    assert not any("7k2m9q4x8p3z" in line for line in robots_lines())
 
 
 def test_sitemap_index_lists_sections(client, settings):

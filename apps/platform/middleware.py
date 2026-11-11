@@ -57,4 +57,10 @@ class MaintenanceModeMiddleware:
         if not on or request.path.startswith(self.exempt):
             return False
         user = getattr(request, "user", None)
-        return not (user is not None and user.is_authenticated and user.is_staff)
+        if not (user is not None and user.is_authenticated and user.is_staff):
+            return True
+        # Staff bypass only once the session passed 2FA (ADR-0010): a stolen password alone must not
+        # open the site during maintenance.
+        from apps.security.services import needs_two_factor
+
+        return needs_two_factor(user)

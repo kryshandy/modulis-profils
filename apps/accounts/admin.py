@@ -8,10 +8,12 @@ from django.db.models import Count, Exists, OuterRef
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from apps.platform import services as platform
 from apps.platform.models import BlockedPhone
 from apps.profiles.models import Profile
+from apps.security import services as security
 
 from . import services
 from .models import OTPChallenge, User
@@ -96,6 +98,7 @@ class UserAdmin(BaseUserAdmin):
         "profiles_count",
         "is_verified",
         "is_staff",
+        "two_factor",
         "is_field_agent",
         "is_active",
         "blocked",
@@ -112,7 +115,14 @@ class UserAdmin(BaseUserAdmin):
         "last_seen_at",
         "date_joined",
     )
-    actions = ("deactivate_accounts", "reactivate_accounts", "logout_everywhere", "block_phones", "unblock_phones")
+    actions = (
+        "deactivate_accounts",
+        "reactivate_accounts",
+        "logout_everywhere",
+        "block_phones",
+        "unblock_phones",
+        "reset_two_factor",
+    )
     search_fields = ("phone", "full_name", "email", "profiles__slug")
     ordering = ("-date_joined",)
     readonly_fields = ("date_joined", "last_seen_at", "last_login", "phone_verified_at")
@@ -147,7 +157,13 @@ class UserAdmin(BaseUserAdmin):
     def get_queryset(self, request):
         blocked = BlockedPhone.objects.filter(phone=OuterRef("phone"))
         return (
-            super().get_queryset(request).annotate(_profiles=Count("profiles", distinct=True), _blocked=Exists(blocked))
+            super()
+            .get_queryset(request)
+            .annotate(
+                _profiles=Count("profiles", distinct=True),
+                _blocked=Exists(blocked),
+                _two_factor=Exists(TOTPDevice.objects.filter(user=OuterRef("pk"), confirmed=True)),
+            )
         )
 
     def has_change_permission(self, request, obj=None):
@@ -187,6 +203,11 @@ class UserAdmin(BaseUserAdmin):
         for pk, phone in doomed:
             platform.audit(request.user, "user.delete", phone, user_id=pk)
 
+    @admin.display(description=_("2FA"), boolean=True, ordering="_two_factor")
+    def two_factor(self, obj):
+        """Staff only: confirmed TOTP device (pros never use 2FA, they log in by SMS code)."""
+        return bool(getattr(obj, "_two_factor", False)) if obj.is_staff else None
+
     @admin.display(description=_("numéro bloqué"), boolean=True, ordering="_blocked")
     def blocked(self, obj):
         return bool(getattr(obj, "_blocked", False))
@@ -202,6 +223,9 @@ class UserAdmin(BaseUserAdmin):
         return request.user.has_perm("platform_settings.delete_blockedphone") and request.user.has_perm(
             "accounts.change_user"
         )
+
+    def has_reset_2fa_permission(self, request):
+        return request.user.is_superuser
 
     def _targets(self, request, queryset):
         """Accounts the current admin may act on: never itself, never a superuser unless superuser."""
@@ -255,6 +279,30 @@ class UserAdmin(BaseUserAdmin):
         users = self._targets(request, queryset)
         count = sum(platform.unblock_phone(user.phone, actor=request.user) for user in users)
         self.message_user(request, _("%(n)d numéro(s) débloqué(s).") % {"n": count}, messages.SUCCESS)
+
+    @admin.action(permissions=["reset_2fa"], description=_("Réinitialiser la double authentification"))
+    def reset_two_factor(self, request, queryset):
+        """Lost phone: delete the 2FA devices and close the sessions; next login forces enrollment."""
+        done = 0
+        for user in queryset:
+            if user.pk == request.user.pk:
+                self.message_user(
+                    request,
+                    _("Ta propre double authentification se réinitialise par un autre super-administrateur."),
+                    messages.WARNING,
+                )
+                continue
+            try:
+                security.reset_two_factor(user, actor=request.user)
+            except PermissionDenied:
+                continue
+            done += 1
+        self.message_user(
+            request,
+            _("Double authentification réinitialisée pour %(n)d compte(s) : nouveau QR code à la prochaine connexion.")
+            % {"n": done},
+            messages.SUCCESS,
+        )
 
     @admin.display(description=_("pages"), ordering="_profiles")
     def profiles_count(self, obj):

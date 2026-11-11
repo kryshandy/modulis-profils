@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{# Staff 2FA verification after the password login (apps.security.views.verify). #}
+{% block bodyclass %}{{ block.super }} mx-2fa-page mx-2fa-verify{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content %}
+<div id="content-main" class="mx-2fa">
+  <p>{% translate "Ouvre ton application d'authentification et saisis le code à 6 chiffres affiché pour « Modulis Profils »." %}</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% if form.errors %}<p class="errornote">{% translate "Le code n'a pas été accepté." %}</p>{% endif %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        {{ form.code.errors }}
+        <div class="flex-container">
+          <label class="required" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+          {{ form.code }}
+        </div>
+      </div>
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" class="default" value="{% translate 'Vérifier' %}">
+    </div>
+  </form>
+  <p class="help">{% translate "Téléphone perdu ? Saisis l'un de tes codes de secours (8 caractères, ex. abcd-efgh) à la place du code. Plus aucun code ? Demande à un super-administrateur de réinitialiser ta double authentification." %}</p>
+  {% include "admin/security/_logout.html" %}
+</div>
+{% endblock %}

@@ -20,10 +20,9 @@ TRACKING_PREFIXES = ("p", "a")  # /p/<pk>.gif view pixel, /a/<pk>/<kind> click b
 def robots_lines() -> list[str]:
     """Production rules (plan §6.5). Never `Disallow: /`: pre-production is password-protected instead."""
     lines = ["User-agent: *", "Allow: /"]
-    for prefix in ("espace/", settings.ADMIN_URL):
-        prefix = prefix.strip("/")
-        if prefix:  # an empty prefix would produce "Disallow: /"
-            lines.append(f"Disallow: /{prefix}/")
+    # The admin is NOT listed: ADMIN_URL is secret (ADR-0010) and robots.txt is public. Admin pages are
+    # behind login + 2FA and send noindex anyway.
+    lines.append("Disallow: /espace/")
     lines += [f"Disallow: /{prefix}/" for prefix in TRACKING_PREFIXES]
     lines += ["", f"Sitemap: {settings.SITE_URL}{reverse('seo:sitemap')}"]
     return lines

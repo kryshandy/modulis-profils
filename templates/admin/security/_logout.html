@@ -1,0 +1,5 @@
+{% load i18n %}
+<form class="mx-2fa-logout" method="post" action="{% url 'admin:logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="button">{% translate "Se déconnecter" %}</button>
+</form>

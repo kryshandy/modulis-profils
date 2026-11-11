@@ -7,7 +7,7 @@ VENV ?= $(HOME)/.venvs/modulis-profils
 PY := $(VENV)/bin/python
 COMPOSE := docker compose
 
-.PHONY: help venv install lint fmt test cov check migrations migrate run seed-demo up down logs dtest dshell dmanage backup-repo
+.PHONY: help venv install lint fmt test cov check migrations migrate run seed-demo up down logs dtest dshell dmanage admin backup-repo
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -67,6 +67,9 @@ dshell: ## Docker : shell Django
 
 dmanage: ## Docker : manage.py (ex. make dmanage cmd="createsuperuser")
 	$(COMPOSE) exec web python manage.py $(cmd)
+
+admin: ## Docker : crée un compte de l'équipe (mot de passe, 2FA à la 1re connexion)
+	$(COMPOSE) exec web python manage.py create_staff
 
 backup-repo: ## Copie de sauvegarde du dépôt git (bundle) — DEST=/mnt/d/backups
 	bash scripts/wsl/backup-repo.sh $(DEST)

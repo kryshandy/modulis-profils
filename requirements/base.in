@@ -7,6 +7,7 @@ redis>=5
 django-htmx
 django-csp>=4
 django-ratelimit>=4.1
+django-otp>=1.7,<1.8  # staff TOTP two-factor authentication (ADR-0010)
 phonenumbers
 Pillow
 segno

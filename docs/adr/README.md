@@ -14,5 +14,6 @@ Statuts : Proposée → Acceptée → (Remplacée par ADR-xxxx).
 | 0007 | kliz pour les notifications d'indexation | Acceptée |
 | 0008 | Développement dans Docker sous WSL2 Ubuntu | Acceptée |
 | 0009 | OTP par WhatsApp Cloud API, SMS Firebase ou passerelle | Acceptée |
+| 0010 | Double authentification (TOTP) obligatoire pour l'équipe | Acceptée |
 
 Elles passent à « Acceptée » quand vous validez le plan.

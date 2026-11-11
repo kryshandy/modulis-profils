@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{# Backup codes, shown ONCE after enrollment or regeneration (apps.security.views.backup_codes). #}
+{% block bodyclass %}{{ block.super }} mx-2fa-page mx-2fa-codes{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content %}
+<div id="content-main" class="mx-2fa">
+  {% if codes %}
+    <p>{% translate "Note ces 10 codes de secours et garde-les en lieu sûr, hors de ton téléphone. Chacun remplace une seule fois le code de l'application si tu perds ton téléphone. Ils ne seront plus jamais affichés." %}</p>
+    <ul class="mx-2fa-codes__list">
+      {% for code in codes %}<li><code>{{ code }}</code></li>{% endfor %}
+    </ul>
+    <p><a class="button" href="{% url 'admin:security_2fa_backup_codes_download' %}" download>{% translate "Télécharger (.txt)" %}</a></p>
+  {% else %}
+    <p>{% translate "Les codes de secours ne sont affichés qu'une seule fois. Si tu ne les as plus, génère-en de nouveaux : les anciens cesseront de fonctionner." %}</p>
+    <form method="post" action="{% url 'admin:security_2fa_backup_codes_regenerate' %}">
+      {% csrf_token %}
+      <div class="submit-row"><input type="submit" value="{% translate 'Générer de nouveaux codes' %}"></div>
+    </form>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="submit-row">
+      {% if codes %}
+        <input type="submit" class="default" value="{% translate 'Mes codes sont en lieu sûr' %}">
+      {% else %}
+        <input type="submit" class="default" value="{% translate 'Continuer' %}">
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

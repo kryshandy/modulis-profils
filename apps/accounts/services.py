@@ -427,3 +427,25 @@ def anonymize_user(user: User) -> None:
     )
     user.set_unusable_password()
     User.objects.filter(pk=user.pk).update(password=user.password)
+
+
+# --- Staff accounts (admin) ---------------------------------------------------------------------
+
+
+def create_staff_user(phone: str, password: str, *, full_name: str = "", superuser: bool = False) -> User:
+    """Create a staff (or superuser) account, password-protected; 2FA is enrolled at first login.
+
+    Raises InvalidPhone, ValueError (account exists) or django ValidationError (password policy).
+    """
+    from django.contrib.auth.password_validation import validate_password
+
+    phone = normalize_phone(phone)
+    if User.objects.filter(phone=phone).exists():
+        raise ValueError(_("Un compte existe déjà avec ce numéro."))
+    validate_password(password, user=User(phone=phone, full_name=full_name))
+    if superuser:
+        user = User.objects.create_superuser(phone, password, full_name=full_name)
+    else:
+        user = User.objects.create_user(phone, password, full_name=full_name, is_staff=True)
+    platform.audit(None, "user.create_staff", phone, superuser=superuser, via="create_staff")
+    return user

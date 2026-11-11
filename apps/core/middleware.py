@@ -48,3 +48,45 @@ class AdminLoginThrottleMiddleware:
                 response["Cache-Control"] = "no-store"
                 return response
         return self.get_response(request)
+
+
+class StaffTwoFactorMiddleware:
+    """Staff must pass TOTP two-factor authentication before reaching ANY admin URL (ADR-0010).
+
+    Sits after OTPMiddleware (request.user.is_verified). For an authenticated, active staff member
+    whose session is not verified, every URL under settings.ADMIN_URL (models, control center,
+    jsi18n…) redirects to enrollment (no device yet) or verification. Only the 2FA pages, the
+    logout and the password form submission stay reachable. admin.site.has_permission repeats
+    the check (apps.security.admin), so removing this middleware never opens the admin.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.prefix = "/" + settings.ADMIN_URL.lstrip("/")
+        self._open_paths: frozenset[str] | None = None
+
+    def _open(self) -> frozenset[str]:
+        if self._open_paths is None:
+            self._open_paths = frozenset(
+                reverse(name) for name in ("admin:security_2fa_enroll", "admin:security_2fa_verify", "admin:logout")
+            )
+        return self._open_paths
+
+    def __call__(self, request):
+        if settings.STAFF_2FA_REQUIRED and request.path.startswith(self.prefix):
+            from apps.security import services  # lazy: apps are loaded after middleware import
+
+            user = getattr(request, "user", None)
+            if user is not None and services.needs_two_factor(user) and not self._allowed(request):
+                return services.redirect_to_two_factor(request)
+        return self.get_response(request)
+
+    def _allowed(self, request) -> bool:
+        if request.path in self._open():
+            return True
+        # Re-submitting the password form (switching account) stays possible; a GET goes to 2FA.
+        return request.method == "POST" and request.path == self._admin_login_path()
+
+    @staticmethod
+    def _admin_login_path() -> str:
+        return reverse("admin:login")

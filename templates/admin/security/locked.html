@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{# Too many wrong 2FA codes for (user, IP): STAFF_2FA_MAX_ATTEMPTS per STAFF_2FA_WINDOW_SECONDS. #}
+{% block bodyclass %}{{ block.super }} mx-2fa-page mx-2fa-locked{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content %}
+<div id="content-main" class="mx-2fa">
+  <p class="errornote">{% translate "Trop de codes incorrects : la vérification est bloquée pendant 10 minutes pour ce compte depuis cet appareil." %}</p>
+  <p>{% translate "Vérifie que l'heure de ton téléphone est réglée automatiquement, puis réessaie plus tard. Si ce n'était pas toi, préviens immédiatement un super-administrateur et change ton mot de passe." %}</p>
+  {% include "admin/security/_logout.html" %}
+</div>
+{% endblock %}

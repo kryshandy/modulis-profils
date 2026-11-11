@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{# My 2FA: status and backup codes regeneration (apps.security.views.overview). #}
+{% block bodyclass %}{{ block.super }} mx-2fa-page mx-2fa-overview{% endblock %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate "Accueil" %}</a> › {{ title }}</div>
+{% endblock %}
+{% block content %}
+<div id="content-main" class="mx-2fa">
+  <div class="module">
+    <h2>{% translate "Application d'authentification" %}</h2>
+    {% if device %}
+      <p>{% blocktranslate with created=device.created_at|date:"d/m/Y" %}Active depuis le {{ created }}.{% endblocktranslate %}
+      {% if device.last_used_at %}{% blocktranslate with used=device.last_used_at|date:"d/m/Y H:i" %}Dernière utilisation : {{ used }}.{% endblocktranslate %}{% endif %}</p>
+      <p class="help">{% translate "Nouveau téléphone ? Demande à un super-administrateur de réinitialiser ta double authentification : tu scanneras un nouveau QR code à la connexion suivante." %}</p>
+    {% else %}
+      <p>{% translate "Aucune application configurée." %} <a href="{% url 'admin:security_2fa_enroll' %}">{% translate "Activer la double authentification" %}</a></p>
+    {% endif %}
+  </div>
+  {% if device %}
+  <div class="module">
+    <h2>{% translate "Codes de secours" %}</h2>
+    <p>{% blocktranslate count n=backup_left %}Il te reste {{ n }} code de secours.{% plural %}Il te reste {{ n }} codes de secours.{% endblocktranslate %}</p>
+    <form method="post" action="{% url 'admin:security_2fa_backup_codes_regenerate' %}">
+      {% csrf_token %}
+      <div class="submit-row"><input type="submit" value="{% translate 'Générer de nouveaux codes (remplace les anciens)' %}"></div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

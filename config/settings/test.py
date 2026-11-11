@@ -19,3 +19,4 @@ TURNSTILE_SITE_KEY = ""
 TURNSTILE_SECRET_KEY = ""
 KLIZ_ENABLED = False
 TRUSTED_PROXY_IPS: list[str] = []
+STAFF_2FA_REQUIRED = True  # conftest marks force_login() staff sessions as verified (apps.security.testing)
