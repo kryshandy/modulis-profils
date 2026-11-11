@@ -20,8 +20,9 @@ RUN groupadd --gid ${UID} app && useradd --uid ${UID} --gid app --home /app app
 COPY requirements/ /tmp/requirements/
 RUN pip install -r /tmp/requirements/dev.txt
 COPY docker/django/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-USER app
+RUN chmod +x /entrypoint.sh && mkdir -p /app/media && chown app:app /app/media
+# No `USER app` here: the entrypoint starts as root only to give /app/media to `app`
+# (Docker volumes are root-owned), then drops privileges with setpriv before running anything.
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
@@ -31,10 +32,10 @@ COPY requirements/ /tmp/requirements/
 RUN pip install -r /tmp/requirements/prod.txt
 COPY --chown=app:app . /app
 COPY docker/django/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh \
+RUN chmod +x /entrypoint.sh && mkdir -p /app/media && chown app:app /app/media \
     && DJANGO_SETTINGS_MODULE=config.settings.prod DJANGO_SECRET_KEY=build SMS_BACKEND=x \
        python manage.py collectstatic --noinput
-USER app
+# Entrypoint drops to `app` after fixing volume ownership (see entrypoint.sh).
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://127.0.0.1:8000/healthz || exit 1
 ENTRYPOINT ["/entrypoint.sh"]

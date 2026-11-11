@@ -72,6 +72,18 @@ Activez ensuite les canaux dans le **centre de contrôle**.
 | `make dshell` | console Django |
 | `docker compose down -v` | tout supprimer, **données comprises** (repartir de zéro) |
 
+## Après une mise à jour du code
+
+Le serveur et le worker se rechargent tout seuls. Si le `Dockerfile`, `entrypoint.sh` ou les dépendances changent,
+reconstruisez les images :
+
+```bash
+docker compose up -d --build
+```
+
+En cas de problème, le **centre de contrôle → Santé de la plateforme** vérifie la base, le cache, le **stockage des
+fichiers** (envoi de photos) et les tâches de fond.
+
 ## Ports
 
 - Site : `8000` (`WEB_HOST_PORT=8001 make up` pour en changer).

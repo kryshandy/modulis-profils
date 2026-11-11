@@ -52,6 +52,24 @@ def _cache() -> Check:
     return Check(str(_("Cache")), OK if ok else ERROR, str(_("lecture/écriture OK") if ok else _("échec")), backend)
 
 
+def _storage() -> Check:
+    """Write + delete a tiny file in the media storage (photos, gallery, share images).
+
+    Catches the 2026-11-11 incident: a root-owned Docker volume made every upload fail with
+    "Permission denied" while the rest of the site looked healthy.
+    """
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+
+    label = str(_("Stockage des fichiers"))
+    try:
+        name = default_storage.save(f"health/{uuid.uuid4().hex}.txt", ContentFile(b"ok"))
+        default_storage.delete(name)
+    except Exception as exc:
+        return Check(label, ERROR, str(_("écriture impossible")), str(exc)[:200])
+    return Check(label, OK, str(_("écriture OK")), default_storage.__class__.__name__)
+
+
 def _heartbeat() -> Check:
     age = services.heartbeat_age()
     label = str(_("Tâches de fond (Huey)"))
@@ -130,7 +148,7 @@ def _runtime() -> list[Check]:
 
 
 def report() -> list[Check]:
-    return [_database(), _cache(), _heartbeat(), _kliz(), *_counts(), *_runtime()]
+    return [_database(), _cache(), _storage(), _heartbeat(), _kliz(), *_counts(), *_runtime()]
 
 
 def seo_summary() -> dict:
