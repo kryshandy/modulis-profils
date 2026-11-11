@@ -26,6 +26,14 @@
     {% endif %}
   </div>
 
+  <a class="promo" href="/espace/modeles/">
+    <span class="promo__kicker"><span class="dot" aria-hidden="true"></span>{% translate "Étape bonus" %}</span>
+    <span class="promo__title">{% translate "Choisis ton modèle de site" %}</span>
+    <span class="promo__text">{% translate "Donne à ta page le style de ton métier, en un clic." %}</span>
+    <span class="btn btn--aqua"><span class="btn__dot" aria-hidden="true"></span>{% translate "Voir les modèles" %}</span>
+    <span class="promo__art thumbs" aria-hidden="true"><i></i><i></i><i></i></span>
+  </a>
+
   <a class="btn btn--primary btn--block btn--lg" href="{% url 'dashboard:home' %}">{% translate "Aller à mon espace" %}</a>
 </div>
 {% endblock %}

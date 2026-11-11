@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n dashboard_tags %}
+{% load static i18n dashboard_tags brand_tags %}
 {% block title %}{% block page_title %}{% translate "Espace pro" %}{% endblock %} · {{ SITE_NAME }}{% endblock %}
 {% block head %}
   <meta name="csrf-token" content="{{ csrf_token }}">
@@ -8,11 +8,12 @@
 {% endblock %}
 {% block body_class %}dash{% block dash_body_class %}{% endblock %}{% endblock %}
 {% block header %}
-{% with nav=request.resolver_match.url_name %}
+{% with nav=request.resolver_match.url_name app=request.resolver_match.app_name %}
 <header class="topbar">
   <a class="brand" href="{% url 'dashboard:home' %}">
     {% icon "logo" "brand__mark" %}<span class="brand__name">Modulis <b>Pro</b></span>
   </a>
+  <span class="topbar__fill"></span>
   {% if all_profiles|length > 1 %}
   <form class="switcher" method="post" action="{% url 'dashboard:switch_profile' %}">
     {% csrf_token %}
@@ -31,18 +32,23 @@
 </header>
 
 <nav class="sidenav" aria-label="{% translate 'Menu principal' %}">
+  <a class="brand sidenav__brand" href="{% url 'dashboard:home' %}">{% icon "logo" "brand__mark" %}<span class="brand__name">Modulis <b>Pro</b></span></a>
   <ul>
     <li><a href="{% url 'dashboard:home' %}"{% if nav == 'home' %} aria-current="page"{% endif %}>{% icon "home" %}<span>{% translate "Accueil" %}</span></a></li>
     <li><a href="{% url 'dashboard:edit' 'identite' %}"{% if nav == 'edit' %} aria-current="page"{% endif %}>{% icon "edit" %}<span>{% translate "Ma page" %}</span></a></li>
+    <li><a href="/espace/modeles/"{% if app == 'themes' %} aria-current="page"{% endif %}>{% icon "palette" %}<span>{% translate "Modèles" %}</span><span class="badge badge--new">{% translate "Nouveau" %}</span></a></li>
     <li><a href="{% url 'dashboard:share' %}"{% if nav == 'share' %} aria-current="page"{% endif %}>{% icon "share" %}<span>{% translate "Partager / QR" %}</span></a></li>
     <li><a href="{% url 'dashboard:stats' %}"{% if nav == 'stats' %} aria-current="page"{% endif %}>{% icon "chart" %}<span>{% translate "Statistiques" %}</span></a></li>
     <li><a href="{% url 'dashboard:cards' %}"{% if nav == 'cards' %} aria-current="page"{% endif %}>{% icon "card" %}<span>{% translate "Cartes NFC" %}</span></a></li>
     <li><a href="{% url 'dashboard:settings' %}"{% if nav == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}<span>{% translate "Paramètres" %}</span></a></li>
     <li><a href="{% url 'dashboard:help' %}"{% if nav == 'help' %} aria-current="page"{% endif %}>{% icon "help" %}<span>{% translate "Aide" %}</span></a></li>
   </ul>
-  <form method="post" action="{% url 'dashboard:logout' %}">{% csrf_token %}
-    <button class="sidenav__logout" type="submit">{% icon "logout" %}<span>{% translate "Se déconnecter" %}</span></button>
-  </form>
+  <div class="sidenav__foot">
+    <form method="post" action="{% url 'dashboard:logout' %}">{% csrf_token %}
+      <button class="sidenav__logout" type="submit">{% icon "logout" %}<span>{% translate "Se déconnecter" %}</span></button>
+    </form>
+    <p class="brand-sign">{% icon "logo" %}<span>{% translate "Une solution" %} <b>Modulis Tech</b></span></p>
+  </div>
 </nav>
 
 <nav class="bottomnav" aria-label="{% translate 'Menu' %}">
@@ -51,11 +57,12 @@
   <a href="{% url 'dashboard:share' %}"{% if nav == 'share' %} aria-current="page"{% endif %}>{% icon "share" %}<span>{% translate "Partager" %}</span></a>
   <a href="{% url 'dashboard:stats' %}"{% if nav == 'stats' %} aria-current="page"{% endif %}>{% icon "chart" %}<span>{% translate "Stats" %}</span></a>
   <details class="more">
-    <summary{% if nav == 'cards' or nav == 'settings' or nav == 'help' %} aria-current="page"{% endif %}>{% icon "more" %}<span>{% translate "Plus" %}</span></summary>
+    <summary{% if nav == 'cards' or nav == 'settings' or nav == 'help' or app == 'themes' %} aria-current="page"{% endif %}>{% icon "more" %}<span>{% translate "Plus" %}</span></summary>
     <div class="more__sheet">
-      <a href="{% url 'dashboard:cards' %}">{% icon "card" %}{% translate "Cartes NFC" %}</a>
-      <a href="{% url 'dashboard:settings' %}">{% icon "settings" %}{% translate "Paramètres" %}</a>
-      <a href="{% url 'dashboard:help' %}">{% icon "help" %}{% translate "Aide" %}</a>
+      <a href="/espace/modeles/"{% if app == 'themes' %} aria-current="page"{% endif %}>{% icon "palette" %}{% translate "Modèles" %}<span class="badge badge--new">{% translate "Nouveau" %}</span></a>
+      <a href="{% url 'dashboard:cards' %}"{% if nav == 'cards' %} aria-current="page"{% endif %}>{% icon "card" %}{% translate "Cartes NFC" %}</a>
+      <a href="{% url 'dashboard:settings' %}"{% if nav == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}{% translate "Paramètres" %}</a>
+      <a href="{% url 'dashboard:help' %}"{% if nav == 'help' %} aria-current="page"{% endif %}>{% icon "help" %}{% translate "Aide" %}</a>
       <form method="post" action="{% url 'dashboard:logout' %}">{% csrf_token %}
         <button type="submit">{% icon "logout" %}{% translate "Se déconnecter" %}</button>
       </form>
@@ -67,6 +74,8 @@
 
 {% block content %}
 <div class="page">
+  {% platform_announcement as announcement %}
+  {% if announcement %}<p class="announce" role="status">{% icon "sparkle" %}<span>{{ announcement }}</span></p>{% endif %}
   {% if profile and profile.status == "suspended" %}
     <p class="alert alert--error">{% translate "Ta page est suspendue par l'équipe Modulis et n'est plus visible. Contacte le support depuis la page Aide." %}</p>
   {% endif %}

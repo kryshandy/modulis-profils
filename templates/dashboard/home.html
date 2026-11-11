@@ -9,6 +9,7 @@
     <p class="alert alert--error" role="alert">{% translate "Ta page est suspendue par l'équipe Modulis : elle n'est plus visible et tu ne peux pas la modifier." %} <a href="{% url 'dashboard:help' %}">{% translate "Contacter le support" %}</a></p>
   {% endif %}
   <div class="greeting">
+    <p class="kicker greeting__kicker"><span class="dot dot--aqua" aria-hidden="true"></span>{% translate "Ton espace pro" %}</p>
     <h1 class="h1">{% blocktranslate with name=profile.display_name %}Bonjour {{ name }} !{% endblocktranslate %}</h1>
     <span class="badge badge--plan badge--{{ plan_code }}">
       {% if plan_code == "free" %}{% translate "Offre gratuite" %}{% elif plan_code == "essentiel" %}{% translate "Offre Essentiel" %}{% elif plan_code == "pro" %}{% translate "Offre Pro" %}{% else %}{% translate "Offre Équipe" %}{% endif %}
@@ -20,6 +21,14 @@
   {% endif %}
 
   {% include "dashboard/partials/url_card.html" %}
+
+  <a class="promo" href="/espace/modeles/">
+    <span class="promo__kicker"><span class="dot" aria-hidden="true"></span>{% translate "Nouveau : les modèles de site" %}</span>
+    <span class="promo__title">{% translate "Choisis ton modèle de site" %}</span>
+    <span class="promo__text">{% translate "Des designs pensés pour ton métier. Essaie-les sur ta page et garde celui qui te ressemble. Tu peux changer quand tu veux." %}</span>
+    <span class="btn btn--aqua"><span class="btn__dot" aria-hidden="true"></span>{% translate "Voir les modèles" %}</span>
+    <span class="promo__art thumbs" aria-hidden="true"><i></i><i></i><i></i></span>
+  </a>
 
   <div class="home__grid">
     <section class="card stack" data-tour="2" data-tour-title="{% translate 'Ta jauge de complétude' %}" data-tour-text="{% translate 'Plus ta page est complète, plus Google la montre. Touche une ligne pour la compléter.' %}">

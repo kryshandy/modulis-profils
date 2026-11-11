@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 4 182 174">
+<defs>
+<linearGradient id="gL" gradientUnits="userSpaceOnUse" x1="0" y1="50" x2="0" y2="172"><stop offset="0" stop-color="#0B8584"/><stop offset="1" stop-color="#087573"/></linearGradient>
+<linearGradient id="gR" gradientUnits="userSpaceOnUse" x1="0" y1="50" x2="0" y2="172"><stop offset="0" stop-color="#1CC8C6"/><stop offset="1" stop-color="#12B3B2"/></linearGradient>
+<mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200"><path d="M28.5 155.5V68L98 137" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/></mask>
+</defs>
+<path d="M28.5 155.5V68L98 137" fill="none" stroke="url(#gL)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M98.5 137L168 68V155.5" fill="none" stroke="url(#gR)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M98.5 137L168 68V155.5" fill="none" stroke="#075E5E" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" mask="url(#m)"/>
+<circle cx="29" cy="26" r="16.5" fill="#0A8282"/><circle cx="168" cy="26" r="16.5" fill="#FD6552"/>
+</svg>

@@ -1,0 +1,147 @@
+/* Modulis skin for the Django admin (/gestion/). Loaded by templates/admin/base_site.html after base.css and
+   dark_mode.css: only overrides the admin's CSS variables plus a few header / button details, so every admin
+   screen (and the control center) keeps working. */
+
+html[data-theme="light"], :root {
+  --primary: #0A7F7D;
+  --secondary: #063A39;
+  --accent: #17BDBB;
+  --primary-fg: #FFFFFF;
+
+  --body-fg: #16242C;
+  --body-bg: #FFFFFF;
+  --body-quiet-color: #4A5A60;
+  --body-medium-color: #2B3A40;
+  --body-loud-color: #0B171C;
+
+  --header-color: #9ED6D3;
+  --header-branding-color: #EAF6F5;
+  --header-bg: #063A39;
+  --header-link-color: #EAF6F5;
+
+  --breadcrumbs-fg: #4A5A60;
+  --breadcrumbs-link-fg: #075E5E;
+  --breadcrumbs-bg: #EEF4F3;
+
+  --link-fg: #075E5E;
+  --link-hover-color: #B9321C;
+  --link-selected-fg: #063A39;
+
+  --hairline-color: #E1EAE8;
+  --border-color: #C9D6D4;
+
+  --error-fg: #B9321C;
+  --message-success-bg: #DDF1EF;
+  --message-warning-bg: #FFF1CC;
+  --message-error-bg: #FDE9E4;
+
+  --darkened-bg: #F4F8F7;
+  --selected-bg: #DDF1EF;
+  --selected-row: #FFF6DC;
+
+  --button-fg: #FFFFFF;
+  --button-bg: #0A7F7D;
+  --button-hover-bg: #075E5E;
+  --default-button-bg: #063A39;
+  --default-button-hover-bg: #0A7F7D;
+  --close-button-bg: #4A5A60;
+  --close-button-hover-bg: #16242C;
+  --delete-button-bg: #B9321C;
+  --delete-button-hover-bg: #8E2412;
+
+  --object-tools-fg: #FFFFFF;
+  --object-tools-bg: #4A5A60;
+  --object-tools-hover-bg: #063A39;
+
+  --font-family-primary: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #0B4948;
+    --primary-fg: #EAF6F5;
+    --body-fg: #EAF6F5;
+    --body-bg: #03201F;
+    --body-quiet-color: #9ED6D3;
+    --body-medium-color: #CFE9E7;
+    --body-loud-color: #FFFFFF;
+    --breadcrumbs-fg: #9ED6D3;
+    --breadcrumbs-link-fg: #EAF6F5;
+    --breadcrumbs-bg: #082E2D;
+    --link-fg: #6FDCDA;
+    --link-hover-color: #FD8A7B;
+    --link-selected-fg: #9ED6D3;
+    --hairline-color: #0F3F3D;
+    --border-color: #1B5452;
+    --error-fg: #FF9A86;
+    --message-success-bg: #0F4A47;
+    --message-warning-bg: #4A3A10;
+    --message-error-bg: #57221A;
+    --darkened-bg: #082E2D;
+    --selected-bg: #0F4A47;
+    --selected-row: #0F4A47;
+    --close-button-bg: #1B5452;
+    --close-button-hover-bg: #2A6B69;
+    color-scheme: dark;
+  }
+}
+html[data-theme="dark"] {
+  --primary: #0B4948;
+  --primary-fg: #EAF6F5;
+  --body-fg: #EAF6F5;
+  --body-bg: #03201F;
+  --body-quiet-color: #9ED6D3;
+  --body-medium-color: #CFE9E7;
+  --body-loud-color: #FFFFFF;
+  --breadcrumbs-fg: #9ED6D3;
+  --breadcrumbs-link-fg: #EAF6F5;
+  --breadcrumbs-bg: #082E2D;
+  --link-fg: #6FDCDA;
+  --link-hover-color: #FD8A7B;
+  --link-selected-fg: #9ED6D3;
+  --hairline-color: #0F3F3D;
+  --border-color: #1B5452;
+  --error-fg: #FF9A86;
+  --message-success-bg: #0F4A47;
+  --message-warning-bg: #4A3A10;
+  --message-error-bg: #57221A;
+  --darkened-bg: #082E2D;
+  --selected-bg: #0F4A47;
+  --selected-row: #0F4A47;
+  --close-button-bg: #1B5452;
+  --close-button-hover-bg: #2A6B69;
+  color-scheme: dark;
+}
+
+/* Header: forest band, Modulis lockup */
+#header { padding: 10px 24px; border-bottom: 3px solid #FD6552; }
+#site-name { font-weight: 500; font-size: 1rem; }
+.mx-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none !important; min-height: 44px; }
+.mx-brand__mark { width: 30px; height: auto; display: block; }
+.mx-brand__name { color: #EAF6F5; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; font-variation-settings: "wdth" 112; }
+.mx-brand__title { color: #9ED6D3; font-weight: 500; font-size: .875rem; padding-left: 10px; border-left: 1px solid rgba(234, 246, 245, .25); }
+#site-name a:link, #site-name a:visited { color: #EAF6F5; }
+#user-tools a, #logout-form button { border-bottom-color: rgba(158, 214, 211, .5); }
+@media (max-width: 767px) { #header { padding: 10px 16px; } .mx-brand__title { display: none; } }
+
+/* Headings: Archivo with the brand width axis */
+#content h1 { font-weight: 800; letter-spacing: -.02em; font-variation-settings: "wdth" 110; color: var(--body-loud-color); }
+.module h2, .module caption, .inline-group h2 { font-weight: 700; letter-spacing: .02em; font-variation-settings: "wdth" 104; }
+
+/* Buttons: pill */
+.button, input[type=submit], input[type=button], .submit-row input, a.button, .object-tools a, .submit-row a.deletelink, .submit-row a.closelink {
+  border-radius: 999px;
+}
+.button, input[type=submit], input[type=button], .submit-row input, a.button { font-weight: 600; padding: 10px 18px; }
+a.button { padding: 6px 12px; }
+.object-tools a { padding: 4px 14px; }
+:focus-visible { outline: 3px solid #17BDBB; outline-offset: 2px; }
+
+/* Login page */
+.login #container { border-radius: 22px; border: 0; box-shadow: 0 24px 48px -24px rgba(22, 36, 44, .45); }
+.login #header { justify-content: center; }
+.login .mx-brand__title { display: none; }
+.login { background: #EEF4F3; }
+@media (prefers-color-scheme: dark) { .login { background: #03201F; } }
+html[data-theme="dark"] .login { background: #03201F; }
+html[data-theme="light"] .login { background: #EEF4F3; }

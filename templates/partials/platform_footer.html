@@ -1,0 +1,35 @@
+{% load i18n static %}<footer class="pf-footer">
+  <div class="pf-wrap">
+    <div class="pf-footer__grid">
+      <div class="pf-footer__about">
+        <a class="pf-brand pf-brand--light" href="/">
+          <img class="pf-brand__mark" src="{% static 'img/brand/logo-mark.svg' %}" width="34" height="33" alt="">
+          <span class="pf-brand__name">Modulis</span><span class="pf-brand__tag">{% translate "Profils" %}</span>
+        </a>
+        <p class="pf-footer__sign">{% translate "Une solution" %} <b>Modulis Tech</b></p>
+        <p class="pf-footer__tag">{% translate "Construisons ensemble vos solutions. Des pages pros gratuites pour les artisans, commerçants et freelances, trouvées sur Google." %}</p>
+      </div>
+      <div>
+        <p class="pf-footer__h">{% translate "Pour les pros" %}</p>
+        <ul>
+          <li><a href="{% url 'dashboard:login' %}">{% translate "Créer ma page gratuite" %}</a></li>
+          <li><a href="{% url 'dashboard:login' %}?next=/espace/modeles/">{% translate "Modèles de site" %}</a></li>
+          <li><a href="{% url 'dashboard:login' %}">{% translate "Espace pro" %}</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="pf-footer__h">Modulis Tech</p>
+        <ul>
+          <li><a href="https://www.modulis.tech/" rel="noopener">modulis.tech</a></li>
+          <li><span>{% translate "Cartes de visite NFC" %}</span></li>
+          <li><span>{% translate "Agence digitale au Cameroun" %}</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="pf-wordmark" aria-hidden="true"><span>M</span><span>O</span><span>D</span><span>U</span><span>L</span><span>I</span><span>S</span></p>
+    <div class="pf-footer__base">
+      <span>© {% now "Y" %} Modulis Tech · {{ SITE_NAME }}</span>
+      <span>{% translate "Pages pros gratuites" %}</span>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+{# Modulis skin for the Django admin (/gestion/): logo, Archivo, brand colours. Blocks of admin/base_site.html kept. #}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="icon" href="{% static 'img/brand/favicon.svg' %}" type="image/svg+xml">
+<link rel="icon" href="{% static 'img/brand/favicon-32.png' %}" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="{% static 'css/fonts.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/modulis-admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a class="mx-brand" href="{% url 'admin:index' %}">
+    <img class="mx-brand__mark" src="{% static 'img/brand/logo-mark.svg' %}" width="34" height="33" alt="">
+    <span class="mx-brand__name">Modulis</span>
+    <span class="mx-brand__title">{{ site_header|default:_('Django administration') }}</span>
+  </a>
+</div>
+{% if user.is_anonymous %}
+  {% include "admin/color_theme_toggle.html" %}
+{% endif %}
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

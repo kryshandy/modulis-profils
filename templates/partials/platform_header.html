@@ -1,0 +1,17 @@
+{% load i18n static %}<a class="pf-skip" href="#main">{% translate "Aller au contenu" %}</a>
+<header class="pf-nav">
+  <div class="pf-wrap">
+    <div class="pf-nav__pill">
+      <a class="pf-brand" href="/">
+        <img class="pf-brand__mark" src="{% static 'img/brand/logo-mark.svg' %}" width="34" height="33" alt="">
+        <span class="pf-brand__name">Modulis</span><span class="pf-brand__tag">{% translate "Profils" %}</span>
+      </a>
+      <nav class="pf-nav__links" aria-label="{% translate 'Navigation principale' %}">
+        <a href="/#comment">{% translate "Comment ça marche" %}</a>
+        <a href="/#modeles">{% translate "Modèles" %}</a>
+        <a href="/#villes">{% translate "Villes" %}</a>
+      </nav>
+      <a class="pf-btn pf-btn--sm" href="{% url 'dashboard:login' %}"><span class="pf-btn__dot" aria-hidden="true"></span>{% translate "Créer ma page" %}</a>
+    </div>
+  </div>
+</header>

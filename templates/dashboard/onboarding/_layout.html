@@ -9,7 +9,7 @@
     <a class="iconbtn" href="{% url 'dashboard:onboarding' previous %}" aria-label="{% translate 'Étape précédente' %}">{% icon "back" %}</a>
   {% else %}<span class="iconbtn iconbtn--ghost" aria-hidden="true"></span>{% endif %}
   <div class="wizard__progress">
-    <p class="wizard__count">{% blocktranslate with n=step_number total=step_total %}Étape {{ n }} sur {{ total }}{% endblocktranslate %}</p>
+    <p class="wizard__count">{% icon "logo" "brand__mark" %}{% blocktranslate with n=step_number total=step_total %}Étape {{ n }} sur {{ total }}{% endblocktranslate %}</p>
     <ol class="steps" aria-hidden="true">
       {% for s in steps %}<li class="steps__item{% if s.done %} is-done{% endif %}{% if s.current %} is-current{% endif %}"></li>{% endfor %}
     </ol>

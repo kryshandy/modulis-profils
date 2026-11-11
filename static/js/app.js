@@ -230,6 +230,19 @@
     });
   }
 
+  /* "Plus" sheet of the bottom nav: close on outside tap and Escape ------------------------ */
+  doc.addEventListener("click", function (e) {
+    $$("details.more[open]").forEach(function (d) { if (!d.contains(e.target)) { d.open = false; } });
+  });
+  doc.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") { return; }
+    $$("details.more[open]").forEach(function (d) {
+      d.open = false;
+      var s = $("summary", d);
+      if (s) { s.focus(); }
+    });
+  });
+
   /* Init (on load and after every HTMX swap) ---------------------------------------------- */
   function init(root) {
     $$(".js-only[hidden]", root).forEach(function (el) { el.hidden = false; });
