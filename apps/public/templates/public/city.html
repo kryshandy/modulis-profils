@@ -1,23 +1,36 @@
 {% extends "public/base_public.html" %}
 {% load i18n %}
+{% block body_class %}platform platform--listing{% endblock %}
+{% block theme_color %}#EEF4F3{% endblock %}
+{% block styles %}{% include "partials/platform_head.html" %}{% endblock %}
+{% block header %}{% include "partials/platform_header.html" %}{% endblock %}
 {% block content %}
-{% include "public/_breadcrumb.html" %}
-<h1>{% blocktranslate with city=city.name %}Professionnels à {{ city }}{% endblocktranslate %}</h1>
+<div class="pf-pagehead">
+  <div class="pf-wrap">
+    {% include "public/_breadcrumb.html" %}
+    <p class="pf-kicker"><span class="pf-sq pf-sq--teal" aria-hidden="true"></span>{% translate "Annuaire des pros" %}</p>
+    <h1>{% blocktranslate with city=city.name %}Professionnels à {{ city }}{% endblocktranslate %}</h1>
+  </div>
+</div>
+<div class="pf-wrap pf-listing">
 {% if trades %}
 <section class="section">
-  <h2>{% translate "Métiers présents" %}</h2>
-  <ul class="chips">
+  <h2 class="pf-kicker"><span class="pf-sq pf-sq--coral" aria-hidden="true"></span>{% translate "Métiers présents" %}</h2>
+  <ul class="chips pf-chips">
     {% for c in trades %}<li>{% if c.linked %}<a class="chip" href="{{ c.url }}">{{ c.trade.plural_name }} <span class="chip__count">{{ c.count }}</span></a>{% else %}<span class="chip">{{ c.trade.plural_name }} <span class="chip__count">{{ c.count }}</span></span>{% endif %}</li>{% endfor %}
   </ul>
 </section>
 {% endif %}
 <section class="section">
-  <h2>{% translate "Profils" %}</h2>
+  <h2 class="pf-kicker"><span class="pf-sq pf-sq--saffron" aria-hidden="true"></span>{% translate "Profils" %}</h2>
   {% if page.object_list %}
-    <ul class="pro-list">{% for p in page.object_list %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+    <ul class="pro-list pf-pros">{% for p in page.object_list %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
     {% include "public/_pagination.html" %}
   {% else %}
-    <p>{% translate "Aucun profil pour l’instant dans cette ville." %}</p>
+    <p class="pf-empty">{% translate "Aucun profil pour l’instant dans cette ville." %}</p>
   {% endif %}
 </section>
+{% include "partials/platform_join.html" %}
+</div>
 {% endblock %}
+{% block footer %}{% include "partials/platform_footer.html" %}{% endblock %}

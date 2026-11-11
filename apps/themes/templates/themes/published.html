@@ -1,0 +1,50 @@
+{% extends "dashboard_base.html" %}
+{% load i18n static dashboard_tags %}
+{% block page_title %}{% translate "Ta page est en ligne" %}{% endblock %}
+{% block dash_head %}<link rel="stylesheet" href="{% static 'css/themes/dashboard.css' %}">{% endblock %}
+{% block dash_content %}
+<div class="tm tm-done">
+  <section class="tm-done__hero card">
+    <span class="tm-done__icon" aria-hidden="true">{% icon "check" "icon--xl" %}</span>
+    {# Only claim it when it is true: indexable page AND instant notifications switched on. #}
+    {% if indexable and status.state != "disabled" %}
+    <h1 class="h1">{% translate "Ta page est en ligne — Google et Bing sont prévenus" %}</h1>
+    {% else %}
+    <h1 class="h1">{% translate "Ta page est en ligne" %}</h1>
+    {% endif %}
+    <p class="lead">{% blocktranslate with name=theme.name n=version %}Nouveau design « {{ name }} » publié (version {{ n }}).{% endblocktranslate %}</p>
+
+    <div class="url-card tm-done__url">
+      <span class="url-card__label small muted">{% translate "Ton adresse" %}</span>
+      <a class="url-card__url text-break" href="{{ live_url }}" target="_blank" rel="noopener">{{ live_url|without_scheme }}</a>
+      <div class="btn-row">
+        <a class="btn btn--primary" href="{{ live_url }}" target="_blank" rel="noopener">{% icon "eye" %}<span>{% translate "Voir ma page" %}</span></a>
+        <button class="btn btn--ghost js-only" type="button" data-copy="{{ live_url }}" data-copied="{% translate 'Lien copié ✓' %}" hidden>{% icon "copy" %}<span>{% translate "Copier le lien" %}</span></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="tm-done__grid">
+    <section class="card stack" aria-labelledby="share-title">
+      <h2 class="h3" id="share-title">{% translate "Fais-le savoir" %}</h2>
+      <p class="muted small">{% translate "Les premières visites aident Google à découvrir ta page plus vite." %}</p>
+      <div class="btn-row">
+        <a class="btn btn--whatsapp" href="{{ whatsapp_share }}" target="_blank" rel="noopener">{% icon "whatsapp" %}<span>{% translate "Partager sur WhatsApp" %}</span></a>
+        <a class="btn btn--ghost" href="{{ facebook_share }}" target="_blank" rel="noopener">{% icon "share" %}<span>Facebook</span></a>
+        <a class="btn btn--ghost" href="{% url 'dashboard:share' %}">{% icon "qr" %}<span>{% translate "QR code et affiche" %}</span></a>
+      </div>
+    </section>
+
+    <section class="card stack" aria-labelledby="engines-title">
+      <h2 class="h3" id="engines-title">{% translate "Moteurs de recherche" %}</h2>
+      {% include "themes/partials/status.html" %}
+      {% if blockers %}
+      <ul class="bullets small">{% for b in blockers %}<li>{{ b }}</li>{% endfor %}</ul>
+      <a class="btn btn--ghost btn--small" href="{% url 'dashboard:edit' 'identite' %}">{% icon "edit" %}<span>{% translate "Compléter ma page" %}</span></a>
+      {% endif %}
+    </section>
+  </div>
+
+  <p class="center"><a class="btn btn--link" href="{% url 'themes:gallery' %}">{% translate "Revenir aux modèles" %}</a></p>
+</div>
+{% endblock %}

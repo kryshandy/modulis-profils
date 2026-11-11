@@ -1,0 +1,10 @@
+{% if links %}
+<section class="t-section t-section--links" id="liens">
+  <div class="t-wrap t-section__inner">
+    <h2 class="t-h2">{{ label }}</h2>
+    <ul class="links t-links">
+      {% for l in links %}<li><a href="{{ l.url }}" rel="{{ user_link_rel }}" data-track="link">{{ l.label }}</a></li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}

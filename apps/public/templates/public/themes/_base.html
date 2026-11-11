@@ -1,0 +1,65 @@
+{% extends "public/base_public.html" %}
+{% load i18n static public_images public_theme %}
+{# Every theme renders through this file: same <head> (title, meta, canonical, robots, Open Graph), #}
+{# same JSON-LD @graph, a single h1 (in the hero partial) and the same breadcrumb. No inline style/script. #}
+{% block theme_color %}{{ theme_color }}{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/themes/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/themes/'|add:theme.layout|add:'.css' %}">
+  {% if font_css_url %}<link rel="stylesheet" href="{{ font_css_url }}">
+  {% endif %}<link rel="stylesheet" href="{{ theme_css_url }}">{% endblock %}
+{% block head %}{% if photo %}<link rel="preload" as="image" {% preload_attrs photo %} fetchpriority="high">{% endif %}{% if preview %}
+  <base target="_blank">{% endif %}{% endblock %}
+{% block body_class %}t t--{{ theme.layout }} t-font--{{ theme.font_pair }} t-theme--{{ theme.theme.code }}{% endblock %}
+
+{% block header %}
+<header class="t-bar">
+  <div class="t-wrap t-bar__inner">
+    <span class="t-bar__mark" aria-hidden="true">{{ profile.display_name|first|upper }}</span>
+    <span class="t-bar__name">{{ profile.display_name }}</span>
+    <a class="t-bar__link" href="#contact">{% translate "Contact" %}</a>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+{% if preview %}<p class="t-notice" role="status">{% translate "Aperçu privé : seul toi le vois. Rien n'est publié tant que tu n'as pas validé." %}</p>{% endif %}
+{% if owner_private %}
+<p class="t-notice t-notice--warn" role="status">{% translate "Ta page est privée : toi seul la vois. Rends-la publique depuis ton espace pour que tes clients la trouvent." %}</p>
+{% endif %}
+<article class="t-page"{% if not preview %} data-profile-id="{{ profile.pk }}"{% endif %}>
+  {% block hero %}{% endblock %}
+  <div class="t-body">
+    {% for s in sections %}{% section_template s.key as tpl %}{% include tpl with label=s.label %}{% endfor %}
+  </div>
+  <p class="share t-share t-wrap"><a class="btn btn--quiet" href="{{ share_url }}" rel="{{ contact_rel }}" data-track="share"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#share"></use></svg>{% translate "Partager sur WhatsApp" %}</a></p>
+</article>
+
+{% if similar %}
+<section class="t-similar t-wrap similar">
+  <h2 class="t-h2">{{ similar_title }}</h2>
+  <ul class="pro-list">{% for p in similar %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+</section>
+{% endif %}
+
+<div class="t-wrap">{% include "public/_breadcrumb.html" %}</div>
+{% if not preview %}<img class="pixel" src="/p/{{ profile.pk }}.gif" width="1" height="1" alt="" loading="eager">{% endif %}
+{% endblock %}
+
+{% block footer %}
+{% if show_branding %}
+<aside class="growth-banner">
+  <a href="{{ signup_url }}">{% translate "Crée ta page pro gratuite" %}</a>
+  <span>{% blocktranslate with site=SITE_NAME %}avec {{ site }}{% endblocktranslate %}</span>
+</aside>
+{% endif %}
+<footer class="site-footer t-footer">
+  <p><a href="/">{{ SITE_NAME }}</a> · <a href="{{ report_url }}" rel="nofollow">{% translate "Signaler cette page" %}</a></p>
+</footer>
+{% if whatsapp_url or phone %}
+<nav class="t-dock" aria-label="{% translate 'Contact rapide' %}">
+  {% if whatsapp_url %}<a class="btn btn--primary" href="{{ whatsapp_url }}" rel="{{ contact_rel }}" data-track="whatsapp"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#whatsapp"></use></svg>WhatsApp</a>{% endif %}
+  {% if phone %}<a class="btn {% if whatsapp_url %}btn--secondary{% else %}btn--primary{% endif %}" href="tel:{{ phone }}" data-track="call"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#phone"></use></svg>{% translate "Appeler" %}</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/profile.js' %}" defer></script>{% endblock %}

@@ -1,0 +1,16 @@
+{% load i18n dashboard_tags %}<section class="tm-preview" data-preview aria-label="{% translate 'Aperçu de ta page' %}">
+  <div class="tm-preview__bar">
+    <p class="tm-preview__title">{% icon "eye" %}<span>{% translate "Aperçu avec ta page" %}</span></p>
+    <div class="tm-device" role="group" aria-label="{% translate 'Taille d’écran' %}">
+      <button class="tm-device__btn" type="button" data-device="mobile" aria-pressed="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="7" y="2.5" width="10" height="19" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 18.5h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{% translate "Mobile" %}</span></button>
+      <button class="tm-device__btn" type="button" data-device="desktop" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2.5" y="4" width="19" height="12.5" rx="1.8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16.5V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>{% translate "Ordinateur" %}</span></button>
+    </div>
+  </div>
+  <div class="tm-preview__stage" data-stage="mobile">
+    <div class="tm-preview__device">
+      <iframe class="tm-preview__frame" src="{{ preview_url }}" title="{% blocktranslate %}Aperçu : {{ title }}{% endblocktranslate %}" loading="lazy" data-preview-frame></iframe>
+    </div>
+    <p class="tm-preview__loading small muted" data-preview-status hidden>{% translate "Mise à jour de l'aperçu…" %}</p>
+  </div>
+  <p class="small muted tm-preview__alt"><a href="{{ preview_url }}" target="_blank" rel="noopener">{% translate "Ouvrir l'aperçu en plein écran" %}</a></p>
+</section>

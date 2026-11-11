@@ -1,0 +1,145 @@
+{% extends "dashboard_base.html" %}
+{% load i18n static dashboard_tags %}
+{% block page_title %}{% translate "Personnaliser" %} · {{ theme.name }}{% endblock %}
+{% block dash_head %}<link rel="stylesheet" href="{% static 'css/themes/dashboard.css' %}">{% endblock %}
+{% block dash_content %}
+<div class="tm tm-customize">
+  <a class="btn btn--link tm-back" href="{% url 'themes:gallery' %}">{% icon "left" %}<span>{% translate "Changer de modèle" %}</span></a>
+  <header class="tm-head">
+    <p class="tm-kicker">{% icon "palette" %}<span>{% blocktranslate with name=theme.name %}Modèle {{ name }}{% endblocktranslate %}</span></p>
+    <h1 class="h1">{% translate "Personnalise ta page" %}</h1>
+    <p class="lead">{% translate "Chaque changement est enregistré en brouillon et visible dans l'aperçu. Ta page en ligne ne change qu'au moment où tu publies." %}</p>
+  </header>
+
+  {% if error %}<p class="alert alert--error" role="alert">{{ error }}</p>{% endif %}
+
+  <div class="tm-studio">
+    <form class="tm-editor" method="post" action="{% url 'themes:customize' %}" data-theme-editor novalidate>
+      {% csrf_token %}
+      {# Default button for the Enter key (otherwise the first enabled "move" arrow would be used). #}
+      <button class="tm-default-submit" type="submit" tabindex="-1" aria-hidden="true">{% translate "Enregistrer" %}</button>
+
+      <fieldset class="tm-field card">
+        <legend class="tm-field__title">{% translate "Couleurs" %}</legend>
+        <p class="small muted">{% translate "Les textes sont ajustés automatiquement pour rester lisibles." %}</p>
+        <div class="tm-presets">
+          {% for p in presets %}
+          <label class="tm-preset">
+            <input type="radio" name="preset" value="{{ p.index }}"{% if preset == p.index %} checked{% endif %}
+              data-primary="{{ p.palette.primary }}" data-accent="{{ p.palette.accent }}" data-background="{{ p.palette.background }}" data-surface="{{ p.palette.surface }}" data-text="{{ p.palette.text }}">
+            <span class="tm-preset__box">
+              <svg class="tm-swatch" viewBox="0 0 64 40" width="64" height="40" aria-hidden="true" focusable="false">
+                <rect width="64" height="40" rx="6" fill="{{ p.palette.background }}"/>
+                <rect x="6" y="6" width="52" height="12" rx="3" fill="{{ p.palette.primary }}"/>
+                <rect x="6" y="22" width="34" height="12" rx="3" fill="{{ p.palette.surface }}"/>
+                <rect x="10" y="26" width="18" height="3" rx="1.5" fill="{{ p.palette.text }}"/>
+                <circle cx="51" cy="28" r="6" fill="{{ p.palette.accent }}"/>
+              </svg>
+              <span class="tm-preset__name">{{ p.name|default:_("Palette") }}</span>
+            </span>
+          </label>
+          {% endfor %}
+          <label class="tm-preset">
+            <input type="radio" name="preset" value="custom"{% if preset == "custom" %} checked{% endif %} data-custom>
+            <span class="tm-preset__box tm-preset__box--custom">
+              <svg class="tm-swatch" viewBox="0 0 64 40" width="64" height="40" aria-hidden="true" focusable="false">
+                <rect width="64" height="40" rx="6" fill="{{ palette.background }}"/>
+                <circle cx="16" cy="20" r="8" fill="{{ palette.primary }}"/>
+                <circle cx="32" cy="20" r="8" fill="{{ palette.accent }}"/>
+                <circle cx="48" cy="20" r="8" fill="{{ palette.text }}"/>
+              </svg>
+              <span class="tm-preset__name">{% translate "Mes couleurs" %}</span>
+            </span>
+          </label>
+        </div>
+        <div class="tm-colors">
+          {% for key, value in palette_fields %}
+          <label class="tm-color">
+            <input type="color" name="color_{{ key }}" value="{{ value|lower }}" data-color="{{ key }}">
+            <span>{% if key == "primary" %}{% translate "Principale" %}{% elif key == "accent" %}{% translate "Accent" %}{% elif key == "background" %}{% translate "Fond" %}{% elif key == "surface" %}{% translate "Cartes" %}{% else %}{% translate "Texte" %}{% endif %}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset class="tm-field card">
+        <legend class="tm-field__title">{% translate "Typographie" %}</legend>
+        <div class="tm-options tm-options--fonts">
+          {% for code, label in fonts %}
+          <label class="tm-option">
+            <input type="radio" name="font_pair" value="{{ code }}"{% if draft.font_pair == code %} checked{% endif %}>
+            <span class="tm-option__box"><span class="tm-font-sample tm-font--{{ code }}" aria-hidden="true">Aa</span><span>{{ label }}</span></span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset class="tm-field card">
+        <legend class="tm-field__title">{% translate "En-tête de la page" %}</legend>
+        <div class="tm-options">
+          {% for code, label in layouts %}
+          <label class="tm-option">
+            <input type="radio" name="hero_variant" value="{{ code }}"{% if draft.hero_variant == code %} checked{% endif %}>
+            <span class="tm-option__box"><img src="{% static 'img/themes/layout-'|add:code|add:'.svg' %}" width="72" height="54" alt=""><span>{{ label }}</span></span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset class="tm-field card">
+        <legend class="tm-field__title">{% translate "Angles" %}</legend>
+        <div class="tm-options tm-options--row">
+          {% for code, label in corners %}
+          <label class="tm-option">
+            <input type="radio" name="corners" value="{{ code }}"{% if draft.corners == code %} checked{% endif %}>
+            <span class="tm-option__box"><span class="tm-corner tm-corner--{{ code }}" aria-hidden="true"></span><span>{{ label }}</span></span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset class="tm-field card">
+        <legend class="tm-field__title">{% translate "Bouton principal" %}</legend>
+        <label class="form-field">
+          <span class="form-field__label">{% translate "Texte du bouton WhatsApp" %}</span>
+          <input type="text" name="cta_label" value="{{ draft.cta_label }}" maxlength="{{ cta_max }}" placeholder="{% translate 'Écrire sur WhatsApp' %}">
+          <span class="form-field__help">{% translate "Exemples : « Demander un devis », « Prendre rendez-vous », « Commander »." %}</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="tm-field card">
+        <legend class="tm-field__title">{% translate "Sections de la page" %}</legend>
+        <p class="small muted">{% translate "Change l'ordre avec les flèches. La présentation et les prestations restent visibles : Google en a besoin." %}</p>
+        <ol class="tm-sections" data-sections>
+          {% for s in sections %}
+          <li class="tm-section" data-section="{{ s.key }}">
+            <input type="hidden" name="order" value="{{ s.key }}">
+            <label class="tm-switch">
+              {% if s.locked %}<input type="hidden" name="visible_{{ s.key }}" value="on"><input type="checkbox" checked disabled>
+              {% else %}<input type="checkbox" name="visible_{{ s.key }}"{% if s.visible %} checked{% endif %}>{% endif %}
+              <span class="tm-switch__track" aria-hidden="true"></span>
+              <span class="tm-section__label">{{ s.label }}</span>
+            </label>
+            <span class="tm-section__moves">
+              <button class="iconbtn iconbtn--ghost" type="submit" name="move" value="{{ s.key }}:up" data-move="up"{% if s.first %} disabled{% endif %} aria-label="{% blocktranslate with label=s.label %}Monter « {{ label }} »{% endblocktranslate %}">{% icon "up" %}</button>
+              <button class="iconbtn iconbtn--ghost" type="submit" name="move" value="{{ s.key }}:down" data-move="down"{% if s.last %} disabled{% endif %} aria-label="{% blocktranslate with label=s.label %}Descendre « {{ label }} »{% endblocktranslate %}">{% icon "down" %}</button>
+            </span>
+          </li>
+          {% endfor %}
+        </ol>
+      </fieldset>
+
+      <div class="tm-editor__actions">
+        <p class="tm-save-state small muted" data-save-state role="status" aria-live="polite"></p>
+        <button class="btn btn--ghost" type="submit" data-save-button>{% translate "Enregistrer le brouillon" %}</button>
+        <button class="btn btn--primary btn--lg" type="submit" name="next" value="publish">{% translate "Valider et publier" %}{% icon "right" %}</button>
+      </div>
+    </form>
+
+    <div class="tm-studio__preview">
+      {% include "themes/partials/preview_frame.html" with title=theme.name %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block dash_scripts %}<script src="{% static 'js/theme-editor.js' %}" defer></script>{% endblock %}

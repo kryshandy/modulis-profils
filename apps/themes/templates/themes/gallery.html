@@ -1,0 +1,77 @@
+{% extends "dashboard_base.html" %}
+{% load i18n static dashboard_tags %}
+{% block page_title %}{% translate "Modèles de site" %}{% endblock %}
+{% block dash_head %}<link rel="stylesheet" href="{% static 'css/themes/dashboard.css' %}">{% endblock %}
+{% block dash_content %}
+<div class="tm">
+  <header class="tm-head">
+    <p class="tm-kicker">{% icon "palette" %}<span>{% blocktranslate count n=total %}{{ n }} modèle professionnel{% plural %}{{ n }} modèles professionnels{% endblocktranslate %}</span></p>
+    <h1 class="h1">{% translate "Choisis le style de ta page" %}</h1>
+    <p class="lead">{% translate "Des modèles prêts à l'emploi, pensés pour ton métier. Tu gardes tes textes et tes photos : choisis, ajuste les couleurs, publie. Google est prévenu tout de suite." %}</p>
+  </header>
+
+  {% if not enabled %}
+  <p class="alert alert--warning" role="status">{% translate "Le choix des modèles est momentanément indisponible. Ta page reste en ligne avec son design actuel." %}</p>
+  {% else %}
+
+  <section class="tm-current card" aria-labelledby="tm-current-title">
+    <img class="tm-current__thumb" src="{% static 'img/themes/'|add:live.theme.code|add:'.svg' %}" width="120" height="90" alt="">
+    <div class="tm-current__text">
+      <p class="small muted">{% translate "Ta page utilise" %}</p>
+      <h2 class="h3" id="tm-current-title">{{ live.theme.name }}</h2>
+    </div>
+    <div class="tm-current__actions">
+      {% if has_draft %}<a class="btn btn--primary btn--small" href="{% url 'themes:customize' %}">{% translate "Reprendre mon brouillon" %}</a>
+      {% else %}<a class="btn btn--ghost btn--small" href="{% url 'themes:customize' %}">{% icon "edit" %}<span>{% translate "Personnaliser" %}</span></a>{% endif %}
+    </div>
+  </section>
+
+  <nav class="tm-filter" aria-label="{% translate 'Filtrer par métier' %}">
+    <ul class="tm-chips">
+      <li><a class="tm-chip" href="{% url 'themes:gallery' %}"{% if not category %} aria-current="true"{% endif %}>{% translate "Tous" %} <span class="tm-chip__n">{{ total }}</span></a></li>
+      {% for value, label, n in categories %}
+      <li><a class="tm-chip" href="?categorie={{ value }}"{% if category == value %} aria-current="true"{% endif %}>{{ label }} <span class="tm-chip__n">{{ n }}</span></a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+
+  {% if not has_premium %}
+  <p class="tm-upsell">{% icon "sparkle" %}<span>{% translate "Les modèles Premium sont inclus dans les offres Essentiel et Pro. Tu peux tous les prévisualiser avec ta page." %}</span></p>
+  {% endif %}
+
+  <ul class="tm-grid">
+    {% for c in cards %}{% with t=c.theme %}
+    <li class="tm-card{% if c.is_current %} is-current{% endif %}{% if c.locked %} is-locked{% endif %}">
+      <a class="tm-card__shot" href="{% url 'themes:detail' t.code %}" aria-label="{% blocktranslate with name=t.name %}Aperçu du modèle {{ name }}{% endblocktranslate %}">
+        <img src="{% static 'img/themes/'|add:t.code|add:'.svg' %}" width="320" height="240" alt="" loading="lazy" decoding="async">
+      </a>
+      <div class="tm-card__body">
+        <div class="tm-card__badges">
+          {% if t.is_premium %}<span class="tm-badge tm-badge--premium">{% translate "Premium" %}</span>{% else %}<span class="tm-badge">{% translate "Gratuit" %}</span>{% endif %}
+          {% if c.is_current %}<span class="tm-badge tm-badge--current">{% icon "check" %}{% translate "Actuel" %}</span>{% elif c.is_draft %}<span class="tm-badge tm-badge--draft">{% translate "Brouillon" %}</span>{% endif %}
+        </div>
+        <h2 class="tm-card__name">{{ t.name }}</h2>
+        <p class="tm-card__cat">{{ t.get_category_display }}</p>
+        <p class="tm-card__desc">{{ t.description }}</p>
+        <div class="tm-card__actions">
+          <a class="btn btn--ghost btn--small" href="{% url 'themes:detail' t.code %}">{% icon "eye" %}<span>{% translate "Aperçu" %}</span></a>
+          {% if c.locked %}
+          <a class="btn btn--small tm-lock" href="{% url 'dashboard:settings' %}#offre">{% translate "Débloquer" %}</a>
+          {% elif c.is_draft %}
+          <a class="btn btn--primary btn--small" href="{% url 'themes:customize' %}">{% translate "Reprendre" %}</a>
+          {% else %}
+          <form method="post" action="{% url 'themes:use' t.code %}">{% csrf_token %}
+            <button class="btn btn--primary btn--small" type="submit">{% if c.is_current %}{% translate "Personnaliser" %}{% else %}{% translate "Utiliser ce modèle" %}{% endif %}</button>
+          </form>
+          {% endif %}
+        </div>
+        {% if c.locked %}<p class="tm-card__lock small muted">{% translate "Inclus dans Essentiel et Pro." %}</p>{% endif %}
+      </div>
+    </li>
+    {% endwith %}{% empty %}
+    <li class="empty">{% translate "Aucun modèle dans cette catégorie pour l'instant." %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endblock %}

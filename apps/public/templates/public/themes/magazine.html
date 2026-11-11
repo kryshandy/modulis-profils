@@ -1,0 +1,12 @@
+{% extends "public/themes/_base.html" %}
+{% block hero %}
+<header class="t-hero profile-head{% if not photo %} t-hero--nophoto{% endif %}">
+  <div class="t-hero__media">{% include "public/themes/_photo.html" %}</div>
+  <div class="t-hero__shade" aria-hidden="true"></div>
+  <div class="t-wrap t-hero__text">
+    {% if profile.city %}<p class="t-eyebrow">{{ profile.city.name }}</p>{% endif %}
+    {% include "public/themes/_identity.html" %}
+    {% include "public/themes/_actions.html" %}
+  </div>
+</header>
+{% endblock %}

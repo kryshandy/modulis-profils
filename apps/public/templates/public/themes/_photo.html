@@ -1,0 +1,1 @@
+{% load public_images %}{% if photo %}<img class="profile-head__photo" {% img_attrs photo %} alt="{{ photo_alt }}" fetchpriority="high" decoding="async">{% else %}<span class="profile-head__initial t-initial" aria-hidden="true">{{ profile.display_name|first|upper }}</span>{% endif %}

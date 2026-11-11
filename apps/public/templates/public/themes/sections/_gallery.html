@@ -1,0 +1,10 @@
+{% load public_images %}{% if gallery %}
+<section class="t-section t-section--gallery" id="realisations">
+  <div class="t-wrap t-section__inner">
+    <h2 class="t-h2">{{ label }}</h2>
+    <ul class="gallery t-gallery">
+      {% for g in gallery %}<li><img {% img_attrs g %} alt="{{ g.alt }}"{% if g.lazy %} loading="lazy"{% endif %} decoding="async"></li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}

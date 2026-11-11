@@ -1,0 +1,13 @@
+{% extends "public/themes/_base.html" %}
+{% block hero %}
+<header class="t-hero profile-head">
+  <div class="t-hero__band" aria-hidden="true"></div>
+  <div class="t-wrap">
+    <div class="t-hero__card">
+      {% include "public/themes/_photo.html" %}
+      {% include "public/themes/_identity.html" %}
+      {% include "public/themes/_actions.html" %}
+    </div>
+  </div>
+</header>
+{% endblock %}

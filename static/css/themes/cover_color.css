@@ -1,0 +1,23 @@
+/* Hero "Bandeau de couleur": a primary band with soft accent shapes, the identity card overlapping it. */
+.t--cover_color .t-hero { padding-bottom: .5rem; }
+.t--cover_color .t-hero__band {
+  position: absolute; inset: 0 0 auto; height: 12.5rem; overflow: hidden;
+  background: linear-gradient(135deg, var(--c-primary) 0%, color-mix(in srgb, var(--c-primary) 72%, #000) 100%);
+}
+.t--cover_color .t-hero__band::before,
+.t--cover_color .t-hero__band::after { content: ""; position: absolute; border-radius: 50%; }
+.t--cover_color .t-hero__band::before { width: 22rem; height: 22rem; right: -7rem; top: -11rem; background: var(--c-accent); opacity: .35; }
+.t--cover_color .t-hero__band::after { width: 12rem; height: 12rem; left: -4rem; bottom: -7rem; border: 2px solid var(--c-on-primary); opacity: .18; }
+.t--cover_color .t-hero__card {
+  position: relative; margin-top: 4.5rem; padding: 0 1.25rem 1.5rem; text-align: center;
+  background: var(--c-surface); border-radius: var(--r-lg); box-shadow: var(--shadow); border: 1px solid var(--c-line);
+}
+.t--cover_color .profile-head__photo,
+.t--cover_color .t-initial { margin: -80px auto 1rem; border: 5px solid var(--c-surface); box-shadow: 0 0 0 3px var(--c-accent); }
+.t--cover_color .t-meta { justify-content: center; }
+.t--cover_color .t-actions { text-align: left; }
+@media (min-width: 40rem) {
+  .t--cover_color .t-hero__band { height: 15rem; }
+  .t--cover_color .t-hero__card { margin-top: 7rem; padding: 0 2.5rem 2rem; }
+  .t--cover_color .t-actions { justify-content: center; }
+}

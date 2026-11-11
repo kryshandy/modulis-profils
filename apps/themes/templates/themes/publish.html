@@ -1,0 +1,66 @@
+{% extends "dashboard_base.html" %}
+{% load i18n static dashboard_tags %}
+{% block page_title %}{% translate "Valider et publier" %}{% endblock %}
+{% block dash_head %}<link rel="stylesheet" href="{% static 'css/themes/dashboard.css' %}">{% endblock %}
+{% block dash_content %}
+<div class="tm tm-publish">
+  <a class="btn btn--link tm-back" href="{% url 'themes:customize' %}">{% icon "left" %}<span>{% translate "Retour à la personnalisation" %}</span></a>
+  <header class="tm-head">
+    <p class="tm-kicker">{% icon "sparkle" %}<span>{% blocktranslate with name=theme.name %}Modèle {{ name }}{% endblocktranslate %}</span></p>
+    <h1 class="h1">{% translate "Prêt à mettre en ligne ?" %}</h1>
+    <p class="lead">{% translate "Ta page est mise à jour à l'instant, et Google et Bing sont prévenus aussitôt qu'elle remplit leurs critères." %}</p>
+  </header>
+
+  <div class="tm-publish__grid">
+    <section class="card tm-ready" aria-labelledby="ready-title">
+      <div class="tm-ready__score">
+        <span class="tm-ready__value">{{ readiness.score }}<small>%</small></span>
+        <div>
+          <h2 class="h3" id="ready-title">{% translate "Prête pour Google" %}</h2>
+          {% if readiness.indexable %}
+            <p class="status status--ok">{% icon "check" %}{% translate "Ta page remplit toutes les conditions : elle sera proposée à Google dès la publication." %}</p>
+          {% else %}
+            <p class="status status--wait">{% translate "Ta page sera en ligne, mais pas encore proposée à Google." %}</p>
+          {% endif %}
+        </div>
+      </div>
+      <ul class="checklist">
+        {% for item in readiness.items %}
+        <li class="checklist__item{% if item.done %} is-done{% endif %}">
+          <span class="checklist__icon">{% if item.done %}{% icon "check" %}{% else %}{% icon "circle" %}{% endif %}</span>
+          <span>{{ item.label }}</span>
+          {% if not item.done %}<span class="small muted">+{{ item.points }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% if readiness.blockers %}
+      <div class="tm-blockers">
+        <p class="small"><strong>{% translate "À corriger pour être sur Google :" %}</strong></p>
+        <ul class="bullets small">{% for b in readiness.blockers %}<li>{{ b }}</li>{% endfor %}</ul>
+        <a class="btn btn--ghost btn--small" href="{% url 'dashboard:edit' 'identite' %}">{% icon "edit" %}<span>{% translate "Compléter ma page" %}</span></a>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="card tm-go">
+      <h2 class="h3">{% translate "Ce qui va se passer" %}</h2>
+      <ol class="tm-steps">
+        <li>{% translate "Ton nouveau design remplace l'ancien sur ta page, à la même adresse." %}</li>
+        <li>{% translate "La date de mise à jour de ta page et le plan du site sont actualisés." %}</li>
+        <li>{% translate "Bing (IndexNow) est prévenu immédiatement ; Google relit le plan du site." %}</li>
+      </ol>
+      {% if locked %}
+        <p class="alert alert--warning">{% translate "Ce modèle est réservé aux offres Essentiel et Pro." %}</p>
+        <a class="btn btn--ghost" href="{% url 'themes:gallery' %}">{% translate "Choisir un modèle gratuit" %}</a>
+      {% else %}
+      <form method="post" action="{% url 'themes:publish' %}">{% csrf_token %}
+        <button class="btn btn--primary btn--lg btn--block" type="submit">{% icon "sparkle" %}<span>{% translate "Valider et publier" %}</span></button>
+      </form>
+      {% endif %}
+    </section>
+  </div>
+
+  {% if preview_url %}{% include "themes/partials/preview_frame.html" with title=theme.name %}{% endif %}
+</div>
+{% endblock %}
+{% block dash_scripts %}<script src="{% static 'js/theme-editor.js' %}" defer></script>{% endblock %}

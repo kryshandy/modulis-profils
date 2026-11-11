@@ -1,0 +1,15 @@
+{% load i18n public_theme %}
+<section class="t-section t-section--contact" id="contact">
+  <div class="t-wrap t-section__inner">
+    <div class="t-contact">
+      <h2 class="t-h2">{{ label }}</h2>
+      <p class="t-contact__lead">{% blocktranslate with name=profile.display_name %}Une question, un devis, un rendez-vous ? {{ name }} te répond directement.{% endblocktranslate %}</p>
+      <ul class="t-contact__list">
+        {% if phone %}<li><span class="t-contact__label">{% translate "Téléphone" %}</span><a href="tel:{{ phone }}">{{ phone|pretty_phone }}</a></li>{% endif %}
+        {% if whatsapp_url %}<li><span class="t-contact__label">WhatsApp</span><a href="{{ whatsapp_url }}" rel="{{ contact_rel }}">{{ cta_label }}</a></li>{% endif %}
+        {% if email %}<li><span class="t-contact__label">{% translate "Email" %}</span><a href="mailto:{{ email }}">{{ email }}</a></li>{% endif %}
+        <li><span class="t-contact__label">{% translate "Carte de contact" %}</span><a href="/{{ profile.slug }}/contact.vcf" rel="nofollow">{% translate "Enregistrer dans mon téléphone" %}</a></li>
+      </ul>
+    </div>
+  </div>
+</section>

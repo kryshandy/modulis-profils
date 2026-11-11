@@ -11,14 +11,16 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import DatabaseError, transaction
 from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
 from django.shortcuts import render
+from django.templatetags.static import static
 from django.urls import NoReverseMatch, reverse
 from django.utils import translation
 from django.utils.cache import patch_cache_control
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_safe
 
 from apps.profiles.models import Profile, SlugRegistry
-from apps.profiles.services import resolve_slug
+from apps.profiles.services import OPENING_DAYS, resolve_slug
 from apps.seo import jsonld, selectors
 from apps.seo.meta import (
     absolute_url,
@@ -29,6 +31,7 @@ from apps.seo.meta import (
     profile_meta,
     truncate,
 )
+from apps.themes import services as themes
 
 from . import images, responsive
 from .http import (
@@ -47,6 +50,17 @@ NOINDEX = "noindex"
 CONTACT_REL = "nofollow noopener"  # WhatsApp / maps / share: outbound, not UGC, passes no equity
 USER_LINK_REL = "ugc nofollow noopener"  # links typed by the pro
 VCARD_MAX_AGE = 300
+THEME_CSS_MAX_AGE = 365 * 86400  # versioned URL (?v=<hash>): immutable
+THEME_CSS_UNVERSIONED_MAX_AGE = 300
+DAY_LABELS = {
+    "mo": gettext_lazy("Lundi"),
+    "tu": gettext_lazy("Mardi"),
+    "we": gettext_lazy("Mercredi"),
+    "th": gettext_lazy("Jeudi"),
+    "fr": gettext_lazy("Vendredi"),
+    "sa": gettext_lazy("Samedi"),
+    "su": gettext_lazy("Dimanche"),
+}
 _DIGITS_RE = re.compile(r"\D+")
 
 
@@ -70,6 +84,17 @@ def city_path(city) -> str:
 
 def directory_path(trade, city) -> str:
     return reverse("public:directory", kwargs={"trade_plural": trade.plural_slug, "city": city.slug})
+
+
+def directory_enabled() -> bool:
+    """Platform switch for /villes/<city> and /<trades>/<city> (control center)."""
+    from apps.platform.services import feature
+
+    try:
+        with transaction.atomic():
+            return feature("directory")
+    except (DatabaseError, KeyError):  # platform tables unavailable: keep the directory on
+        return True
 
 
 def gone(request) -> HttpResponse:
@@ -170,9 +195,9 @@ def _crumbs_for_jsonld(crumbs: list[tuple[str, str]], current_path: str) -> list
     return [(n, p) for n, p in parents if p] + [(name, current_path)]
 
 
-def _city_crumb(city, minimum: int) -> tuple[str, str]:
+def _city_crumb(city, minimum: int, *, enabled: bool = True) -> tuple[str, str]:
     """The city level is linked only when /villes/<city> is indexable (like the home `linked`)."""
-    return (city.name, city_path(city) if selectors.city_count(city) >= minimum else "")
+    return (city.name, city_path(city) if enabled and selectors.city_count(city) >= minimum else "")
 
 
 # --- home, cities, directory -----------------------------------------------------------------
@@ -182,8 +207,9 @@ def _city_crumb(city, minimum: int) -> tuple[str, str]:
 @language_independent
 def home(request):
     minimum = selectors.directory_min()
-    cities = selectors.city_stats()
-    combos = selectors.directory_combos()
+    listed = directory_enabled()  # off: no city / directory links at all (those pages answer 404)
+    cities = selectors.city_stats() if listed else []
+    combos = selectors.directory_combos() if listed else []
     meta = page_meta(
         title=_("Crée ta page pro gratuite – %(site)s") % {"site": settings.SITE_NAME},
         description=_(
@@ -243,6 +269,8 @@ def _listing_jsonld(path: str, name: str, page, crumbs) -> str:
 @require_safe
 @language_independent
 def city(request, city):
+    if not directory_enabled():
+        raise Http404
     city_obj = selectors.find_city(city)
     if city_obj is None:
         raise Http404
@@ -286,6 +314,8 @@ def city(request, city):
 @require_safe
 @language_independent
 def directory(request, trade_plural, city):
+    if not directory_enabled():
+        raise Http404
     trade = selectors.find_trade_by_plural(trade_plural)
     city_obj = selectors.find_city(city) if trade else None
     if trade is None or city_obj is None:
@@ -356,9 +386,10 @@ def _profile_breadcrumb(profile: Profile, name: str) -> list[tuple[str, str]]:
     crumbs = [(_("Accueil"), "/")]
     if city:
         minimum = selectors.directory_min()
-        crumbs.append(_city_crumb(city, minimum))
+        enabled = directory_enabled()
+        crumbs.append(_city_crumb(city, minimum, enabled=enabled))
         if profile.trade:
-            linked = selectors.directory_count(profile.trade, city) >= minimum
+            linked = enabled and selectors.directory_count(profile.trade, city) >= minimum
             crumbs.append(
                 (
                     _("%(plural)s à %(city)s") % {"plural": profile.trade.plural_name, "city": city.name},
@@ -387,7 +418,47 @@ def _gallery(media, alt: str) -> list[dict]:
     return gallery
 
 
-def _profile_context(request, profile: Profile, *, owner_private: bool) -> dict:
+def _hours(profile: Profile) -> list[dict]:
+    hours = profile.opening_hours if isinstance(profile.opening_hours, dict) else {}
+    if not hours:
+        return []
+    rows = []
+    for day in OPENING_DAYS:
+        ranges = [r for r in hours.get(day) or [] if isinstance(r, list | tuple) and len(r) == 2]
+        rows.append({"day": str(DAY_LABELS[day]), "ranges": ", ".join(f"{a}–{b}" for a, b in ranges)})
+    return rows
+
+
+def font_stylesheet_url() -> str:
+    """Self-hosted Archivo (static/css/fonts.css, brand design system); empty if not collected yet."""
+    try:
+        return static("css/fonts.css")
+    except ValueError:  # missing from the static manifest: system fonts only
+        return ""
+
+
+def _theme_context(profile: Profile, theme: themes.ResolvedTheme, stylesheet_url: str) -> dict:
+    category = theme.theme.category
+    return {
+        "theme": theme,
+        "sections": [{"key": key, "label": themes.section_label(key, category)} for key in theme.visible_sections()],
+        "theme_css_url": stylesheet_url,
+        "font_css_url": font_stylesheet_url() if theme.uses_webfont else "",
+        "theme_color": theme.tokens["primary"],
+        "cta_label": theme.cta_label or _("Écrire sur WhatsApp"),
+        "hours": _hours(profile),
+    }
+
+
+def _profile_context(
+    request,
+    profile: Profile,
+    *,
+    owner_private: bool,
+    theme: themes.ResolvedTheme | None = None,
+    stylesheet_url: str = "",
+    preview: bool = False,
+) -> dict:
     city = profile.city
     job = profile.title
     name = profile.display_name
@@ -401,14 +472,16 @@ def _profile_context(request, profile: Profile, *, owner_private: bool) -> dict:
     ]
     alt = profile_alt(name, job, city.name if city else "")
     og_version = images.og_fingerprint(profile)[:8]
-    meta = profile_meta(profile, indexable=False if owner_private else None, og_version=og_version)
+    meta = profile_meta(profile, indexable=False if (owner_private or preview) else None, og_version=og_version)
+    theme = theme or themes.resolve(profile)
 
     crumbs = _profile_breadcrumb(profile, name)
     photo = None
     if profile.photo:
-        photo = responsive.responsive_image(
-            profile.photo, display_width=responsive.AVATAR_SIZE, max_width=responsive.AVATAR_MAX_VARIANT
+        display, max_variant = themes.PHOTO_DISPLAY.get(
+            theme.layout, (responsive.AVATAR_SIZE, responsive.AVATAR_MAX_VARIANT)
         )
+        photo = responsive.responsive_image(profile.photo, display_width=display, max_width=max_variant)
     # JSON-LD image: the real photo only (og.png is noindex), never a placeholder (audit #1)
     entity = jsonld.profile_entity(profile, image_url=profile.photo.url if profile.photo else "")
     graph = jsonld.page_graph(
@@ -427,6 +500,8 @@ def _profile_context(request, profile: Profile, *, owner_private: bool) -> dict:
     whatsapp = _digits(profile.whatsapp)
     similar = selectors.similar_profiles(profile)
     return {
+        **_theme_context(profile, theme, stylesheet_url or f"/{profile.slug}/theme.css?v={theme.version}"),
+        "preview": preview,
         "profile": profile,
         "meta": meta,
         "jsonld": jsonld.dumps(graph),
@@ -466,20 +541,45 @@ def profile(request, slug):
         return gone(request)
     if outcome == "old" or slug != slug.lower():
         return HttpResponsePermanentRedirect(profile_obj.get_absolute_url())
+    owner_private = outcome == "owner_private"
+    response = render_profile_page(request, profile_obj, owner_private=owner_private)
+    if owner_private:
+        response["X-Robots-Tag"] = NOINDEX
+    return _set_public_cache(request, response, private=owner_private)
+
+
+def render_profile_page(
+    request,
+    profile_obj: Profile,
+    *,
+    owner_private: bool = False,
+    theme: themes.ResolvedTheme | None = None,
+    stylesheet_url: str = "",
+    preview: bool = False,
+) -> HttpResponse:
+    """The profile page rendered with its theme (live by default; the dashboard previews pass another one).
+
+    Every theme template extends public/themes/_base.html: same head, JSON-LD, h1 and breadcrumb.
+    """
     profile_obj = (
         Profile.objects.select_related("trade", "city", "city__country")
         .prefetch_related("services", "media", "links")
         .get(pk=profile_obj.pk)
     )
-    owner_private = outcome == "owner_private"
+    theme = theme or themes.resolve(profile_obj)
     lang = profile_obj.language or settings.LANGUAGE_CODE
     with translation.override(lang):
-        context = _profile_context(request, profile_obj, owner_private=owner_private)
-        response = render(request, "public/profile.html", context)
+        context = _profile_context(
+            request,
+            profile_obj,
+            owner_private=owner_private,
+            theme=theme,
+            stylesheet_url=stylesheet_url,
+            preview=preview,
+        )
+        response = render(request, theme.template, context)
     mark_language_independent(response, lang)  # the language comes from the profile, not the browser
-    if owner_private:
-        response["X-Robots-Tag"] = NOINDEX
-    return _set_public_cache(request, response, private=owner_private)
+    return response
 
 
 @require_safe
@@ -488,6 +588,32 @@ def profile_trailing_slash(request, slug):
 
 
 # --- profile resources (never indexed) --------------------------------------------------------
+
+
+def theme_css_response(css: str) -> HttpResponse:
+    response = HttpResponse(css.encode(), content_type="text/css; charset=utf-8")
+    return _noindex(response)
+
+
+@require_safe
+def theme_css(request, slug):
+    """/<slug>/theme.css?v=<hash>: the page's colours, fonts and corners as CSS custom properties.
+
+    The URL is versioned by a hash of the settings, so a matching `v` is cached for a year; any other
+    `v` (or none) gets a short cache. Publishing a theme changes the hash: the new page links a new URL.
+    """
+    profile_obj, response = _profile_resource(request, slug, "theme.css")
+    if response:
+        return response
+    theme = themes.resolve(profile_obj)
+    response = theme_css_response(theme.css())
+    if not profile_obj.is_publicly_visible:
+        return set_private_no_store(response)
+    if request.GET.get("v") == theme.version:
+        patch_cache_control(response, public=True, max_age=THEME_CSS_MAX_AGE, immutable=True)
+    else:
+        patch_cache_control(response, public=True, max_age=THEME_CSS_UNVERSIONED_MAX_AGE)
+    return response
 
 
 @require_safe

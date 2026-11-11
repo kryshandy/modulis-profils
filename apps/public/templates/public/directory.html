@@ -1,13 +1,26 @@
 {% extends "public/base_public.html" %}
 {% load i18n %}
+{% block body_class %}platform platform--listing{% endblock %}
+{% block theme_color %}#EEF4F3{% endblock %}
+{% block styles %}{% include "partials/platform_head.html" %}{% endblock %}
+{% block header %}{% include "partials/platform_header.html" %}{% endblock %}
 {% block content %}
-{% include "public/_breadcrumb.html" %}
-<h1>{{ heading }}</h1>
+<div class="pf-pagehead">
+  <div class="pf-wrap">
+    {% include "public/_breadcrumb.html" %}
+    <p class="pf-kicker"><span class="pf-sq pf-sq--coral" aria-hidden="true"></span>{% translate "Annuaire des pros" %}</p>
+    <h1>{{ heading }}</h1>
+  </div>
+</div>
+<div class="pf-wrap pf-listing">
 {% if page.object_list %}
-  <ul class="pro-list">{% for p in page.object_list %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+  <ul class="pro-list pf-pros">{% for p in page.object_list %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
   {% include "public/_pagination.html" %}
 {% else %}
-  <p>{% blocktranslate with plural=trade.plural_name|lower city=city.name %}Aucun {{ plural }} pour l’instant à {{ city }}.{% endblocktranslate %}</p>
+  <p class="pf-empty">{% blocktranslate with plural=trade.plural_name|lower city=city.name %}Aucun {{ plural }} pour l’instant à {{ city }}.{% endblocktranslate %}</p>
 {% endif %}
-{% if city_url %}<p class="section"><a href="{{ city_url }}">{% blocktranslate with city=city.name %}Tous les professionnels à {{ city }}{% endblocktranslate %}</a></p>{% endif %}
+{% if city_url %}<p class="section"><a class="pf-link" href="{{ city_url }}">{% blocktranslate with city=city.name %}Tous les professionnels à {{ city }}{% endblocktranslate %}</a></p>{% endif %}
+{% include "partials/platform_join.html" %}
+</div>
 {% endblock %}
+{% block footer %}{% include "partials/platform_footer.html" %}{% endblock %}

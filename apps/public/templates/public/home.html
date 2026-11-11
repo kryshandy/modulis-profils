@@ -1,45 +1,178 @@
 {% extends "public/base_public.html" %}
 {% load i18n %}
-{% block body_class %}home{% endblock %}
+{% block body_class %}home platform{% endblock %}
+{% block theme_color %}#EEF4F3{% endblock %}
+{% block styles %}{% include "partials/platform_head.html" %}{% endblock %}
+{% block header %}{% include "partials/platform_header.html" %}{% endblock %}
 {% block content %}
-<section class="hero">
-  <h1>{% translate "Ta page pro gratuite, trouvée sur Google" %}</h1>
-  <p class="hero__lead">{% translate "Artisans, commerçants, freelances : en deux minutes, ton nom, ton métier, tes prestations et tes photos sur une page à ton adresse. Tes clients te contactent directement sur WhatsApp." %}</p>
-  <a class="btn btn--primary btn--lg" href="{{ signup_url }}">{% translate "Crée ta page pro gratuite" %}</a>
-  <ul class="hero__points">
-    <li>{% translate "Gratuit, sans application à installer" %}</li>
-    <li>{% translate "Une adresse simple à partager" %}</li>
-    <li>{% translate "Carte NFC et QR code en option" %}</li>
-  </ul>
+<section class="hero pf-hero">
+  <div class="pf-wrap pf-hero__grid">
+    <div class="pf-hero__text">
+      <ul class="hero__points pf-pills">
+        <li><span class="pf-sq pf-sq--coral" aria-hidden="true"></span>{% translate "Gratuit, sans application à installer" %}</li>
+        <li><span class="pf-sq pf-sq--saffron" aria-hidden="true"></span>{% translate "Une adresse simple à partager" %}</li>
+        <li><span class="pf-sq pf-sq--cobalt" aria-hidden="true"></span>{% translate "Carte NFC et QR code en option" %}</li>
+      </ul>
+      <h1 class="pf-xl pf-hero__title">{% blocktranslate %}Ta page pro, <span class="pf-hl">trouvée sur Google</span>{% endblocktranslate %}</h1>
+      <p class="hero__lead pf-hero__lead">{% translate "Artisans, commerçants, freelances : en deux minutes, ton nom, ton métier, tes prestations et tes photos sur une page à ton adresse. Tes clients te contactent directement sur WhatsApp." %}</p>
+      <div class="pf-hero__cta">
+        <a class="pf-btn pf-btn--lg" href="{{ signup_url }}"><span class="pf-btn__dot" aria-hidden="true"></span>{% translate "Crée ta page pro gratuite" %}</a>
+        <a class="pf-btn pf-btn--line pf-btn--lg" href="#comment">{% translate "Comment ça marche" %}</a>
+      </div>
+    </div>
+    <div class="pf-hero__art" aria-hidden="true">
+      <svg viewBox="0 0 440 470" width="440" height="470" focusable="false">
+        <circle cx="250" cy="220" r="190" fill="#17BDBB" opacity=".18"/>
+        <circle cx="96" cy="78" r="16" fill="#FD6552"/>
+        <circle cx="398" cy="388" r="10" fill="#FFB81C"/>
+        <g transform="rotate(-14 130 330)">
+          <rect x="18" y="262" width="250" height="156" rx="20" fill="#063A39"/>
+          <g transform="translate(42 288) scale(.2)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="34">
+            <path d="M28.5 155.5V68L98 137" stroke="#0A7F7D"/><path d="M98.5 137L168 68V155.5" stroke="#17BDBB"/>
+            <circle cx="29" cy="26" r="16.5" fill="#0A8282" stroke="none"/><circle cx="168" cy="26" r="16.5" fill="#FD6552" stroke="none"/>
+          </g>
+          <rect x="42" y="372" width="120" height="8" rx="4" fill="#EAF6F5"/>
+          <rect x="42" y="388" width="78" height="6" rx="3" fill="#9ED6D3"/>
+          <g fill="none" stroke="#17BDBB" stroke-width="5" stroke-linecap="round">
+            <path d="M214 312a26 26 0 0 1 0 40"/><path d="M228 300a44 44 0 0 1 0 64"/><path d="M242 288a62 62 0 0 1 0 88"/>
+          </g>
+        </g>
+        <g transform="translate(206 28)">
+          <rect width="206" height="410" rx="34" fill="#16242C"/>
+          <rect x="9" y="9" width="188" height="392" rx="26" fill="#FFFFFF"/>
+          <rect x="9" y="9" width="188" height="118" rx="26" fill="#FD6552"/>
+          <rect x="9" y="96" width="188" height="31" fill="#FD6552"/>
+          <rect x="22" y="24" width="162" height="26" rx="13" fill="#FFFFFF"/>
+          <circle cx="38" cy="37" r="6" fill="none" stroke="#16242C" stroke-width="2.5"/><path d="M42.5 41.5l5 5" stroke="#16242C" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="54" y="33" width="92" height="8" rx="4" fill="#C9D6D4"/>
+          <circle cx="103" cy="128" r="36" fill="#0A7F7D" stroke="#FFFFFF" stroke-width="6"/>
+          <path d="M84 140V118l19 19 19-19v22" fill="none" stroke="#EAF6F5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="44" y="178" width="118" height="12" rx="6" fill="#16242C"/>
+          <rect x="62" y="198" width="82" height="8" rx="4" fill="#9AA8AD"/>
+          <rect x="30" y="222" width="146" height="34" rx="17" fill="#128C4A"/>
+          <rect x="62" y="235" width="82" height="8" rx="4" fill="#FFFFFF"/>
+          <rect x="30" y="272" width="146" height="44" rx="12" fill="#EEF4F3"/>
+          <rect x="42" y="284" width="70" height="7" rx="3.5" fill="#16242C"/><rect x="42" y="298" width="96" height="6" rx="3" fill="#9AA8AD"/>
+          <rect x="138" y="284" width="26" height="7" rx="3.5" fill="#0A7F7D"/>
+          <rect x="30" y="324" width="146" height="44" rx="12" fill="#EEF4F3"/>
+          <rect x="42" y="336" width="58" height="7" rx="3.5" fill="#16242C"/><rect x="42" y="350" width="84" height="6" rx="3" fill="#9AA8AD"/>
+          <rect x="138" y="336" width="26" height="7" rx="3.5" fill="#0A7F7D"/>
+        </g>
+        <g transform="translate(150 70)">
+          <rect width="128" height="40" rx="20" fill="#FFFFFF"/>
+          <rect width="128" height="40" rx="20" fill="none" stroke="#16242C" stroke-opacity=".12"/>
+          <circle cx="22" cy="20" r="8" fill="#0A7F7D"/><path d="M18 20l3 3 5-6" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="38" y="16" width="74" height="8" rx="4" fill="#16242C"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="pf-wrap">
+    <ul class="pf-facts">
+      <li><b>2 min</b><span>{% translate "pour mettre ta page en ligne, avec un simple code SMS" %}</span></li>
+      <li><b>0 F</b><span>{% translate "la page, son adresse et ton QR code sont gratuits" %}</span></li>
+      <li><b>1 lien</b><span>{% translate "à partager partout : WhatsApp, Facebook, carte de visite" %}</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="pf-section pf-why">
+  <div class="pf-wrap">
+    <div class="pf-head">
+      <h2 class="pf-xl pf-head__title">{% translate "Les clients te cherchent. Sois là." %}</h2>
+      <p class="pf-head__lead">{% translate "Quand quelqu’un tape ton métier et ta ville sur Google, ta page répond : qui tu es, ce que tu fais, où te trouver, et un bouton pour t’écrire." %}</p>
+    </div>
+    <ul class="pf-promises">
+      <li class="pf-promise pf-promise--coral"><h3>{% translate "Trouvé sur Google" %}</h3><p>{% translate "Ta page est pensée pour le référencement local : ton métier, ta ville, tes prestations, tes horaires." %}</p></li>
+      <li class="pf-promise pf-promise--saffron"><h3>{% translate "Contacté sur WhatsApp" %}</h3><p>{% translate "Un bouton, et le client t’écrit directement. Pas d’intermédiaire, pas de commission." %}</p></li>
+      <li class="pf-promise pf-promise--cobalt"><h3>{% translate "Prêt en 2 minutes" %}</h3><p>{% translate "Ton numéro, un code par SMS, ton métier : ta page est en ligne. Rien à installer." %}</p></li>
+      <li class="pf-promise pf-promise--teal"><h3>{% translate "Gratuit, pour de vrai" %}</h3><p>{% translate "La page, l’adresse et le QR code sont gratuits. Les offres payantes ajoutent des options, jamais l’essentiel." %}</p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="pf-section pf-forest" id="comment">
+  <div class="pf-wrap">
+    <div class="pf-head">
+      <h2 class="pf-xl pf-head__title">{% translate "Comment ça marche" %}</h2>
+      <p class="pf-head__lead">{% translate "Trois étapes, et tes clients peuvent te trouver, te voir et t’écrire." %}</p>
+    </div>
+    <ol class="pf-steps">
+      <li class="pf-step">
+        <span class="pf-step__n" aria-hidden="true">01</span>
+        <h3>{% translate "Crée ta page" %}</h3>
+        <p>{% translate "Entre ton numéro, reçois un code par SMS, choisis ton métier. Pas de mot de passe à retenir." %}</p>
+      </li>
+      <li class="pf-step">
+        <span class="pf-step__n" aria-hidden="true">02</span>
+        <h3>{% translate "Choisis ton modèle" %}</h3>
+        <p>{% translate "Un design pensé pour ton métier, tes couleurs, tes photos. Tu changes quand tu veux." %}</p>
+      </li>
+      <li class="pf-step">
+        <span class="pf-step__n" aria-hidden="true">03</span>
+        <h3>{% translate "Partage-la partout" %}</h3>
+        <p>{% translate "Ton lien sur WhatsApp, ton QR code en vitrine, et la carte NFC Modulis : un simple contact avec un téléphone ouvre ta page." %}</p>
+        <span class="pf-nfc" aria-hidden="true"><span class="pf-nfc__card"></span><span class="pf-nfc__wave"></span></span>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="pf-section pf-templates" id="modeles">
+  <div class="pf-wrap pf-templates__grid">
+    <div>
+      <h2 class="pf-xl pf-head__title">{% translate "Un modèle pour chaque métier" %}</h2>
+      <p class="pf-head__lead">{% translate "Coiffure, restauration, BTP, services, boutique : choisis le style qui te ressemble dans ton espace pro, essaie-le sur ta page, garde-le en un clic." %}</p>
+      <a class="pf-btn pf-btn--lg" href="{{ signup_url }}?next=/espace/modeles/"><span class="pf-btn__dot" aria-hidden="true"></span>{% translate "Voir les modèles" %}</a>
+    </div>
+    <ul class="pf-thumbs" aria-hidden="true">
+      <li class="pf-thumb pf-thumb--coral"><i></i><span>{% translate "Beauté" %}</span></li>
+      <li class="pf-thumb pf-thumb--saffron"><i></i><span>{% translate "Restauration" %}</span></li>
+      <li class="pf-thumb pf-thumb--cobalt"><i></i><span>{% translate "Services" %}</span></li>
+      <li class="pf-thumb pf-thumb--forest"><i></i><span>{% translate "Artisanat" %}</span></li>
+    </ul>
+  </div>
 </section>
 
 {% if cities %}
-<section class="section">
-  <h2>{% translate "Villes" %}</h2>
-  <ul class="chips">
-    {% for c in cities %}<li>{% if c.linked %}<a class="chip" href="{{ c.url }}">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></a>{% else %}<span class="chip">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></span>{% endif %}</li>{% endfor %}
-  </ul>
+<section class="section pf-section" id="villes">
+  <div class="pf-wrap">
+    <h2 class="pf-kicker"><span class="pf-sq pf-sq--teal" aria-hidden="true"></span>{% translate "Villes" %}</h2>
+    <ul class="chips pf-cloud">
+      {% for c in cities %}<li>{% if c.linked %}<a class="chip" href="{{ c.url }}">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></a>{% else %}<span class="chip">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></span>{% endif %}</li>{% endfor %}
+    </ul>
+  </div>
 </section>
 {% endif %}
 
 {% if combos %}
-<section class="section">
-  <h2>{% translate "Métiers" %}</h2>
-  <ul class="chips">
-    {% for c in combos %}<li>{% if c.linked %}<a class="chip" href="{{ c.url }}">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</a>{% else %}<span class="chip">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</span>{% endif %}</li>{% endfor %}
-  </ul>
+<section class="section pf-section pf-section--tight">
+  <div class="pf-wrap">
+    <h2 class="pf-kicker"><span class="pf-sq pf-sq--coral" aria-hidden="true"></span>{% translate "Métiers" %}</h2>
+    <ul class="chips pf-chips">
+      {% for c in combos %}<li>{% if c.linked %}<a class="chip" href="{{ c.url }}">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</a>{% else %}<span class="chip">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</span>{% endif %}</li>{% endfor %}
+    </ul>
+  </div>
 </section>
 {% endif %}
 
 {% if recent %}
-<section class="section">
-  <h2>{% translate "Pages récentes" %}</h2>
-  <ul class="pro-list">{% for p in recent %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+<section class="section pf-section pf-section--tight">
+  <div class="pf-wrap">
+    <h2 class="pf-kicker"><span class="pf-sq pf-sq--saffron" aria-hidden="true"></span>{% translate "Pages récentes" %}</h2>
+    <ul class="pro-list pf-pros">{% for p in recent %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+  </div>
 </section>
 {% endif %}
 
-<section class="section cta">
-  <h2>{% translate "Prêt à être trouvé ?" %}</h2>
-  <a class="btn btn--primary" href="{{ signup_url }}">{% translate "Crée ta page pro gratuite" %}</a>
+<section class="section cta pf-cta">
+  <div class="pf-wrap">
+    <h2 class="pf-xl pf-cta__title">{% translate "Prêt à être trouvé ?" %}</h2>
+    <div class="pf-cta__row">
+      <p>{% translate "Deux minutes, un code SMS, et ta page est en ligne. C’est gratuit." %}</p>
+      <a class="pf-btn pf-btn--ink pf-btn--lg" href="{{ signup_url }}"><span class="pf-btn__dot" aria-hidden="true"></span>{% translate "Crée ta page pro gratuite" %}</a>
+    </div>
+  </div>
 </section>
 {% endblock %}
+{% block footer %}{% include "partials/platform_footer.html" %}{% endblock %}

@@ -1,0 +1,24 @@
+/* Hero "Éditorial": lookbook typography, hairlines, numbered sections, square portrait. */
+.t--editorial { counter-reset: t-section; }
+.t--editorial .t-hero { padding: 2.25rem 0 1.5rem; border-bottom: 1px solid var(--c-text); }
+.t--editorial .t-hero__grid { display: grid; gap: 1.75rem; }
+.t--editorial .t-name { font-size: clamp(2.6rem, 11vw, 5.25rem); line-height: .98; }
+.t--editorial .t-subtitle { font-style: italic; font-family: var(--f-head); font-size: clamp(1.1rem, 3.6vw, 1.45rem); }
+.t--editorial .profile-head__photo,
+.t--editorial .t-initial { width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--r-sm); filter: saturate(.92) contrast(1.03); }
+.t--editorial .t-initial { font-size: 8rem; background: var(--c-text); color: var(--c-bg); }
+.t--editorial .t-hero__media { max-width: 20rem; }
+.t--editorial .t-eyebrow { display: flex; align-items: center; gap: .75rem; }
+.t--editorial .t-eyebrow::after { content: ""; flex: 0 0 3rem; height: 1px; background: currentColor; }
+.t--editorial .btn--primary { box-shadow: none; }
+.t--editorial .t-section { counter-increment: t-section; }
+.t--editorial .t-section + .t-section { border-top-color: var(--c-text); }
+.t--editorial .t-h2::before { content: counter(t-section, decimal-leading-zero); width: auto; height: auto; background: none; transform: none; font: 500 .85rem/1 var(--f-body); letter-spacing: .1em; color: var(--c-accent-ink); }
+.t--editorial .t-contact .t-h2::before { background: none; color: inherit; }
+.t--editorial .t-service { background: transparent; border-width: 0 0 1px; border-radius: 0; padding: 1rem 0; }
+.t--editorial .t-gallery img { border-radius: 0; }
+@media (min-width: 48rem) {
+  .t--editorial .t-hero { padding: 4.5rem 0 3rem; }
+  .t--editorial .t-hero__grid { grid-template-columns: 1fr 18rem; align-items: end; gap: 3rem; }
+  .t--editorial .t-hero__media { max-width: none; }
+}

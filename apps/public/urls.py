@@ -14,6 +14,7 @@ urlpatterns = [
     path("<slug:slug>/qr.svg", views.qr_svg, name="qr_svg"),
     path("<slug:slug>/qr.png", views.qr_png, name="qr_png"),
     path("<slug:slug>/og.png", views.og_image, name="og_image"),
+    path("<slug:slug>/theme.css", views.theme_css, name="theme_css"),
     path("<slug:trade_plural>/<slug:city>", views.directory, name="directory"),
     path("<slug:trade_plural>/<slug:city>/", views.directory_trailing_slash, name="directory_slash"),
     path("<slug:slug>/", views.profile_trailing_slash, name="profile_slash"),

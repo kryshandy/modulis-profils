@@ -1,0 +1,10 @@
+{% load i18n %}{% if hours %}
+<section class="t-section t-section--hours" id="horaires">
+  <div class="t-wrap t-section__inner">
+    <h2 class="t-h2">{{ label }}</h2>
+    <dl class="t-hours">
+      {% for h in hours %}<div class="t-hours__row{% if not h.ranges %} is-closed{% endif %}"><dt>{{ h.day }}</dt><dd>{% if h.ranges %}{{ h.ranges }}{% else %}{% translate "Fermé" %}{% endif %}</dd></div>{% endfor %}
+    </dl>
+  </div>
+</section>
+{% endif %}

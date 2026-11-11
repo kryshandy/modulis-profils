@@ -1,0 +1,18 @@
+{% load i18n dashboard_tags %}<div class="tm-status tm-status--{{ status.state }}" id="engine-status"{% if not status.final %} hx-get="{% url 'themes:published_status' %}" hx-trigger="every 3s" hx-swap="outerHTML"{% endif %} role="status" aria-live="polite">
+  {% if status.state == "sent" %}
+    <p class="status status--ok">{% icon "check" %}{% translate "Notification envoyée : Bing et les moteurs IndexNow ont reçu ta nouvelle page." %}</p>
+    <p class="small muted">{% blocktranslate with at=status.at|time:"H:i" %}Envoyée à {{ at }}. Google la relira via le plan du site.{% endblocktranslate %}</p>
+  {% elif status.state == "retry" %}
+    <p class="status status--wait">{% translate "Le moteur n'a pas répondu : un nouvel essai automatique est prévu, rien à faire de ton côté." %}</p>
+  {% elif status.state == "queued" or status.state == "pending" %}
+    {% if status.final %}
+    <p class="status status--wait">{% translate "Notification programmée : elle partira avec le prochain envoi groupé (moins de 10 minutes)." %}</p>
+    {% else %}
+    <p class="status status--wait"><span class="tm-spinner" aria-hidden="true"></span>{% translate "Envoi de la notification aux moteurs…" %}</p>
+    {% endif %}
+  {% elif status.state == "disabled" %}
+    <p class="status status--wait">{% translate "Les notifications instantanées sont en pause : Google et Bing découvriront ta page via le plan du site, mis à jour à l'instant." %}</p>
+  {% else %}
+    <p class="status status--wait">{% translate "Ta page n'est pas encore proposée à Google : complète-la pour qu'elle le soit automatiquement." %}</p>
+  {% endif %}
+</div>

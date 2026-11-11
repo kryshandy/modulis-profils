@@ -51,6 +51,10 @@ class DirectorySitemap(SiteUrlSitemap):
     """City pages and trade×city directories that meet SEO_DIRECTORY_MIN_PROFILES."""
 
     def items(self):
+        from apps.public.views import directory_enabled
+
+        if not directory_enabled():  # switched off in the control center: those pages answer 404
+            return []
         minimum = selectors.directory_min()
         entries = [
             {"path": reverse("public:city", kwargs={"city": c["city"].slug}), "lastmod": c["lastmod"]}

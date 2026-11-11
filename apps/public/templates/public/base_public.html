@@ -6,8 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ meta.title|default:SITE_NAME }}{% endblock %}</title>
   {% block seo %}{% if meta %}{% include "public/_seo_head.html" %}{% else %}<meta name="robots" content="noindex, follow">{% endif %}{% endblock %}
-  <meta name="theme-color" content="#0A7F7D">
-  <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+  <meta name="theme-color" content="{% block theme_color %}#0A7F7D{% endblock %}">
+  {% block favicons %}<link rel="icon" href="{% static 'img/brand/favicon.svg' %}" type="image/svg+xml">
+  <link rel="icon" href="{% static 'img/brand/favicon-32.png' %}" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'img/brand/apple-touch-icon.png' %}">{% endblock %}
+  {% block styles %}<link rel="stylesheet" href="{% static 'css/profile.css' %}">{% endblock %}
   {% block head %}{% endblock %}
   {% if jsonld %}<script type="application/ld+json">{{ jsonld }}</script>{% endif %}
 </head>

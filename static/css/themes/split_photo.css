@@ -1,0 +1,15 @@
+/* Hero "Photo à côté du titre": big portrait framed by an accent block, text left on desktop. */
+.t--split_photo .t-hero { padding: 1.75rem 0 1rem; overflow: hidden; }
+.t--split_photo .t-hero__grid { display: grid; gap: 1.75rem; }
+.t--split_photo .t-hero__media { order: -1; position: relative; justify-self: center; width: min(74vw, 22rem); margin-right: 1.1rem; }
+.t--split_photo .t-hero__media::before { content: ""; position: absolute; inset: 1.1rem -1.1rem -1.1rem 1.1rem; border-radius: var(--r-lg); background: var(--c-accent); }
+.t--split_photo .profile-head__photo,
+.t--split_photo .t-initial { position: relative; width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.t--split_photo .t-initial { font-size: 7rem; }
+.t--split_photo .t-name { font-size: clamp(2.3rem, 9vw, 4.25rem); }
+.t--split_photo .t-subtitle { color: var(--c-primary-ink); font-weight: 600; }
+@media (min-width: 48rem) {
+  .t--split_photo .t-hero { padding: 4rem 0 2.5rem; }
+  .t--split_photo .t-hero__grid { grid-template-columns: 1.15fr .85fr; align-items: center; gap: 3.5rem; }
+  .t--split_photo .t-hero__media { order: 0; width: calc(100% - 1.1rem); max-width: 24rem; justify-self: end; }
+}

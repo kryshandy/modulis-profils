@@ -1,0 +1,36 @@
+{% extends "dashboard_base.html" %}
+{% load i18n static dashboard_tags %}
+{% block page_title %}{{ theme.name }} · {% translate "Modèles" %}{% endblock %}
+{% block dash_head %}<link rel="stylesheet" href="{% static 'css/themes/dashboard.css' %}">{% endblock %}
+{% block dash_content %}
+<div class="tm tm-detail">
+  <a class="btn btn--link tm-back" href="{% url 'themes:gallery' %}">{% icon "left" %}<span>{% translate "Tous les modèles" %}</span></a>
+  <header class="tm-detail__head">
+    <div>
+      <p class="tm-card__badges">
+        {% if theme.is_premium %}<span class="tm-badge tm-badge--premium">{% translate "Premium" %}</span>{% else %}<span class="tm-badge">{% translate "Gratuit" %}</span>{% endif %}
+        {% if is_current %}<span class="tm-badge tm-badge--current">{% icon "check" %}{% translate "Actuel" %}</span>{% endif %}
+        <span class="tm-badge tm-badge--cat">{{ theme.get_category_display }}</span>
+      </p>
+      <h1 class="h1">{{ theme.name }}</h1>
+      <p class="lead">{{ theme.description }}</p>
+    </div>
+    <div class="tm-detail__cta">
+      {% if not enabled %}
+        <p class="alert alert--warning">{% translate "Le choix des modèles est momentanément indisponible." %}</p>
+      {% elif locked %}
+        <a class="btn btn--primary" href="{% url 'dashboard:settings' %}#offre">{% icon "sparkle" %}<span>{% translate "Débloquer avec Essentiel" %}</span></a>
+        <p class="small muted">{% translate "Ce modèle est inclus dans les offres Essentiel et Pro." %}</p>
+      {% else %}
+        <form method="post" action="{% url 'themes:use' theme.code %}">{% csrf_token %}
+          <button class="btn btn--primary btn--lg" type="submit">{% if is_current %}{% translate "Personnaliser" %}{% else %}{% translate "Utiliser ce modèle" %}{% endif %}</button>
+        </form>
+        <p class="small muted">{% translate "Rien n'est publié avant ta validation." %}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  {% include "themes/partials/preview_frame.html" with title=theme.name %}
+</div>
+{% endblock %}
+{% block dash_scripts %}<script src="{% static 'js/theme-editor.js' %}" defer></script>{% endblock %}

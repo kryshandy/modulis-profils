@@ -1,0 +1,8 @@
+{% if profile.bio %}
+<section class="t-section t-section--about" id="presentation">
+  <div class="t-wrap t-section__inner">
+    <h2 class="t-h2">{{ label }}</h2>
+    <div class="bio t-prose">{{ profile.bio|linebreaks }}</div>
+  </div>
+</section>
+{% endif %}

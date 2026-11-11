@@ -1,0 +1,16 @@
+{% load i18n %}{% if profile.address or profile.district or profile.service_area or profile.city %}
+<section class="t-section t-section--area" id="zone">
+  <div class="t-wrap t-section__inner">
+    <h2 class="t-h2">{{ label }}</h2>
+    <div class="t-area-card">
+      <span class="t-area-card__pin" aria-hidden="true"></span>
+      <div class="t-area-card__text">
+        {% if profile.address %}<p class="t-area-card__line"><strong>{{ profile.address }}</strong></p>{% endif %}
+        <p class="t-area-card__line">{{ profile.district }}{% if profile.district and profile.city %}, {% endif %}{{ profile.city.name }}</p>
+        {% if profile.service_area %}<p class="t-area-card__line t-muted">{% blocktranslate with area=profile.service_area %}Intervient : {{ area }}{% endblocktranslate %}</p>{% endif %}
+      </div>
+      {% if maps_url %}<a class="btn btn--quiet" href="{{ maps_url }}" rel="{{ contact_rel }}">{% translate "Voir sur la carte" %}</a>{% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
