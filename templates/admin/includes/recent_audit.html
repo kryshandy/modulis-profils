@@ -1,0 +1,7 @@
+{% load i18n %}{% if show %}
+<section class="mp-recent" aria-labelledby="mp-recent-title">
+  <h2 id="mp-recent-title">{% translate "Dernières actions d'administration" %}</h2>
+  {% include "admin/platform/includes/audit_list.html" with entries=entries %}
+  <p><a href="{% url 'admin:platform_settings_auditlog_changelist' %}">{% translate "Tout le journal" %}</a></p>
+</section>
+{% endif %}

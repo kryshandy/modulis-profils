@@ -74,15 +74,15 @@ def test_admin_index_with_kpis(admin_client, sample_data):
 def test_changelist_add_change_pages_load(admin_client, sample_data, model_admin_pair):
     model, _model_admin = model_admin_pair
     info = model._meta.app_label, model._meta.model_name
-    response = admin_client.get(reverse("admin:{}_{}_changelist".format(*info)))
+    response = admin_client.get(reverse("admin:{}_{}_changelist".format(*info)), follow=True)  # SiteSettings: 302
     assert response.status_code == 200
-    response = admin_client.get(reverse("admin:{}_{}_changelist".format(*info)), {"q": "test"})
+    response = admin_client.get(reverse("admin:{}_{}_changelist".format(*info)), {"q": "test"}, follow=True)
     assert response.status_code == 200
     add = admin_client.get(reverse("admin:{}_{}_add".format(*info)))
     assert add.status_code in (200, 403)
     obj = model._default_manager.first()
     if obj is not None:
-        response = admin_client.get(reverse("admin:{}_{}_change".format(*info), args=[obj.pk]))
+        response = admin_client.get(reverse("admin:{}_{}_change".format(*info), args=[obj.pk]), follow=True)
         assert response.status_code == 200
 
 

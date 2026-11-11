@@ -1,0 +1,108 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'platform/control-center.css' %}">{% endblock %}
+{% block bodyclass %}{{ block.super }} mp-control-center{% endblock %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate "Accueil" %}</a>
+  &rsaquo; {% translate "Centre de contrôle" %}
+</div>
+{% endblock %}
+{% block content %}
+<div id="content-main" class="mp-cc">
+  <p class="mp-cc__intro">
+    {% translate "Active ou désactive les fonctions de la plateforme. Chaque changement s'applique partout en moins de 30 secondes et il est inscrit au journal d'administration." %}
+    {% if settings_obj.updated_by %}<br><span class="mp-muted">{% blocktranslate with who=settings_obj.updated_by when=settings_obj.updated_at|date:"d/m/Y H:i" %}Dernière modification par {{ who }} le {{ when }}.{% endblocktranslate %}</span>{% endif %}
+  </p>
+
+  {% if settings_obj.maintenance_mode %}
+    <p class="mp-banner mp-banner--danger" role="alert">{% translate "Le site public est EN MAINTENANCE : les visiteurs voient une page 503." %}</p>
+  {% endif %}
+
+  <nav class="mp-cc__nav" aria-label="{% translate 'Sections' %}">
+    {% for section, form in sections %}<a href="#section-{{ section.code }}">{{ section.title }}</a>{% endfor %}
+    <a href="#section-health">{% translate "Santé" %}</a>
+    <a href="#section-journal">{% translate "Journal" %}</a>
+  </nav>
+
+  <div class="mp-cc__grid">
+  {% for section, form in sections %}
+    <section class="mp-panel{% if section.code == open_section %} mp-panel--focus{% endif %}" id="section-{{ section.code }}" aria-labelledby="title-{{ section.code }}">
+      <header class="mp-panel__head">
+        <h2 id="title-{{ section.code }}">{{ section.title }}</h2>
+        <p class="mp-muted">{{ section.description }}</p>
+      </header>
+
+      {% if section.code == "auth" %}
+        <table class="mp-table">
+          <caption class="mp-sr">{% translate "Canaux OTP" %}</caption>
+          <thead><tr><th scope="col">{% translate "Canal" %}</th><th scope="col">{% translate "Interrupteur" %}</th><th scope="col">{% translate "Configuration" %}</th></tr></thead>
+          <tbody>
+          {% for ch in otp_channels %}
+            <tr>
+              <td>{{ ch.label }}{% if ch.is_default %} <span class="mp-chip">{% translate "par défaut" %}</span>{% endif %}</td>
+              <td>{% if ch.enabled %}<span class="mp-state mp-state--on">{% translate "activé" %}</span>{% else %}<span class="mp-state mp-state--off">{% translate "désactivé" %}</span>{% endif %}</td>
+              <td>{% if ch.configured is None %}<span class="mp-state mp-state--unknown">{% translate "configuration inconnue" %}</span>{% elif ch.configured %}<span class="mp-state mp-state--on">{% translate "configuré" %}</span>{% else %}<span class="mp-state mp-state--warn">{% translate "non configuré (variables d'environnement manquantes)" %}</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      <form method="post" action="{% url 'admin:platform_control_center' %}#section-{{ section.code }}" class="mp-form" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="section" value="{{ section.code }}">
+        {{ form.non_field_errors }}
+        {% for field in form %}{% include "admin/platform/includes/field.html" %}{% endfor %}
+        {% if section.code == "maintenance" %}
+          <p><a href="{% url 'admin:platform_maintenance_preview' %}" target="_blank" rel="noopener">{% translate "Voir l'aperçu de la page de maintenance" %}</a></p>
+        {% endif %}
+        <div class="mp-form__actions"><button type="submit" class="button default">{% translate "Enregistrer" %}</button></div>
+      </form>
+
+      {% if section.code == "seo" %}
+        <dl class="mp-facts">
+          <div><dt>{% translate "URL en file d'attente" %}</dt><dd>{{ seo.queue_size }}</dd></div>
+          <div><dt>{% translate "kliz (environnement)" %}</dt><dd>{% if seo.kliz_enabled %}<span class="mp-state mp-state--on">KLIZ_ENABLED</span>{% else %}<span class="mp-state mp-state--warn">{% translate "désactivé (KLIZ_ENABLED)" %}</span>{% endif %}</dd></div>
+        </dl>
+        <form method="post" action="{% url 'admin:platform_control_center' %}" class="mp-form mp-form--inline">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="seo_flush">
+          <button type="submit" class="button">{% translate "Notifier les moteurs maintenant" %}</button>
+        </form>
+        <div class="mp-cols">
+          <div>
+            <h3>{% translate "Derniers succès" %}</h3>
+            <ul class="mp-list">{% for log in seo.successes %}<li>{{ log.created_at|date:"d/m H:i" }} · {{ log.provider }} · {{ log.url_count }} URL</li>{% empty %}<li class="mp-muted">{% translate "Aucun." %}</li>{% endfor %}</ul>
+          </div>
+          <div>
+            <h3>{% translate "Derniers échecs" %}</h3>
+            <ul class="mp-list">{% for log in seo.failures %}<li>{{ log.created_at|date:"d/m H:i" }} · {{ log.provider }}{% if log.status_code %} ({{ log.status_code }}){% endif %} · {{ log.error|truncatechars:80 }}</li>{% empty %}<li class="mp-muted">{% translate "Aucun." %}</li>{% endfor %}</ul>
+          </div>
+        </div>
+        <p><a href="{% url 'admin:seo_indexinglog_changelist' %}">{% translate "Journal d'indexation complet" %}</a></p>
+      {% endif %}
+    </section>
+  {% endfor %}
+  </div>
+
+  <section class="mp-panel mp-panel--wide" id="section-health" aria-labelledby="title-health">
+    <header class="mp-panel__head"><h2 id="title-health">{% translate "Santé de la plateforme" %}</h2></header>
+    <ul class="mp-health">
+      {% for check in health %}
+        <li class="mp-health__item mp-health__item--{{ check.state }}">
+          <span class="mp-health__label">{{ check.label }}</span>
+          <span class="mp-health__value">{% if check.url %}<a href="{{ check.url }}">{{ check.value }}</a>{% else %}{{ check.value }}{% endif %}</span>
+          {% if check.detail %}<span class="mp-health__detail">{{ check.detail }}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="mp-panel mp-panel--wide" id="section-journal" aria-labelledby="title-journal">
+    <header class="mp-panel__head"><h2 id="title-journal">{% translate "Dernières actions d'administration" %}</h2></header>
+    {% include "admin/platform/includes/audit_list.html" with entries=recent_audit %}
+    <p><a href="{% url 'admin:platform_settings_auditlog_changelist' %}">{% translate "Tout le journal" %}</a> · <a href="{% url 'admin:platform_settings_blockedphone_changelist' %}">{% translate "Numéros bloqués" %}</a> · <a href="{% url 'admin:accounts_user_changelist' %}">{% translate "Comptes" %}</a></p>
+  </section>
+</div>
+{% endblock %}

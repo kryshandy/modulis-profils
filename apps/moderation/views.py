@@ -2,9 +2,11 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.cache import add_never_cache_headers
+from django.utils.translation import gettext as _
 from django_ratelimit.decorators import ratelimit
 
 from apps.core.utils import ratelimit_ip_key, security_ip_hash
+from apps.platform.services import feature
 from apps.profiles import services as profile_services
 from apps.profiles.models import SlugRegistry
 
@@ -27,9 +29,23 @@ def _noindex(response):
     return response
 
 
+def _reports_closed(request, profile):
+    """Public reports switched off in the control center: friendly 200 page, never indexed."""
+    context = {
+        "title": _("Signalements momentanément fermés"),
+        "message": _(
+            "Le formulaire de signalement est momentanément indisponible. Réessaie plus tard ou contacte le support."
+        ),
+        "back_url": profile.get_absolute_url(),
+    }
+    return _noindex(render(request, "platform/feature_closed.html", context))
+
+
 @ratelimit(key=ratelimit_ip_key, rate="5/h", method="POST", block=False, group="moderation.report")
 def report(request, slug: str):
     profile = _reportable_profile(slug)
+    if not feature("reports"):
+        return _reports_closed(request, profile)
     form = ReportForm(request.POST or None)
     if request.method == "POST":
         if getattr(request, "limited", False):

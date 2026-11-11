@@ -1,0 +1,16 @@
+{% load i18n %}
+<section class="mp-hero" aria-labelledby="mp-hero-title">
+  <div>
+    <h2 id="mp-hero-title" class="mp-hero__title">{% translate "État de la plateforme" %}</h2>
+    <ul class="mp-hero__chips">
+      {% if state.maintenance %}<li><span class="mp-state mp-state--error">{% translate "Maintenance en cours" %}</span></li>{% endif %}
+      {% for chip in state.chips %}
+        <li><span class="mp-state {% if chip.on %}mp-state--on{% else %}mp-state--off{% endif %}">{{ chip.label }} : {% if chip.on %}{% translate "activé" %}{% else %}{% translate "désactivé" %}{% endif %}</span></li>
+      {% endfor %}
+      {% if state.announcement %}<li><span class="mp-chip">{% translate "Annonce affichée aux pros" %}</span></li>{% endif %}
+    </ul>
+  </div>
+  {% if can_manage %}
+    <a class="button default mp-hero__cta" href="{% url 'admin:platform_control_center' %}">{% translate "Ouvrir le centre de contrôle" %}</a>
+  {% endif %}
+</section>

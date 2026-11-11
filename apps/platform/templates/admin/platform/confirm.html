@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'platform/control-center.css' %}">{% endblock %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate "Accueil" %}</a>
+  &rsaquo; <a href="{% url 'admin:platform_control_center' %}">{% translate "Centre de contrôle" %}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+{% block content %}
+<div id="content-main" class="mp-cc">
+  <section class="mp-panel mp-panel--danger" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">{% blocktranslate with s=section.title %}Changement sensible : {{ s }}{% endblocktranslate %}</h2>
+    <ul class="mp-list">{% for w in warnings %}<li><strong>{{ w }}</strong></li>{% endfor %}</ul>
+    <p>{% translate "Confirme seulement si tu sais pourquoi tu le fais. Le changement sera inscrit au journal." %}</p>
+    <form method="post" action="{% url 'admin:platform_control_center' %}">
+      {% csrf_token %}
+      {% for name, value in hidden_fields %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+      <input type="hidden" name="confirm" value="1">
+      <div class="submit-row">
+        <input type="submit" class="default" value="{% translate 'Oui, appliquer' %}">
+        <a href="{% url 'admin:platform_control_center' %}#section-{{ section.code }}" class="button cancel-link">{% translate "Non, annuler" %}</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

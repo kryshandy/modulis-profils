@@ -20,6 +20,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.billing import services as billing
 from apps.billing.models import Plan, Subscription
 from apps.cards.models import Card
+from apps.platform.services import audit
 from apps.seo.indexing import queue_urls
 
 from . import services
@@ -148,6 +149,8 @@ class ProfileAdmin(admin.ModelAdmin):
         "trade",
         "city",
         "status",
+        "online",
+        "theme_name",
         "completeness_score",
         "is_indexable",
         "verified",
@@ -216,6 +219,8 @@ class ProfileAdmin(admin.ModelAdmin):
     actions = (
         "verify",
         "unverify",
+        "take_offline",
+        "put_online",
         "suspend",
         "reactivate",
         "recompute_seo",
@@ -239,13 +244,35 @@ class ProfileAdmin(admin.ModelAdmin):
             .order_by("-ends_at")
             .values("plan__code")[:1]
         )
-        return super().get_queryset(request).annotate(_plan_code=Subquery(current_plan))
+        queryset = super().get_queryset(request).annotate(_plan_code=Subquery(current_plan))
+        for rel in Profile._meta.related_objects:  # ProfileTheme (apps.themes) may or may not exist yet
+            if rel.one_to_one and rel.get_accessor_name() == "theme_settings":
+                has_theme_fk = any(f.name == "theme" and f.is_relation for f in rel.related_model._meta.get_fields())
+                # theme column without N+1. The ChangeList skips list_select_related once the queryset
+                # already selects related rows, so those relations are repeated here.
+                queryset = queryset.select_related(
+                    *self.list_select_related, "theme_settings__theme" if has_theme_fk else "theme_settings"
+                )
+        return queryset
 
     # Columns ------------------------------------------------------------------------------
 
     @admin.display(description=_("adresse"), ordering="slug")
     def public_link(self, obj):
         return format_html('<a href="{}" target="_blank" rel="noopener">/{}</a>', obj.get_absolute_url(), obj.slug)
+
+    @admin.display(description=_("en ligne"), boolean=True, ordering="visibility")
+    def online(self, obj):
+        return obj.visibility == Profile.Visibility.PUBLIC and obj.status == Profile.Status.ACTIVE
+
+    @admin.display(description=_("modèle de site"))
+    def theme_name(self, obj):
+        """ProfileTheme (apps.themes, related_name "theme_settings") when the themes app provides it."""
+        settings_obj = getattr(obj, "theme_settings", None)
+        if settings_obj is None:
+            return "—"
+        theme = getattr(settings_obj, "theme", None) or getattr(settings_obj, "theme_slug", None) or settings_obj
+        return str(getattr(theme, "name", theme))
 
     @admin.display(description=_("téléphone du compte"), ordering="user__phone")
     def owner_phone(self, obj):
@@ -360,11 +387,30 @@ class ProfileAdmin(admin.ModelAdmin):
         count = queryset.update(verified_at=None)
         self.message_user(request, _("Badge retiré sur %(n)d profil(s).") % {"n": count}, messages.SUCCESS)
 
+    def _set_visibility(self, request, queryset, visibility: str) -> int:
+        count = 0
+        for profile in queryset.exclude(status=Profile.Status.DELETED).exclude(visibility=visibility):
+            services.update_profile(profile, visibility=visibility)
+            audit(request.user, f"profile.visibility.{visibility}", f"/{profile.slug}")
+            count += 1
+        return count
+
+    @admin.action(permissions=["change"], description=_("Mettre hors ligne (page privée)"))
+    def take_offline(self, request, queryset):
+        count = self._set_visibility(request, queryset, Profile.Visibility.PRIVATE)
+        self.message_user(request, _("%(n)d page(s) mise(s) hors ligne.") % {"n": count}, messages.SUCCESS)
+
+    @admin.action(permissions=["change"], description=_("Remettre en ligne (page publique)"))
+    def put_online(self, request, queryset):
+        count = self._set_visibility(request, queryset, Profile.Visibility.PUBLIC)
+        self.message_user(request, _("%(n)d page(s) remise(s) en ligne.") % {"n": count}, messages.SUCCESS)
+
     @admin.action(permissions=["change"], description=_("Suspendre"))
     def suspend(self, request, queryset):
         count = 0
         for profile in queryset.filter(status=Profile.Status.ACTIVE):
             services.suspend_profile(profile, str(_("Suspendu par l'administration")))
+            audit(request.user, "profile.suspend", f"/{profile.slug}")
             count += 1
         self.message_user(request, _("%(n)d profil(s) suspendu(s).") % {"n": count}, messages.SUCCESS)
 
@@ -373,6 +419,7 @@ class ProfileAdmin(admin.ModelAdmin):
         count = 0
         for profile in queryset.filter(status=Profile.Status.SUSPENDED):
             services.reactivate_profile(profile)
+            audit(request.user, "profile.reactivate", f"/{profile.slug}")
             count += 1
         self.message_user(request, _("%(n)d profil(s) réactivé(s).") % {"n": count}, messages.SUCCESS)
 

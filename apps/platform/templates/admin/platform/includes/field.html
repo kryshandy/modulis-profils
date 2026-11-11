@@ -1,0 +1,19 @@
+{% load i18n %}{% if field.field.widget.input_type == "checkbox" %}
+<div class="mp-toggle{% if field.errors %} mp-toggle--error{% endif %}">
+  <label class="mp-switch" for="{{ field.id_for_label }}">
+    {{ field }}
+    <span class="mp-switch__track" aria-hidden="true"></span>
+    <span class="mp-switch__text">{{ field.label|capfirst }}</span>
+    <span class="mp-state {% if field.value %}mp-state--on{% else %}mp-state--off{% endif %}">{% if field.value %}{% translate "activé" %}{% else %}{% translate "désactivé" %}{% endif %}</span>
+  </label>
+  {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+  {{ field.errors }}
+</div>
+{% else %}
+<div class="mp-field{% if field.errors %} mp-field--error{% endif %}">
+  {{ field.label_tag }}
+  {{ field }}
+  {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+  {{ field.errors }}
+</div>
+{% endif %}

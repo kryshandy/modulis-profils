@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from django.db.models import Count
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 def get_kpis() -> dict:
@@ -38,3 +39,31 @@ def get_kpis() -> dict:
         "open_reports": Report.objects.filter(status=Report.Status.OPEN).count(),
         "indexing_failures": list(IndexingLog.objects.filter(success=False).order_by("-created_at")[:5]),
     }
+
+
+def get_platform_state() -> dict:
+    """State chips of the admin index hero (control center switches) + latest audit entries."""
+
+    from apps.platform.services import get_settings
+
+    s = get_settings()
+    chips = [
+        {"label": _("OTP WhatsApp"), "on": s.otp_whatsapp_enabled},
+        {"label": _("OTP SMS Firebase"), "on": s.otp_firebase_sms_enabled},
+        {"label": _("OTP SMS passerelle"), "on": s.otp_sms_gateway_enabled},
+        {"label": _("Connexion"), "on": s.login_enabled},
+        {"label": _("Inscriptions"), "on": s.signups_enabled},
+        {"label": _("Activation des cartes"), "on": s.card_activation_enabled},
+        {"label": _("Signalements"), "on": s.reports_enabled},
+    ]
+    return {
+        "chips": chips,
+        "maintenance": s.maintenance_mode,
+        "announcement": s.announcement,
+    }
+
+
+def get_recent_audit(limit: int = 8) -> list:
+    from apps.platform.models import AuditLog
+
+    return list(AuditLog.objects.select_related("actor")[:limit])

@@ -1,7 +1,9 @@
 {% extends "admin/index.html" %}
 {% load static admin_kpis %}
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/modulis-kpis.css' %}">{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/modulis-kpis.css' %}"><link rel="stylesheet" href="{% static 'platform/control-center.css' %}">{% endblock %}
 {% block content %}
+{% admin_platform_hero %}
 {% admin_kpis %}
+{% admin_recent_audit %}
 {{ block.super }}
 {% endblock %}

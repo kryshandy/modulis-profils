@@ -1,0 +1,10 @@
+{% load i18n %}{% if entries %}
+<table class="mp-table">
+  <thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Qui" %}</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "Cible" %}</th></tr></thead>
+  <tbody>
+  {% for entry in entries %}
+    <tr><td>{{ entry.created_at|date:"d/m/Y H:i" }}</td><td>{{ entry.actor|default:"—" }}</td><td><code>{{ entry.action }}</code></td><td>{{ entry.target|default:"—" }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="mp-muted">{% translate "Aucune action enregistrée pour l'instant." %}</p>{% endif %}

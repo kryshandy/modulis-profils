@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Maintenance en cours" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}page-maintenance{% endblock %}
+{% block content %}
+<section class="auth center">
+  <div class="card">
+    <p class="brand">{{ SITE_NAME }}</p>
+    <h1>{% translate "On revient très vite" %}</h1>
+    <p class="lead">{{ maintenance_message }}</p>
+    <p class="muted">{% translate "La plateforme est en maintenance pour quelques minutes. Merci de ta patience." %}</p>
+    {% if preview %}<p class="alert alert--warning">{% translate "Aperçu réservé à l'équipe : voici ce que voient les visiteurs." %}</p>{% endif %}
+  </div>
+</section>
+{% endblock %}
