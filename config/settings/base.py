@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.analytics",
     "apps.moderation",
     "apps.billing",
+    "apps.themes",
     "apps.dashboard",
     "apps.public",
 ]
@@ -63,6 +64,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "apps.core.middleware.AdminLoginThrottleMiddleware",
+    "apps.platform.middleware.MaintenanceModeMiddleware",  # after auth: staff bypass
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
@@ -145,12 +147,24 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": ["'self'"],
-        "script-src": ["'self'", "https://challenges.cloudflare.com"],
+        # Google hosts below: Firebase Phone Auth + its invisible reCAPTCHA only (ADR-0009).
+        "script-src": [
+            "'self'",
+            "https://challenges.cloudflare.com",
+            "https://www.gstatic.com",
+            "https://www.google.com",
+            "https://apis.google.com",
+        ],
         "style-src": ["'self'"],
         "img-src": ["'self'", "data:"],
         "font-src": ["'self'"],
-        "connect-src": ["'self'"],
-        "frame-src": ["https://challenges.cloudflare.com"],
+        "connect-src": [
+            "'self'",
+            "https://identitytoolkit.googleapis.com",
+            "https://securetoken.googleapis.com",
+            "https://www.googleapis.com",
+        ],
+        "frame-src": ["https://challenges.cloudflare.com", "https://www.google.com", "https://*.firebaseapp.com"],
         "frame-ancestors": ["'none'"],
         "form-action": ["'self'"],
         "base-uri": ["'self'"],
@@ -173,7 +187,8 @@ else:
 
 # --- Business settings -----------------------------------------------------------------------
 
-# OTP by SMS only (ADR-0004).
+# One-time codes by WhatsApp or SMS (ADR-0004, ADR-0009). Channels are switched on/off in the
+# admin control center (apps.platform); a channel is offered only if it is also configured here.
 OTP_LENGTH = 6
 OTP_TTL_SECONDS = 5 * 60
 OTP_MAX_ATTEMPTS = 5
@@ -184,6 +199,22 @@ OTP_ALLOWED_PREFIXES = env.list("OTP_ALLOWED_PREFIXES", default=["+237"])
 OTP_HMAC_KEY = env("OTP_HMAC_KEY", default=SECRET_KEY)
 SMS_BACKEND = env("SMS_BACKEND", default="apps.accounts.sms.ConsoleSmsBackend")
 DEFAULT_PHONE_REGION = "CM"
+
+# --- OTP providers (ADR-0009). Empty values = channel unavailable (never required). ---------------
+# WhatsApp Cloud API (Meta): approved *authentication* template with a copy-code button.
+WHATSAPP_ACCESS_TOKEN = env("WHATSAPP_ACCESS_TOKEN", default="")
+WHATSAPP_PHONE_NUMBER_ID = env("WHATSAPP_PHONE_NUMBER_ID", default="")
+WHATSAPP_API_VERSION = env("WHATSAPP_API_VERSION", default="v23.0")
+WHATSAPP_OTP_TEMPLATE = env("WHATSAPP_OTP_TEMPLATE", default="")
+WHATSAPP_OTP_LANGUAGE = env("WHATSAPP_OTP_LANGUAGE", default="fr")
+# Firebase Authentication (phone provider): public web config + project id for ID-token checks.
+FIREBASE_PROJECT_ID = env("FIREBASE_PROJECT_ID", default="")
+FIREBASE_WEB_API_KEY = env("FIREBASE_WEB_API_KEY", default="")
+FIREBASE_WEB_AUTH_DOMAIN = env("FIREBASE_WEB_AUTH_DOMAIN", default="")
+FIREBASE_WEB_APP_ID = env("FIREBASE_WEB_APP_ID", default="")
+FIREBASE_SDK_VERSION = "11.10.0"  # pinned: https://www.gstatic.com/firebasejs/<version>/…
+FIREBASE_PENDING_TTL_SECONDS = 10 * 60  # browser flow allowed after our checks passed
+FIREBASE_MAX_AUTH_AGE_SECONDS = 10 * 60  # an ID token must prove a phone verified just now
 
 # Cloudflare Turnstile (bot challenge before sending an OTP). Empty = disabled (dev/tests).
 TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY", default="")

@@ -14,3 +14,4 @@ nh3
 whitenoise
 kliz==0.3.1
 requests  # Turnstile verification (also pulled by kliz)
+PyJWT[crypto]>=2.10  # Firebase ID-token verification (RS256), no firebase-admin (ADR-0009)

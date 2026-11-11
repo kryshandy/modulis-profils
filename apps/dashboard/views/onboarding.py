@@ -5,6 +5,7 @@ Writes go through `apps.profiles.services` only. A suspended page can be looked 
 
 from __future__ import annotations
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import Http404
@@ -14,6 +15,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from apps.accounts.services import OTPError
+from apps.platform.services import feature
 from apps.profiles import services as profiles
 from apps.profiles.models import Profile
 
@@ -91,6 +93,13 @@ def onboarding(request, step: str):
 
 def _step_name(request, profile: Profile | None):
     form = IdentityForm(request.POST or None, instance=profile)
+    if profile is None and not feature("page_creation"):  # switch of the admin control center
+        closed = _("La création de nouvelles pages est momentanément suspendue. Réessaie un peu plus tard.")
+        if form.is_bound:
+            form.add_error(None, closed)
+        else:
+            messages.warning(request, closed)
+        return {"form": form, "creation_closed": True}
     if request.method == "POST" and form.is_valid():
         name, kind = form.cleaned_data["display_name"], form.cleaned_data["kind"]
         if profile is None:

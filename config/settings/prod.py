@@ -19,10 +19,11 @@ CACHES = {"default": env.cache("CACHE_URL")}
 if CACHES["default"]["BACKEND"].endswith(("LocMemCache", "DummyCache")):
     raise ImproperlyConfigured("CACHE_URL must point to Redis in production.")
 
-# The SMS backend must be a real provider: Console/Memory would expose OTP codes in logs.
-SMS_BACKEND = env("SMS_BACKEND")
+# The SMS gateway channel is optional (ADR-0009: WhatsApp / Firebase SMS may be used instead), but a
+# Console/Memory backend must never run in production: it would expose OTP codes in logs.
+SMS_BACKEND = env("SMS_BACKEND", default="apps.accounts.sms.DisabledSmsBackend")
 if SMS_BACKEND.rsplit(".", 1)[-1] in {"ConsoleSmsBackend", "MemorySmsBackend"}:
-    raise ImproperlyConfigured("SMS_BACKEND must be a real SMS provider in production.")
+    raise ImproperlyConfigured("SMS_BACKEND must be a real SMS provider (or left unset) in production.")
 
 # Secrets must be distinct, explicit values (never derived from SECRET_KEY in production).
 for _name in ("OTP_HMAC_KEY", "ANALYTICS_SALT", "CARD_ACTIVATION_KEY", "SLUG_HASH_KEY"):

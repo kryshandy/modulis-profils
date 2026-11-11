@@ -7,9 +7,10 @@ from .views import auth, editor, onboarding, pages
 app_name = "dashboard"
 
 urlpatterns = [
-    # Auth (SMS code only)
+    # Auth (one-time code by WhatsApp or SMS, ADR-0009)
     path("connexion", auth.login_view, name="login"),
     path("connexion/code", auth.verify_view, name="verify"),
+    path("connexion/firebase", auth.firebase_verify_view, name="firebase_verify"),
     path("deconnexion", auth.logout_view, name="logout"),
     # Onboarding & walkthrough
     path("bienvenue/<slug:step>", onboarding.onboarding, name="onboarding"),

@@ -12,14 +12,16 @@ import time
 from django.conf import settings
 from django.contrib.auth import login
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django_ratelimit.core import is_ratelimited
 from django_ratelimit.decorators import ratelimit
 
+from apps.accounts import otp
 from apps.accounts import services as accounts
 from apps.accounts.models import OTPChallenge, User
 from apps.analytics import services as analytics
@@ -27,6 +29,7 @@ from apps.analytics.models import Event
 from apps.billing import services as billing
 from apps.core.turnstile import verify_turnstile
 from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
+from apps.platform.services import feature
 from apps.profiles import services as profiles
 from apps.profiles.models import Profile
 
@@ -67,6 +70,17 @@ def _rate_limited(request):
     return _page(request, "cards/rate_limited.html", status=429)
 
 
+def _activation_closed(request):
+    """Switch of the admin control center: activations paused (active cards keep working)."""
+    return _page(request, "cards/activation_closed.html", status=503)
+
+
+PAGE_CREATION_CLOSED = gettext_lazy(
+    "La création de nouvelles pages est momentanément suspendue : cette carte ne peut être liée "
+    "qu'à une page existante. Réessaie un peu plus tard."
+)
+
+
 # --- Scan ------------------------------------------------------------------------------------
 
 
@@ -80,6 +94,8 @@ def scan(request, code: str):
         return _page(request, "cards/unknown.html", {"code": code[:12]}, status=404)
 
     if card.status in (Card.Status.STOCK, Card.Status.SOLD):
+        if not feature("card_activation"):
+            return _activation_closed(request)
         return _redirect(reverse("cards:activate", args=[card.public_code]))
 
     profile = card.profile
@@ -159,6 +175,8 @@ def activate(request, code: str):
     if card.status not in (Card.Status.STOCK, Card.Status.SOLD):
         _clear_state(request, card)
         return _redirect(reverse("cards:scan", args=[card.public_code]))
+    if not feature("card_activation"):
+        return _activation_closed(request)
 
     state = _get_state(request, card)
     if request.method == "POST" and request.POST.get("action") == "restart":
@@ -182,7 +200,48 @@ def _render_step(request, card: Card, state: dict, form, **extra):
         "resend_wait": _resend_wait(state) if state["step"] == "otp" else 0,
         **extra,
     }
+    if state["step"] == "phone" and hasattr(form, "channel_options"):
+        context["channel_options"] = form.channel_options()
+    if state["step"] == "otp":
+        channel = otp.get_channel(state.get("channel")) or otp.default_channel()
+        if channel is not None and "code" in getattr(form, "fields", {}):
+            form.fields["code"].label = channel.code_label
+        context.update(
+            channel=channel,
+            other_channels=[c for c in otp.available_channels() if channel is None or c.code != channel.code],
+            delivery_error=accounts.delivery_failure(state["phone"], OTPChallenge.Purpose.CARD_ACTIVATION),
+        )
+        if channel is not None and channel.kind == otp.CLIENT:
+            autostart = bool(state.pop("autostart", False))
+            _save_state(request, card, state)
+            context["firebase"] = {
+                **otp.CHANNELS[channel.code].web_config(),
+                "sdk_version": settings.FIREBASE_SDK_VERSION,
+                "phone": state["phone"],
+                "verify_url": request.path,
+                "autostart": autostart,
+            }
     return _page(request, "cards/activate.html", context)
+
+
+def _send_card_code(request, card: Card, state: dict, phone: str, channel: str | None) -> None:
+    """Raises OTPError. Same rules as the dashboard login, for every channel."""
+    challenge = accounts.request_otp(
+        phone, OTPChallenge.Purpose.CARD_ACTIVATION, ip_hash=security_ip_hash(request), channel=channel
+    )
+    selected = otp.get_channel(challenge.channel)
+    state.update(
+        step="otp",
+        phone=phone,
+        sent_at=time.time(),
+        channel=challenge.channel,
+        autostart=bool(selected and selected.kind == otp.CLIENT),
+    )
+    _save_state(request, card, state)
+
+
+def _json(data: dict, status: int = 200):
+    return _protect(JsonResponse(data, status=status))
 
 
 def _failed(request, card: Card, error: str, status: int):
@@ -216,18 +275,20 @@ def _step_code(request, card: Card, state: dict):
 
 
 def _step_phone(request, card: Card, state: dict):
-    form = forms.PhoneForm(request.POST or None)
-    if not state.get("code_ok"):  # defensive: never send an SMS before the activation code is verified
+    form = forms.PhoneForm(request.POST or None, channels=otp.available_channels())
+    if not state.get("code_ok"):  # defensive: never send a code before the activation code is verified
         return _redirect(request.path)
     if request.method == "POST" and form.is_valid():
         try:
             phone = accounts.normalize_phone(form.cleaned_data["phone"])
-            accounts.request_otp(phone, OTPChallenge.Purpose.CARD_ACTIVATION, ip_hash=security_ip_hash(request))
+            if not feature("page_creation") and not _existing_profiles(phone):
+                # Nothing to link the card to, and no new page allowed: say it before sending a code.
+                form.add_error("phone", str(PAGE_CREATION_CLOSED))
+                return _render_step(request, card, state, form)
+            _send_card_code(request, card, state, phone, form.cleaned_data.get("channel") or None)
         except accounts.OTPError as exc:
             form.add_error("phone", str(exc))
             return _render_step(request, card, state, form)
-        state.update(step="otp", phone=phone, sent_at=time.time())
-        _save_state(request, card, state)
         return _redirect(request.path)
     return _render_step(request, card, state, form)
 
@@ -238,28 +299,46 @@ def _step_otp(request, card: Card, state: dict):
         state.update(step="code")
         _save_state(request, card, state)
         return _redirect(request.path)
-    if request.method == "POST" and request.POST.get("action") == "resend":
+    action = request.POST.get("action") if request.method == "POST" else None
+    channel = otp.get_channel(state.get("channel"))
+    if action in ("resend", "switch"):
         form = forms.OTPForm()
-        wait = _resend_wait(state)
+        current = channel.code if channel else None
+        target = request.POST.get("channel") if action == "switch" else current
+        wait = _resend_wait(state) if target == current else 0
         if wait:
             notice = _("Patiente encore %(n)d secondes avant de redemander un code.") % {"n": wait}
             return _render_step(request, card, state, form, notice=notice)
         try:
-            accounts.request_otp(phone, OTPChallenge.Purpose.CARD_ACTIVATION, ip_hash=security_ip_hash(request))
+            _send_card_code(request, card, state, phone, target or None)
         except accounts.OTPError as exc:
             notice = str(exc)
         else:
-            notice = _("Un nouveau code vient d'être envoyé.")
-            state["sent_at"] = time.time()
-            _save_state(request, card, state)
+            notice = _("Un nouveau code a été demandé.")
         return _render_step(request, card, state, form, notice=notice)
-    if request.method == "POST" and request.POST.get("action") == "change_phone":
+    if action == "change_phone":
         state.update(step="phone")
         state.pop("phone", None)
         _save_state(request, card, state)
         return _redirect(request.path)
+    if action == "firebase":
+        # JSON endpoint of static/js/firebase-otp.js (CSRF header; rate-limited like every POST here).
+        if channel is None or channel.kind != otp.CLIENT:
+            return _json({"error": _("Ta session a expiré. Recommence l'activation.")}, status=400)
+        try:
+            accounts.verify_firebase_token(
+                request.POST.get("id_token", ""), phone, OTPChallenge.Purpose.CARD_ACTIVATION
+            )
+        except accounts.OTPError as exc:
+            return _json({"error": str(exc)}, status=400)
+        state.update(step="profile", verified=True)
+        _save_state(request, card, state)
+        return _json({"redirect": request.path})
 
     form = forms.OTPForm(request.POST or None)
+    if request.method == "POST" and channel is not None and channel.kind == otp.CLIENT:
+        form.add_error(None, _("Active JavaScript pour valider ce code, ou choisis de recevoir le code par WhatsApp."))
+        return _render_step(request, card, state, form)
     if request.method == "POST" and form.is_valid():
         try:
             accounts.verify_otp(phone, OTPChallenge.Purpose.CARD_ACTIVATION, form.cleaned_data["code"])
@@ -292,7 +371,10 @@ def _step_profile(request, card: Card, state: dict):
             _("Ta page est suspendue : tu ne peux pas y lier de carte. Contacte le support Modulis."),
             status=403,
         )
-    allow_new = _may_create_another(existing, total=len(live))
+    creation_open = feature("page_creation")
+    if not existing and not creation_open:  # switch of the admin control center
+        return _failed(request, card, str(PAGE_CREATION_CLOSED), status=503)
+    allow_new = creation_open and _may_create_another(existing, total=len(live))
     action = request.POST.get("action") if request.method == "POST" else None
 
     if existing and action != "create":

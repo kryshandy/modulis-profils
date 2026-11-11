@@ -21,7 +21,7 @@ Aucun framework JS. Aucune ressource externe (CDN, polices) sur les pages publiq
 - Une application ne modifie pas les modèles d'une autre : elle passe par le `services.py` de celle-ci.
 - Toute création de profil passe par `profiles.services.create_profile` / `get_or_create_profile` (anti-doublon par téléphone E.164).
 - Unicité des slugs : uniquement via `SlugRegistry`. `/c/<code>` répond en **302** + `noindex` ; les **301** sont réservées aux anciens slugs ; profil effacé = **410**.
-- OTP **par SMS uniquement**, stocké en HMAC. Activation de carte : vérifier le code d'activation **avant** d'envoyer un OTP.
+- OTP par **WhatsApp (API Cloud de Meta)**, **SMS via Firebase** ou passerelle SMS (ADR-0009), chaque canal activable dans le centre de contrôle ; nos codes stockés en HMAC. Toute fonction activable se lit via `apps.platform.services.feature()`. Activation de carte : vérifier le code d'activation **avant** d'envoyer un OTP.
 - `ATOMIC_REQUESTS=True` : une vue doit **attraper** les exceptions métier (`OTPError`, `CardError`, `ValidationError`) et réafficher le formulaire. Une exception qui remonte annule les compteurs d'essais (faille de force brute). De même, un service ne lève jamais d'exception à l'intérieur de son propre `transaction.atomic()` après avoir incrémenté un compteur.
 - JSON-LD échappé (`<`, `>`, `&`) ; liens utilisateurs : `https:`, `tel:`, `mailto:`, `wa.me` uniquement, avec `rel="ugc nofollow"`.
 - Chaque vue de `/espace/` filtre par `request.user` (pas d'IDOR).

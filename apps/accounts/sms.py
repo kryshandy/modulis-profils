@@ -41,6 +41,13 @@ class MemorySmsBackend(BaseSmsBackend):
         MemorySmsBackend.outbox.append(message)
 
 
+class DisabledSmsBackend(BaseSmsBackend):
+    """Production default when no SMS gateway is used (WhatsApp / Firebase only): never sends."""
+
+    def send(self, message: SmsMessage) -> None:
+        raise RuntimeError("No SMS gateway configured (SMS_BACKEND).")
+
+
 def get_backend() -> BaseSmsBackend:
     return import_string(settings.SMS_BACKEND)()
 

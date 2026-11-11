@@ -1,6 +1,8 @@
 asgiref==3.13.0
 certifi==2026.10.23
+cffi==2.1.1
 charset-normalizer==3.5.2
+cryptography==50.0.2
 defusedxml==0.7.1
 Django==5.2.19
 django-csp==4.0
@@ -16,6 +18,8 @@ phonenumbers==9.0.43
 pillow==13.0.0
 psycopg==3.3.8
 psycopg-binary==3.3.8
+pycparser==3.12
+PyJWT==2.15.1
 redis==8.1.0
 requests==2.34.2
 segno==1.6.6

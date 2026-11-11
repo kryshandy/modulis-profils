@@ -62,7 +62,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class OTPChallenge(models.Model):
-    """A one-time code sent by SMS. Only an HMAC of the code is stored."""
+    """A one-time code sent by WhatsApp or SMS (ADR-0009). Only an HMAC of the code is stored.
+
+    For a client-side channel (Firebase), the provider holds the code: the challenge has no HMAC and
+    only records that our checks passed (limits, whitelist, blocked numbers) before the send.
+    """
 
     class Purpose(models.TextChoices):
         LOGIN = "login", _("Connexion / inscription")
@@ -77,10 +81,11 @@ class OTPChallenge(models.Model):
     attempts = models.PositiveSmallIntegerField(default=0)
     consumed_at = models.DateTimeField(null=True, blank=True)
     ip_hash = models.CharField(max_length=32, blank=True, db_index=True)
+    channel = models.CharField(_("canal"), max_length=20, blank=True, default="")
 
     class Meta:
-        verbose_name = _("code SMS")
-        verbose_name_plural = _("codes SMS")
+        verbose_name = _("code à usage unique")
+        verbose_name_plural = _("codes à usage unique")
         ordering = ["-created_at"]
 
     def __str__(self) -> str:

@@ -1,11 +1,20 @@
 {% extends "dashboard/auth/_layout.html" %}
-{% load i18n %}
-{% block page_title %}{% translate "Code SMS" %}{% endblock %}
+{% load i18n static %}
+{% block page_title %}{% translate "Ton code" %}{% endblock %}
 {% block auth_content %}
 <h1 class="h1">{% translate "Entre ton code" %}</h1>
-<p class="lead">{% blocktranslate with phone=phone_display %}On vient d'envoyer un code à 6 chiffres au <strong class="nowrap">{{ phone }}</strong>.{% endblocktranslate %}</p>
+{% if channel.code == "whatsapp" %}
+  <p class="lead">{% blocktranslate with phone=phone_display %}Ouvre WhatsApp : on vient d'envoyer un code à 6 chiffres au <strong class="nowrap">{{ phone }}</strong>.{% endblocktranslate %}</p>
+{% elif firebase %}
+  <p class="lead">{% blocktranslate with phone=phone_display %}Tu vas recevoir un SMS avec un code à 6 chiffres au <strong class="nowrap">{{ phone }}</strong>.{% endblocktranslate %}</p>
+{% else %}
+  <p class="lead">{% blocktranslate with phone=phone_display %}On vient d'envoyer un code à 6 chiffres par SMS au <strong class="nowrap">{{ phone }}</strong>.{% endblocktranslate %}</p>
+{% endif %}
+{% if channel.code == "console" %}<p class="alert alert--warning">{{ channel.verify_hint }}</p>{% endif %}
+{% if delivery_error %}<p class="alert alert--warning" role="alert">{{ delivery_error }}</p>{% endif %}
 {% if error %}<p class="alert alert--error" role="alert">{{ error }}</p>{% endif %}
-<form method="post" class="stack" novalidate>
+{% include "dashboard/auth/_firebase.html" %}
+<form method="post" class="stack" novalidate{% if firebase %} data-firebase-form{% endif %}>
   {% csrf_token %}
   <input type="hidden" name="action" value="verify">
   <div class="form-field{% if form.code.errors %} form-field--error{% endif %}">
@@ -13,7 +22,7 @@
     {{ form.code }}
     {% for e in form.code.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
   </div>
-  <button class="btn btn--primary btn--block btn--lg" type="submit" data-busy="{% translate 'Vérification…' %}">{% translate "Valider" %}</button>
+  <button class="btn btn--primary btn--block btn--lg" type="submit"{% if not firebase %} data-busy="{% translate 'Vérification…' %}"{% endif %}>{% translate "Valider" %}</button>
 </form>
 <div class="resend">
   <form method="post">
@@ -21,7 +30,19 @@
     <input type="hidden" name="action" value="resend">
     <button class="btn btn--link" type="submit" data-countdown="{{ resend_wait }}" data-countdown-label="{% translate 'Renvoyer le code dans %s s' %}">{% translate "Je n'ai rien reçu : renvoyer le code" %}</button>
   </form>
+  {% for other in other_channels %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="switch">
+    <input type="hidden" name="channel" value="{{ other.code }}">
+    <button class="btn btn--link" type="submit">{% if other.code == "whatsapp" %}{% translate "Recevoir plutôt le code par WhatsApp" %}{% elif other.code == "console" %}{{ other.choice_label }}{% else %}{% translate "Recevoir plutôt le code par SMS" %}{% endif %}</button>
+  </form>
+  {% endfor %}
   <a class="btn btn--link" href="{% url 'dashboard:login' %}">{% translate "Changer de numéro" %}</a>
 </div>
-<p class="small muted">{% translate "Le SMS peut mettre jusqu'à une minute à arriver. Le code expire au bout de 5 minutes." %}</p>
+<p class="small muted">{% if channel.code == "whatsapp" %}{% translate "Le message WhatsApp arrive en quelques secondes. Le code expire au bout de 5 minutes." %}{% else %}{% translate "Le SMS peut mettre jusqu'à une minute à arriver. Le code expire au bout de 5 minutes." %}{% endif %}</p>
+{% endblock %}
+{% block scripts %}
+  {{ block.super }}
+  {% if firebase %}<script type="module" src="{% static 'js/firebase-otp.js' %}"></script>{% endif %}
 {% endblock %}

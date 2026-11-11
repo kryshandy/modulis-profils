@@ -1,5 +1,5 @@
 {% extends "cards/_layout.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{% translate "Activer ma carte" %} — {{ SITE_NAME }}{% endblock %}
 {% block card_content %}
 <h1>{% translate "Activer ma carte" %}</h1>
@@ -16,16 +16,26 @@
 {% elif step == "phone" %}
   <p>{% translate "Code accepté. Indique maintenant ton numéro : il servira à te connecter à ton espace." %}</p>
 {% elif step == "otp" %}
-  <p>{% blocktranslate %}Nous avons envoyé un code par SMS au {{ phone_display }}.{% endblocktranslate %}</p>
+  {% if channel.code == "whatsapp" %}
+    <p>{% blocktranslate %}Ouvre WhatsApp : nous avons envoyé un code au {{ phone_display }}.{% endblocktranslate %}</p>
+  {% elif firebase %}
+    <p>{% blocktranslate %}Tu vas recevoir un SMS avec un code au {{ phone_display }}.{% endblocktranslate %}</p>
+  {% else %}
+    <p>{% blocktranslate %}Nous avons envoyé un code par SMS au {{ phone_display }}.{% endblocktranslate %}</p>
+  {% endif %}
+  {% if channel.code == "console" %}<p class="alert alert--warning">{{ channel.verify_hint }}</p>{% endif %}
+  {% if delivery_error %}<p class="alert alert--warning" role="alert">{{ delivery_error }}</p>{% endif %}
+  {% include "dashboard/auth/_firebase.html" %}
 {% elif creating %}
   <p>{% translate "Dernière étape : crée ta page. Tu pourras la compléter ensuite." %}</p>
 {% else %}
   <p>{% translate "Ton numéro est vérifié. Choisis la page à associer à cette carte." %}</p>
 {% endif %}
 
-<form method="post" class="card-flow__form" novalidate>
+<form method="post" class="card-flow__form" novalidate{% if step == "phone" %} data-channel-form{% endif %}{% if step == "otp" and firebase %} data-firebase-form{% endif %}>
   {% csrf_token %}
   {% for field in form %}
+    {% if field.name != "channel" %}
     <div class="form-field{% if field.errors %} form-field--error{% endif %}">
       {% if field.field.widget.input_type == "radio" %}
         <fieldset>
@@ -39,7 +49,9 @@
       {% if field.help_text %}<p class="form-field__help">{{ field.help_text }}</p>{% endif %}
       {% for error in field.errors %}<p class="form-field__error" role="alert">{{ error }}</p>{% endfor %}
     </div>
+    {% endif %}
   {% endfor %}
+  {% if step == "phone" %}{% include "dashboard/auth/_channel_choice.html" %}{% endif %}
   {% if step == "code" and turnstile_site_key %}
     <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
   {% endif %}
@@ -48,7 +60,7 @@
   {% endif %}
   <button type="submit" class="btn btn--primary">
     {% if step == "code" %}{% translate "Vérifier le code" %}
-    {% elif step == "phone" %}{% translate "Recevoir le code par SMS" %}
+    {% elif step == "phone" %}{% translate "Recevoir mon code" %}
     {% elif step == "otp" %}{% translate "Valider" %}
     {% elif creating %}{% translate "Créer ma page et activer la carte" %}
     {% else %}{% translate "Activer la carte" %}{% endif %}
@@ -59,6 +71,9 @@
   <div class="card-flow__secondary">
     <form method="post">{% csrf_token %}<input type="hidden" name="action" value="resend"><button type="submit" class="btn btn--link"{% if resend_wait %} data-countdown="{{ resend_wait }}"{% endif %}>{% translate "Renvoyer le code" %}</button></form>
     {% if resend_wait %}<p class="small muted">{% blocktranslate with n=resend_wait %}Tu pourras redemander un code dans {{ n }} secondes.{% endblocktranslate %}</p>{% endif %}
+    {% for other in other_channels %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="switch"><input type="hidden" name="channel" value="{{ other.code }}"><button type="submit" class="btn btn--link">{% if other.code == "whatsapp" %}{% translate "Recevoir plutôt le code par WhatsApp" %}{% elif other.code == "console" %}{{ other.choice_label }}{% else %}{% translate "Recevoir plutôt le code par SMS" %}{% endif %}</button></form>
+    {% endfor %}
     <form method="post">{% csrf_token %}<input type="hidden" name="action" value="change_phone"><button type="submit" class="btn btn--link">{% translate "Changer de numéro" %}</button></form>
   </div>
 {% endif %}
@@ -71,4 +86,6 @@
   {% if step == "code" and turnstile_site_key %}
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   {% endif %}
+  {% if step == "phone" %}<script src="{% static 'js/auth.js' %}" defer></script>{% endif %}
+  {% if step == "otp" and firebase %}<script type="module" src="{% static 'js/firebase-otp.js' %}"></script>{% endif %}
 {% endblock %}

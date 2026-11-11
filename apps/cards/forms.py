@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from apps.accounts.forms import ChannelChoiceMixin, channel_field
 from apps.core.models import City, Trade
 
 from .models import CardBatch
@@ -17,18 +18,23 @@ class ActivationCodeForm(forms.Form):
     )
 
 
-class PhoneForm(forms.Form):
+class PhoneForm(ChannelChoiceMixin, forms.Form):
     phone = forms.CharField(
         label=_("Ton numéro de téléphone"),
         max_length=30,
-        help_text=_("Tu vas recevoir un code par SMS."),
+        help_text=_("Tu vas recevoir un code par WhatsApp ou par SMS."),
         widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel", "autofocus": True}),
     )
+    channel = channel_field()
+
+    def __init__(self, *args, channels=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_channels(channels)
 
 
 class OTPForm(forms.Form):
     code = forms.CharField(
-        label=_("Code reçu par SMS"),
+        label=_("Code reçu"),
         max_length=10,
         widget=forms.TextInput(
             attrs={"autocomplete": "one-time-code", "inputmode": "numeric", "pattern": "[0-9 ]*", "autofocus": True}

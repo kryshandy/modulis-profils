@@ -57,7 +57,7 @@ Lecture croisée des deux PDF : voici les points qu'il faut trancher ou corriger
 | A8 | « Sitemap soumis à Google » | Google a **supprimé l'endpoint de ping** des sitemaps en 2023 | Sitemap déclaré dans `robots.txt` et Search Console ; **IndexNow** pour Bing et Yandex ; l'API Indexing de Google seulement pour les offres d'emploi (JobPosting, V2). |
 | A9 | Statistiques : visites et scans | Les robots gonflent les chiffres ; les IP sont des données personnelles | Filtrage des robots, IP **jamais stockées en clair** (hachage salé, renouvelé chaque jour), agrégats journaliers. |
 | A10 | Paquet `kliz` (votre demande) | Trouvé sur PyPI (0.3.1) : il ne fait que **notifier** les moteurs (IndexNow + Search Console) | **Adopté pour la notification d'indexation uniquement** (ADR-0007, étude `docs/etudes/kliz.md`). |
-| A18 | OTP | Le plan hésitait entre SMS et WhatsApp | **OTP par SMS uniquement** (décision du porteur, 9 nov. 2026). |
+| A18 | OTP | Le plan hésitait entre SMS et WhatsApp | **OTP par WhatsApp (API Cloud de Meta, recommandé) ou par SMS (Firebase Authentication)**, passerelle SMS en option ; chaque canal s'active ou se coupe dans le centre de contrôle, les secrets restent dans `.env` (décision du porteur, 10 nov. 2026, ADR-0009 ; remplace « SMS uniquement » du 9 nov.). |
 | A19 | Environnement | Le plan v1.1 prévoyait Windows natif sans Docker | **Docker + Compose dans WSL2 Ubuntu**, `Makefile` (ADR-0008). |
 | A11 | Outils d'équipe (pre-commit) | Le framework `pre-commit` télécharge ses hooks depuis GitHub | Hooks **git locaux** (`.githooks/`) qui appellent Ruff et les tests installés dans le venv. Zéro dépendance GitHub. |
 | A12 | Domaine | « Choix définitif avant toute impression » | Ajout d'une règle de maintenance : **renouvellement automatique sur 5 à 10 ans + alerte**. Un domaine expiré met hors service toutes les cartes vendues. |
@@ -336,7 +336,7 @@ Bandeau « Crée ta page pro gratuite » sur chaque page gratuite (lien interne,
 
 ## 7. Sécurité, abus et données personnelles
 
-- **OTP** : 6 chiffres, valable 5 minutes, stocké en **HMAC avec un secret serveur** (un simple hachage d'un code à 6 chiffres se casse en quelques secondes), 5 essais par défi **et** un plafond d'essais par numéro sur l'ensemble des défis, délai progressif. Fournisseur SMS ou WhatsApp derrière une interface (choix : question Q3).
+- **OTP** : 6 chiffres, valable 5 minutes, stocké en **HMAC avec un secret serveur** (un simple hachage d'un code à 6 chiffres se casse en quelques secondes), 5 essais par défi **et** un plafond d'essais par numéro sur l'ensemble des défis, délai progressif. Canaux derrière une interface (`apps/accounts/otp/`, ADR-0009) : **WhatsApp** (API Cloud, modèle d'authentification avec bouton « copier le code »), **SMS via Firebase** (vérifié côté navigateur par Firebase, puis jeton d'identité vérifié par notre serveur : RS256, `aud`, `iss`, fraîcheur, fournisseur « phone », même numéro qu'un défi en attente), **passerelle SMS** en option. Les mêmes règles (indicatifs, plafonds, comptes équipe, numéros bloqués, interrupteurs inscriptions/connexion) s'appliquent à tous les canaux, avant tout envoi.
 - **Fraude aux SMS** (« SMS pumping » : des robots font envoyer des SMS vers des numéros surtaxés) : au lancement, seul l'indicatif **+237** est accepté ; défi Turnstile avant l'envoi ; plafonds par numéro, par IP, par préfixe et **plafond de dépense quotidien global** ; alerte si le taux de conversion des OTP chute.
 - **Numéros recyclés** : les opérateurs réattribuent les numéros inactifs, et le nouveau titulaire passe l'OTP. Sur un compte inactif depuis plus de 6 mois, ou qui se connecte depuis un nouvel appareil, on demande une vérification supplémentaire (lien envoyé à l'email s'il existe, sinon revue manuelle), et le propriétaire est notifié.
 - **Contenu utilisateur** : échappement automatique des templates, aucune bio en HTML brut (texte seul, ou Markdown restreint nettoyé par `nh3`), schémas de liens filtrés (§ 6.2).
@@ -515,7 +515,7 @@ Profils créés, profils indexables, % de profils complets, cartes activées / v
 |---|---|---|
 | ~~Q1~~ | ~~« Kliz »~~ → **résolu** : paquet Python d'indexation, adopté (ADR-0007) | — |
 | Q2 | Nom et domaine définitifs (ModulisCard, Tapo, MonPro, KartPro…). Le domaine **des cartes** doit être neutre (sans pays) à cause de l'expansion prévue ; ADR à écrire | lot 5 (impression) — le dev peut commencer avant |
-| Q3 | Fournisseur **SMS** (agrégateur local) pour les OTP : SMS seulement, décidé. Reste à choisir le prestataire et à écrire son backend dans `apps/accounts/sms.py` | mise en ligne |
+| Q3 | Fournisseurs OTP (ADR-0009) : **WhatsApp Cloud API** (créer l'app Meta, le numéro expéditeur et faire approuver le modèle d'authentification) et **Firebase Authentication** (projet, fournisseur « Téléphone », domaines autorisés, région SMS limitée au Cameroun). Agrégateur SMS local facultatif (backend dans `apps/accounts/sms.py`) | mise en ligne |
 | Q4 | Fournisseur Mobile Money | lot 8 |
 | Q5 | Fournisseur des cartes NFC (puce NTAG213/215/216, quantité, délai) | lot 5 |
 | Q6 | Hébergeur du VPS (Hetzner, OVH, Contabo…) | lot 9 |

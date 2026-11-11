@@ -1,0 +1,23 @@
+{% load i18n %}{# OTP channel choice. Context: channel_options (list), form (with a `channel` field). Shared with apps/cards. #}
+{% if channel_options|length > 1 %}
+<fieldset class="form-field choices{% if form.channel.errors %} form-field--error{% endif %}">
+  <legend class="form-field__label">{{ form.channel.label }}</legend>
+  <div class="choices__grid">
+    {% for option in channel_options %}
+      <label class="choice" for="{{ option.id }}">
+        <input type="radio" name="{{ form.channel.html_name }}" id="{{ option.id }}" value="{{ option.code }}"{% if option.checked %} checked{% endif %} data-submit-label="{{ option.label }}">
+        <span class="choice__body">
+          {{ option.label }}{% if option.recommended %} <span class="badge badge--ok">{% translate "Recommandé" %}</span>{% endif %}
+          {% if option.help %}<span class="small muted choice__help">{{ option.help }}</span>{% endif %}
+        </span>
+      </label>
+    {% endfor %}
+  </div>
+  {% for e in form.channel.errors %}<p class="form-field__error" role="alert">{{ e }}</p>{% endfor %}
+</fieldset>
+{% elif channel_options %}
+  {% with option=channel_options.0 %}
+  <input type="hidden" name="{{ form.channel.html_name }}" value="{{ option.code }}">
+  <p class="small muted">{% if option.code == "whatsapp" %}{% translate "Tu vas recevoir ton code sur WhatsApp." %}{% elif option.code == "console" %}{{ option.help }}{% else %}{% translate "Tu vas recevoir ton code par SMS." %}{% endif %}</p>
+  {% endwith %}
+{% endif %}

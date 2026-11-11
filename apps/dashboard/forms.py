@@ -9,6 +9,7 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from apps.accounts.forms import ChannelChoiceMixin, channel_field
 from apps.accounts.services import InvalidPhone, normalize_phone
 from apps.core.models import City, Trade
 from apps.profiles.models import Profile, ProfileLink, ProfileService
@@ -43,7 +44,7 @@ def _clean_phone(value: str) -> str:
 # --- Auth ------------------------------------------------------------------------------------
 
 
-class PhoneForm(forms.Form):
+class PhoneForm(ChannelChoiceMixin, forms.Form):
     phone = forms.CharField(
         label=_("Ton numéro de téléphone"),
         max_length=24,
@@ -57,6 +58,11 @@ class PhoneForm(forms.Form):
             }
         ),
     )
+    channel = channel_field()
+
+    def __init__(self, *args, channels=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_channels(channels)
 
 
 class CodeForm(forms.Form):

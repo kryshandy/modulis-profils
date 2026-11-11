@@ -1,0 +1,34 @@
+{% load i18n %}{% get_current_language as current_lang %}{# Firebase SMS browser flow (static/js/firebase-otp.js). Public config only, no inline script. Shared with apps/cards. #}
+{% if firebase %}
+<div id="firebase-otp" hidden
+  data-firebase-otp
+  data-sdk-version="{{ firebase.sdk_version }}"
+  data-api-key="{{ firebase.apiKey }}"
+  data-auth-domain="{{ firebase.authDomain }}"
+  data-project-id="{{ firebase.projectId }}"
+  data-app-id="{{ firebase.appId }}"
+  data-phone="{{ firebase.phone }}"
+  data-verify-url="{{ firebase.verify_url }}"
+  data-autostart="{% if firebase.autostart %}1{% else %}0{% endif %}"
+  data-lang="{{ current_lang|default:"fr" }}"
+  data-msg-sending="{% translate 'Envoi du SMS en cours…' %}"
+  data-msg-sent="{% translate 'SMS envoyé. Entre le code reçu.' %}"
+  data-msg-checking="{% translate 'Vérification…' %}"
+  data-msg-not-sent="{% translate 'Le SMS n’a pas encore été envoyé. Appuie sur « Renvoyer le code ».' %}"
+  data-msg-reload="{% translate 'Pour recevoir un SMS, appuie sur « Renvoyer le code ».' %}"
+  data-msg-invalid-code="{% translate 'Code incorrect. Vérifie le SMS et réessaie.' %}"
+  data-msg-expired="{% translate 'Ce code a expiré. Demande un nouveau code.' %}"
+  data-msg-too-many="{% translate 'Trop de tentatives sur ce numéro. Réessaie plus tard ou choisis WhatsApp.' %}"
+  data-msg-quota="{% translate 'Le service SMS est saturé pour le moment. Réessaie plus tard ou choisis WhatsApp.' %}"
+  data-msg-captcha="{% translate 'La vérification anti-robot a échoué. Recharge la page et réessaie.' %}"
+  data-msg-network="{% translate 'Pas de connexion internet. Vérifie ta connexion et réessaie.' %}"
+  data-msg-phone="{% translate 'Ce numéro n’est pas accepté par le service SMS. Choisis WhatsApp.' %}"
+  data-msg-load="{% translate 'Le service SMS ne se charge pas. Vérifie ta connexion ou choisis WhatsApp.' %}"
+  data-msg-generic="{% translate 'Une erreur est survenue. Réessaie ou choisis WhatsApp.' %}"
+  data-msg-retry="{% translate 'Réessayer l’envoi' %}"></div>
+<div id="recaptcha-container"></div>
+<p class="small muted" data-firebase-status role="status" aria-live="polite"></p>
+<p class="alert alert--error" data-firebase-error role="alert" hidden></p>
+<p hidden data-firebase-retry-wrap><button type="button" class="btn btn--link" data-firebase-retry>{% translate "Réessayer l’envoi" %}</button></p>
+<noscript><p class="alert alert--warning">{% translate "Le SMS nécessite JavaScript. Active-le, ou choisis de recevoir le code par WhatsApp." %}</p></noscript>
+{% endif %}

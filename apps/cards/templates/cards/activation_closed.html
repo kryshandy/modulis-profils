@@ -1,0 +1,8 @@
+{% extends "cards/_layout.html" %}
+{% load i18n %}
+{% block title %}{% translate "Activation indisponible" %} — {{ SITE_NAME }}{% endblock %}
+{% block card_content %}
+<h1>{% translate "Activation indisponible" %}</h1>
+<p>{% translate "L'activation des cartes est momentanément indisponible. Garde bien ta carte et ton code d'activation, et réessaie un peu plus tard." %}</p>
+<p><a class="btn" href="/">{% translate "Aller à l'accueil" %}</a></p>
+{% endblock %}
