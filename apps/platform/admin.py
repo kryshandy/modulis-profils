@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from django import forms
 from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.urls import path
 from django.utils.translation import gettext_lazy as _
@@ -72,6 +73,8 @@ class SiteSettingsAdmin(admin.ModelAdmin):
 
 
 class BlockedPhoneForm(forms.ModelForm):
+    actor = None  # set by BlockedPhoneAdmin.get_form: the admin user submitting the form
+
     class Meta:
         model = BlockedPhone
         fields = ("phone", "reason")
@@ -80,9 +83,15 @@ class BlockedPhoneForm(forms.ModelForm):
         from apps.accounts.services import OTPError, normalize_phone
 
         try:
-            return normalize_phone(self.cleaned_data.get("phone", ""))
+            phone = normalize_phone(self.cleaned_data.get("phone", ""))
         except OTPError as exc:
             raise forms.ValidationError(str(exc)) from exc
+        if self.instance.pk is None:
+            try:
+                services.ensure_can_block(phone, self.actor)
+            except PermissionDenied as exc:
+                raise forms.ValidationError(str(exc)) from exc
+        return phone
 
 
 @admin.register(BlockedPhone)
@@ -97,6 +106,10 @@ class BlockedPhoneAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return (*self.readonly_fields, "phone") if obj else self.readonly_fields
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj, change=change, **kwargs)
+        return type(form.__name__, (form,), {"actor": request.user})
 
     def save_model(self, request, obj, form, change):
         if change:

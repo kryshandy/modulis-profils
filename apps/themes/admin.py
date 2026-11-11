@@ -2,6 +2,8 @@ from django.contrib import admin, messages
 from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
 
+from apps.platform.services import audit
+
 from .models import ProfileTheme, Theme
 
 
@@ -32,8 +34,26 @@ class ThemeAdmin(admin.ModelAdmin):
         # The code is referenced by drafts and by the default-theme logic: frozen once created.
         return (*self.readonly_fields, "code") if obj else self.readonly_fields
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        audit(request.user, "theme.update" if change else "theme.create", obj.code, fields=sorted(form.changed_data))
+
+    def delete_model(self, request, obj):
+        code = obj.code
+        super().delete_model(request, obj)
+        audit(request.user, "theme.delete", code)
+
+    def delete_queryset(self, request, queryset):
+        codes = list(queryset.values_list("code", flat=True))
+        super().delete_queryset(request, queryset)
+        for code in codes:
+            audit(request.user, "theme.delete", code)
+
     def _bulk(self, request, queryset, message, **values):
+        codes = list(queryset.values_list("code", flat=True))
         count = queryset.update(**values)
+        for code in codes:
+            audit(request.user, "theme.bulk_update", code, **{k: str(v) for k, v in values.items()})
         self.message_user(request, message % {"n": count}, messages.SUCCESS)
 
     @admin.action(permissions=("change",), description=_("Activer (visible dans la galerie)"))
@@ -68,3 +88,23 @@ class ProfileThemeAdmin(admin.ModelAdmin):
     list_select_related = ("profile", "theme")
     raw_id_fields = ("profile",)
     readonly_fields = ("draft", "draft_updated_at", "published_at", "published_version", "updated_at")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        audit(
+            request.user,
+            "profile_theme.update" if change else "profile_theme.create",
+            f"/{obj.profile.slug}",
+            fields=sorted(form.changed_data),
+        )
+
+    def delete_model(self, request, obj):
+        target = f"/{obj.profile.slug}"
+        super().delete_model(request, obj)
+        audit(request.user, "profile_theme.delete", target)
+
+    def delete_queryset(self, request, queryset):
+        targets = [f"/{slug}" for slug in queryset.values_list("profile__slug", flat=True)]
+        super().delete_queryset(request, queryset)
+        for target in targets:
+            audit(request.user, "profile_theme.delete", target)

@@ -12,7 +12,9 @@ from importlib import import_module
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from .models import AuditLog, BlockedPhone, SiteSettings
 
@@ -83,27 +85,66 @@ def audit(actor, action: str, target: str = "", **details) -> None:
 # --- Account management (admin actions) ------------------------------------------------------
 
 
-def terminate_sessions(user) -> int:
-    """Delete every server-side session of `user` ("déconnecter de tous les appareils").
+def _user_ids(users) -> set[str]:
+    """Accept a user, a user id, or an iterable of either."""
+    if users is None:
+        return set()
+    if hasattr(users, "pk") or isinstance(users, int | str):
+        users = [users]
+    return {str(getattr(u, "pk", u)) for u in users if getattr(u, "pk", u) is not None}
 
-    Works with the database-backed session engines (db, cached_db). Returns the number deleted.
+
+def terminate_sessions_by_user(users) -> dict[str, int]:
+    """Delete every server-side session of `users` in ONE pass over the active sessions.
+
+    Works with the database-backed session engines (db, cached_db). Returns {user id: sessions deleted}.
     """
     from django.contrib.sessions.models import Session
 
-    user_id = str(user.pk)
-    doomed = [
-        session.session_key
-        for session in Session.objects.filter(expire_date__gt=timezone.now()).iterator()
-        if str(session.get_decoded().get("_auth_user_id", "")) == user_id
-    ]
+    wanted = _user_ids(users)
+    if not wanted:
+        return {}
+    doomed: dict[str, list[str]] = {}
+    for session in Session.objects.filter(expire_date__gt=timezone.now()).iterator():
+        uid = str(session.get_decoded().get("_auth_user_id", ""))
+        if uid in wanted:
+            doomed.setdefault(uid, []).append(session.session_key)
     if not doomed:
-        return 0
+        return {}
+    keys = [key for user_keys in doomed.values() for key in user_keys]
+    if settings.SESSION_ENGINE != "django.contrib.sessions.backends.db":
+        store = import_module(settings.SESSION_ENGINE).SessionStore
+        for key in keys:
+            store(session_key=key).delete()  # clears the cache copy (cached_db)
+    Session.objects.filter(session_key__in=keys).delete()
+    return {uid: len(user_keys) for uid, user_keys in doomed.items()}
 
-    store = import_module(settings.SESSION_ENGINE).SessionStore
-    for key in doomed:
-        store(session_key=key).delete()  # also clears the cache copy for cached_db
-    Session.objects.filter(session_key__in=doomed).delete()
-    return len(doomed)
+
+def terminate_sessions(users) -> int:
+    """Delete every server-side session of `users` (a user, an id, or an iterable): "déconnecter partout"."""
+    return sum(terminate_sessions_by_user(users).values())
+
+
+def set_users_active(users, active: bool, *, actor=None) -> int:
+    """Activate or deactivate several accounts; deactivation logs them out everywhere (one session pass).
+
+    Returns the number of accounts whose flag changed.
+    """
+    users = list(users)
+    if not users:
+        return 0
+    changed = [user for user in users if user.is_active != active]
+    if changed:
+        get_user_model().objects.filter(pk__in=[u.pk for u in changed]).update(is_active=active)
+        for user in changed:
+            user.is_active = active
+    sessions = {} if active else terminate_sessions_by_user(users)
+    changed_ids = {u.pk for u in changed}
+    for user in users:
+        count = sessions.get(str(user.pk), 0)
+        if user.pk in changed_ids or count:
+            audit(actor, "user.activate" if active else "user.deactivate", user.phone, sessions=count)
+    return len(changed)
 
 
 def set_user_active(user, active: bool, *, actor=None) -> bool:
@@ -111,32 +152,50 @@ def set_user_active(user, active: bool, *, actor=None) -> bool:
 
     Returns True when the flag changed.
     """
-    changed = user.is_active != active
-    if changed:
-        type(user).objects.filter(pk=user.pk).update(is_active=active)
-        user.is_active = active
-    sessions = 0 if active else terminate_sessions(user)
-    if changed or sessions:
-        audit(actor, "user.activate" if active else "user.deactivate", user.phone, sessions=sessions)
-    return changed
+    return bool(set_users_active([user], active, actor=actor))
 
 
 def logout_everywhere(user, *, actor=None) -> int:
-    count = terminate_sessions(user)
-    audit(actor, "user.logout_everywhere", user.phone, sessions=count)
-    return count
+    return logout_users_everywhere([user], actor=actor)
+
+
+def logout_users_everywhere(users, *, actor=None) -> int:
+    users = list(users)
+    sessions = terminate_sessions_by_user(users)
+    for user in users:
+        audit(actor, "user.logout_everywhere", user.phone, sessions=sessions.get(str(user.pk), 0))
+    return sum(sessions.values())
+
+
+def ensure_can_block(phone: str, actor) -> None:
+    """Raise PermissionDenied when `actor` may not block `phone`.
+
+    Never one's own number; a staff or superuser account only by a superuser. `actor=None` is the
+    system (management commands, tasks) and is always allowed.
+    """
+    if actor is None or not getattr(actor, "pk", None):
+        return
+    for user in get_user_model().objects.filter(phone=phone).only("pk", "is_staff", "is_superuser"):
+        if user.pk == actor.pk:
+            raise PermissionDenied(_("Tu ne peux pas bloquer ton propre numéro."))
+        if (user.is_staff or user.is_superuser) and not actor.is_superuser:
+            raise PermissionDenied(
+                _("Seul un super-administrateur peut bloquer le numéro d'un membre de l'équipe Modulis.")
+            )
 
 
 def block_phone(phone: str, *, reason: str, actor=None) -> BlockedPhone:
-    """Refuse this number at login/sign-up, deactivate its account and log it out everywhere."""
+    """Refuse this number at login/sign-up, deactivate its account and log it out everywhere.
 
+    Raises PermissionDenied (see ensure_can_block) before changing anything.
+    """
+    ensure_can_block(phone, actor)
     blocked, created = BlockedPhone.objects.get_or_create(
         phone=phone, defaults={"reason": reason[:200], "created_by": actor if getattr(actor, "pk", None) else None}
     )
     if created:
         audit(actor, "phone.block", phone, reason=reason[:200])
-    for user in get_user_model().objects.filter(phone=phone):
-        set_user_active(user, False, actor=actor)
+    set_users_active(get_user_model().objects.filter(phone=phone), False, actor=actor)
     return blocked
 
 
@@ -147,8 +206,7 @@ def unblock_phone(phone: str, *, actor=None, reactivate: bool = True) -> bool:
     if deleted:
         audit(actor, "phone.unblock", phone)
     if reactivate:
-        for user in get_user_model().objects.filter(phone=phone):
-            set_user_active(user, True, actor=actor)
+        set_users_active(get_user_model().objects.filter(phone=phone), True, actor=actor)
     return bool(deleted)
 
 

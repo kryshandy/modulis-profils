@@ -3,6 +3,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import BaseUserCreationForm
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Exists, OuterRef
 from django.urls import reverse
 from django.utils.html import format_html
@@ -14,6 +15,8 @@ from apps.profiles.models import Profile
 
 from . import services
 from .models import OTPChallenge, User
+
+PRIVILEGE_FIELDS = ("is_staff", "is_superuser", "groups", "user_permissions")
 
 
 def _clean_phone(raw: str) -> str:
@@ -153,14 +156,36 @@ class UserAdmin(BaseUserAdmin):
             return False
         return super().has_change_permission(request, obj)
 
+    def get_readonly_fields(self, request, obj=None):
+        """Privilege fields: only a superuser edits them, and never on their own account.
+
+        A staff member holding accounts.change_user must not be able to tick is_superuser or grant
+        himself permissions; a superuser must not demote or lock himself out by accident.
+        """
+        fields = tuple(super().get_readonly_fields(request, obj))
+        if obj is not None and (not request.user.is_superuser or obj.pk == request.user.pk):
+            fields += tuple(f for f in PRIVILEGE_FIELDS if f not in fields)
+        return fields
+
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if change and "is_active" in form.changed_data:
             if not obj.is_active:
                 platform.terminate_sessions(obj)
             platform.audit(request.user, "user.activate" if obj.is_active else "user.deactivate", obj.phone)
-        if change and {"is_staff", "is_superuser", "groups", "user_permissions"} & set(form.changed_data):
+        if change and set(PRIVILEGE_FIELDS) & set(form.changed_data):
             platform.audit(request.user, "user.permissions", obj.phone, fields=sorted(form.changed_data))
+
+    def delete_model(self, request, obj):
+        phone, pk = obj.phone, obj.pk
+        super().delete_model(request, obj)
+        platform.audit(request.user, "user.delete", phone, user_id=pk)
+
+    def delete_queryset(self, request, queryset):
+        doomed = list(queryset.values_list("pk", "phone"))
+        super().delete_queryset(request, queryset)
+        for pk, phone in doomed:
+            platform.audit(request.user, "user.delete", phone, user_id=pk)
 
     @admin.display(description=_("numéro bloqué"), boolean=True, ordering="_blocked")
     def blocked(self, obj):
@@ -197,29 +222,33 @@ class UserAdmin(BaseUserAdmin):
     @admin.action(permissions=["change"], description=_("Désactiver (et déconnecter)"))
     def deactivate_accounts(self, request, queryset):
         users = self._targets(request, queryset)
-        for user in users:
-            platform.set_user_active(user, False, actor=request.user)
+        platform.set_users_active(users, False, actor=request.user)
         self.message_user(request, _("%(n)d compte(s) désactivé(s).") % {"n": len(users)}, messages.SUCCESS)
 
     @admin.action(permissions=["change"], description=_("Réactiver"))
     def reactivate_accounts(self, request, queryset):
         users = self._targets(request, queryset)
-        for user in users:
-            platform.set_user_active(user, True, actor=request.user)
+        platform.set_users_active(users, True, actor=request.user)
         self.message_user(request, _("%(n)d compte(s) réactivé(s).") % {"n": len(users)}, messages.SUCCESS)
 
     @admin.action(permissions=["change"], description=_("Déconnecter de tous les appareils"))
     def logout_everywhere(self, request, queryset):
-        total = sum(platform.logout_everywhere(user, actor=request.user) for user in self._targets(request, queryset))
+        total = platform.logout_users_everywhere(self._targets(request, queryset), actor=request.user)
         self.message_user(request, _("%(n)d session(s) fermée(s).") % {"n": total}, messages.SUCCESS)
 
     @admin.action(permissions=["block"], description=_("Bloquer le numéro (désactive et déconnecte)"))
     def block_phones(self, request, queryset):
         users = self._targets(request, queryset)
         reason = str(_("Bloqué depuis l'administration par %(who)s") % {"who": request.user})
+        done = 0
         for user in users:
-            platform.block_phone(user.phone, reason=reason, actor=request.user)
-        self.message_user(request, _("%(n)d numéro(s) bloqué(s).") % {"n": len(users)}, messages.SUCCESS)
+            try:
+                platform.block_phone(user.phone, reason=reason, actor=request.user)
+            except PermissionDenied as exc:
+                self.message_user(request, f"{user.phone} : {exc}", messages.ERROR)
+            else:
+                done += 1
+        self.message_user(request, _("%(n)d numéro(s) bloqué(s).") % {"n": done}, messages.SUCCESS)
 
     @admin.action(permissions=["unblock"], description=_("Débloquer le numéro (et réactiver)"))
     def unblock_phones(self, request, queryset):

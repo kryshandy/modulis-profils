@@ -35,6 +35,7 @@ from apps.accounts.services import (
     verify_firebase_token,
     verify_otp,
 )
+from apps.core import csp
 from apps.core.turnstile import verify_turnstile
 from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
 from apps.platform.services import feature
@@ -117,7 +118,8 @@ def login_view(request):
         "channel_options": form.channel_options(),
         "turnstile_site_key": settings.TURNSTILE_SITE_KEY,
     }
-    return render(request, "dashboard/auth/login.html", context, status=200)
+    response = render(request, "dashboard/auth/login.html", context, status=200)
+    return csp.allow(response, csp.TURNSTILE) if context["turnstile_site_key"] else response
 
 
 @require_http_methods(["GET", "POST"])
@@ -172,7 +174,8 @@ def verify_view(request):
         "code_length": settings.OTP_LENGTH,
         **firebase_context(channel, phone=phone, verify_url=reverse("dashboard:firebase_verify"), autostart=autostart),
     }
-    return render(request, "dashboard/auth/verify.html", context)
+    response = render(request, "dashboard/auth/verify.html", context)
+    return csp.allow(response, csp.FIREBASE) if context.get("firebase") else response
 
 
 @require_POST

@@ -66,6 +66,8 @@ modulis-profils/
 ├── conftest.py · pyproject.toml (Ruff, pytest, coverage) · Makefile · manage.py
 ```
 
+**Guide complet de lancement et de test : [docs/LANCEMENT.md](docs/LANCEMENT.md)** · captures d'écran : [docs/captures/](docs/captures/)
+
 ## Documentation
 
 - [docs/00-PLAN-COMPLET.md](docs/00-PLAN-COMPLET.md) : architecture, URL, SEO, parcours, lots, maintenance, risques

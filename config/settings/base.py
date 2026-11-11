@@ -143,28 +143,17 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
-# Content Security Policy (django-csp 4): no inline script, no eval.
+# Content Security Policy (django-csp 4): no inline script, no eval, our origin only.
+# Turnstile and Firebase/Google hosts are added per response by apps.core.csp.allow() on the
+# few pages that need them (login, card activation, Firebase code screens), never site-wide.
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": ["'self'"],
-        # Google hosts below: Firebase Phone Auth + its invisible reCAPTCHA only (ADR-0009).
-        "script-src": [
-            "'self'",
-            "https://challenges.cloudflare.com",
-            "https://www.gstatic.com",
-            "https://www.google.com",
-            "https://apis.google.com",
-        ],
+        "script-src": ["'self'"],
         "style-src": ["'self'"],
         "img-src": ["'self'", "data:"],
         "font-src": ["'self'"],
-        "connect-src": [
-            "'self'",
-            "https://identitytoolkit.googleapis.com",
-            "https://securetoken.googleapis.com",
-            "https://www.googleapis.com",
-        ],
-        "frame-src": ["https://challenges.cloudflare.com", "https://www.google.com", "https://*.firebaseapp.com"],
+        "connect-src": ["'self'"],
         "frame-ancestors": ["'none'"],
         "form-action": ["'self'"],
         "base-uri": ["'self'"],

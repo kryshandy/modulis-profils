@@ -464,3 +464,35 @@ def test_directory_switch_off_hides_listings(client, settings):
     graph = json.dumps(jsonld_blocks(html))
     assert "/villes/douala" not in graph
     assert 'href="/villes/douala"' not in body_of(client.get("/"))
+
+
+# --- publication abuse limits (security review 3be2527..e346dcc) ---------------------------
+
+
+def test_instant_flush_at_most_once_per_page_every_ten_minutes(client, pro, django_capture_on_commit_callbacks):
+    from django.core.cache import cache
+
+    client.post(reverse("themes:use", args=["horizon"]))
+    with mock.patch("apps.seo.tasks.flush_now") as flush, django_capture_on_commit_callbacks(execute=True):
+        first = services.publish(pro)
+        second = services.publish(pro)
+        third = services.publish(pro)
+    assert flush.call_count == 1
+    assert first.instant and not second.instant and not third.instant
+    # The URLs still go to the queue: the periodic flush sends them.
+    assert IndexingQueue.objects.filter(url=pro.absolute_url).exists()
+    cache.delete(services.FLUSH_NOW_LOCK.format(pk=pro.pk))  # ten minutes later
+    with mock.patch("apps.seo.tasks.flush_now") as flush, django_capture_on_commit_callbacks(execute=True):
+        services.publish(pro)
+    flush.assert_called_once()
+
+
+def test_publish_is_rate_limited_per_user(client, pro):
+    client.post(reverse("themes:use", args=["horizon"]))
+    with mock.patch("apps.seo.tasks.flush_now"):
+        for _ in range(10):
+            assert client.post(reverse("themes:publish"))["Location"] == reverse("themes:published")
+        response = client.post(reverse("themes:publish"), follow=True)
+    assert response.redirect_chain[0][0] == reverse("themes:publish")
+    assert "Réessaie un peu plus tard" in body_of(response)
+    assert ProfileTheme.objects.get(profile=pro).published_version == 10

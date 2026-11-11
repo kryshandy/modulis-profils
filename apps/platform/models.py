@@ -5,7 +5,7 @@ disables features; the control center shows whether each provider is configured.
 """
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 
 
@@ -73,7 +73,10 @@ class SiteSettings(models.Model):
         super().save(*args, **kwargs)
         from .services import invalidate
 
+        # Now (this process) AND after commit: a concurrent request reading the old row before our
+        # commit could otherwise re-cache stale values for CACHE_TTL seconds.
         invalidate()
+        transaction.on_commit(invalidate)
 
 
 class BlockedPhone(models.Model):

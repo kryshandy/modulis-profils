@@ -67,14 +67,23 @@ class TestCardActivationSwitch:
 
 
 class TestPageCreationSwitch:
-    def test_new_phone_refused_before_any_code(self, client, sms_outbox):
+    def test_new_phone_not_revealed_before_the_code(self, client, sms_outbox, django_capture_on_commit_callbacks):
+        """Whether a number has a page is only said after the OTP (no account enumeration with a card)."""
         set_switches(page_creation_enabled=False)
         card = CardFactory()
         client.post(_url(card), {"activation_code": GOOD_CODE})
-        response = client.post(_url(card), {"phone": PHONE_RAW})
-        assert response.status_code == 200
+        with django_capture_on_commit_callbacks(execute=True):
+            response = client.post(_url(card), {"phone": PHONE_RAW})
+        assert response.status_code == 302
+        assert OTPChallenge.objects.filter(phone=PHONE).exists() and len(sms_outbox) == 1
+        assert "suspendue" not in client.get(_url(card)).content.decode()
+        code = sms_outbox[-1].body.split("code est ")[1][:6]
+        client.post(_url(card), {"code": code})
+        response = client.get(_url(card))
+        assert response.status_code == 503
         assert "création de nouvelles pages est momentanément suspendue" in response.content.decode()
-        assert not OTPChallenge.objects.exists() and sms_outbox == []
+        card.refresh_from_db()
+        assert card.status != Card.Status.ACTIVE
 
     def test_existing_page_can_still_get_the_card_but_no_new_page(
         self, client, sms_outbox, django_capture_on_commit_callbacks

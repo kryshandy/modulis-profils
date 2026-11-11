@@ -14,6 +14,7 @@ from django_ratelimit.decorators import ratelimit
 
 from apps.accounts.services import set_email
 from apps.cards.services import CardError, activate_card, check_activation_code, disable_card, get_card
+from apps.core import csp
 from apps.core.turnstile import verify_turnstile
 from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
 from apps.profiles import services as profiles
@@ -115,10 +116,15 @@ def _cards_context(request, form=None, error=""):
     }
 
 
+def _cards_page(request, context):
+    response = dash_render(request, "dashboard/cards.html", context, status=200)
+    return csp.allow(response, csp.TURNSTILE) if context["turnstile_site_key"] else response
+
+
 @profile_required
 @require_GET
 def cards(request):
-    return dash_render(request, "dashboard/cards.html", _cards_context(request))
+    return _cards_page(request, _cards_context(request))
 
 
 @profile_required
@@ -147,7 +153,7 @@ def card_link(request):
     if not error and form.is_valid():
         messages.success(request, _("Ta carte est liée à ta page ✓ Fais un essai : approche-la d'un téléphone."))
         return redirect("dashboard:cards")
-    return dash_render(request, "dashboard/cards.html", _cards_context(request, form, error), status=200)
+    return _cards_page(request, _cards_context(request, form, error))
 
 
 @profile_required

@@ -70,6 +70,9 @@ class LoginDisabled(OTPError):
 
 DELIVERY_FAILED_KEY = "otp-delivery-failed:{pk}"
 DELIVERY_FAILED_TTL = 15 * 60
+# The clear code never travels through the task queue: it waits in the cache under a random key.
+OTP_CODE_KEY = "otp-code:{ref}"
+FIREBASE_USED_KEY = "firebase-auth-used:{digest}"
 
 
 def _msg_account_not_allowed() -> str:
@@ -221,8 +224,28 @@ def _create_challenge(phone: str, purpose: str, ip_hash: str, channel: otp.OTPCh
             from .tasks import send_otp_task  # local import: avoids a cycle at app loading
 
             pk, channel_code = challenge.pk, channel.code
-            transaction.on_commit(lambda: send_otp_task(channel_code, phone, code, pk))
+
+            def _enqueue():
+                ref = secrets.token_urlsafe(24)
+                cache.set(OTP_CODE_KEY.format(ref=ref), code, settings.OTP_TTL_SECONDS)
+                send_otp_task(channel_code, phone, ref, pk)
+
+            transaction.on_commit(_enqueue)
     return challenge
+
+
+def deliver_queued_otp(channel_code: str, phone: str, code_ref: str, challenge_id: int, *, final: bool) -> None:
+    """Task side: fetch the code kept under `code_ref`, deliver it, then forget it.
+
+    Nothing is sent once the code has expired from the cache (its challenge has expired too).
+    The cached code is kept while a transient failure will be retried.
+    """
+    key = OTP_CODE_KEY.format(ref=code_ref)
+    code = cache.get(key)
+    if not code:
+        return
+    deliver_otp(channel_code, phone, code, challenge_id, final=final)  # raises when a retry follows
+    cache.delete(key)
 
 
 def deliver_otp(channel_code: str, phone: str, code: str, challenge_id: int, *, final: bool) -> None:
@@ -254,6 +277,14 @@ def delivery_failure(phone: str, purpose: str) -> str:
     return cache.get(DELIVERY_FAILED_KEY.format(pk=challenge.pk)) or ""
 
 
+def _channel_available(code: str) -> bool:
+    try:
+        resolve_channel(code)
+    except ChannelUnavailable:
+        return False
+    return True
+
+
 def verify_otp(phone: str, purpose: str, code: str) -> None:
     """Consume the current challenge if `code` is right, otherwise raise InvalidCode/TooManyRequests."""
     code = (code or "").strip().replace(" ", "")
@@ -276,6 +307,11 @@ def verify_otp(phone: str, purpose: str, code: str) -> None:
         elif challenge is None or challenge.is_expired or not challenge.code_hmac:
             # No HMAC: a client-side (Firebase) challenge can never be answered with a typed code.
             error = InvalidCode(_("Ce code a expiré. Demande un nouveau code."))
+        elif challenge.channel and not _channel_available(challenge.channel):
+            # The channel was switched off in the control center after the code was sent.
+            error = ChannelUnavailable(
+                _("Ce moyen de recevoir le code n'est plus disponible. Demande un nouveau code.")
+            )
         elif challenge.attempts >= settings.OTP_MAX_ATTEMPTS:
             error = TooManyRequests(_("Trop d'essais pour ce code. Demande un nouveau code."))
         elif not hmac.compare_digest(challenge.code_hmac, _hmac(phone, purpose, code)):
@@ -288,6 +324,12 @@ def verify_otp(phone: str, purpose: str, code: str) -> None:
             challenge.save(update_fields=["consumed_at"])
     if error is not None:
         raise error
+
+
+def _firebase_auth_key(claims: dict) -> str:
+    """One Firebase sign-in = (sub, auth_time): refreshed ID tokens of the same sign-in share it."""
+    digest = hashlib.sha256(f"{claims.get('sub')}:{claims.get('auth_time')}".encode()).hexdigest()
+    return FIREBASE_USED_KEY.format(digest=digest)
 
 
 def verify_firebase_token(id_token: str, phone: str, purpose: str) -> str:
@@ -320,6 +362,9 @@ def verify_firebase_token(id_token: str, phone: str, purpose: str) -> str:
         )
         if challenge is None or challenge.is_expired:
             error = InvalidCode(_("Ce code a expiré. Demande un nouveau code."))
+        elif not cache.add(_firebase_auth_key(claims), 1, settings.FIREBASE_MAX_AUTH_AGE_SECONDS + 60):
+            # Replay: this Firebase sign-in (same sub + auth_time, whatever the token) was already used.
+            error = InvalidCode(_("Ce code a déjà été utilisé. Demande un nouveau code."))
         else:
             challenge.consumed_at = timezone.now()
             challenge.save(update_fields=["consumed_at"])

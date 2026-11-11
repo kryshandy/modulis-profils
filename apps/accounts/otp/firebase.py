@@ -25,6 +25,8 @@ from .base import CLIENT, OTPChannel
 
 CERTS_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
 CERTS_CACHE_KEY = "firebase:securetoken:certs:v1"
+CERTS_REFRESH_LOCK = "firebase:securetoken:certs:refresh-lock"
+CERTS_REFRESH_COOLDOWN = 60  # seconds
 DEFAULT_CERTS_MAX_AGE = 3600
 CLOCK_SKEW = 10  # seconds tolerated on exp / iat / auth_time
 MAX_AGE_RE = re.compile(r"max-age=(\d+)")
@@ -98,7 +100,9 @@ def get_certs(*, force: bool = False) -> dict[str, str]:
 def _public_key(kid: str):
     certs = get_certs()
     pem = certs.get(kid)
-    if pem is None:  # key rotation: refresh once
+    # Key rotation: refresh, but at most once per CERTS_REFRESH_COOLDOWN (random kids must not let
+    # anyone make us hammer Google's endpoint).
+    if pem is None and cache.add(CERTS_REFRESH_LOCK, 1, CERTS_REFRESH_COOLDOWN):
         pem = get_certs(force=True).get(kid)
     if pem is None:
         raise InvalidFirebaseToken("unknown kid")

@@ -472,7 +472,9 @@ class ProfileAdmin(admin.ModelAdmin):
             return None
         if request.POST.get("confirm_erase") == "yes":
             for profile in profiles:
+                slug, pk = profile.slug, profile.pk
                 services.delete_profile(profile)
+                audit(request.user, "profile.erase", f"/{slug}", profile_id=pk)
             self.message_user(
                 request,
                 _("%(n)d profil(s) effacé(s) définitivement. Leurs adresses répondent maintenant 410.")

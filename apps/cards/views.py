@@ -27,6 +27,7 @@ from apps.accounts.models import OTPChallenge, User
 from apps.analytics import services as analytics
 from apps.analytics.models import Event
 from apps.billing import services as billing
+from apps.core import csp
 from apps.core.turnstile import verify_turnstile
 from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
 from apps.platform.services import feature
@@ -146,12 +147,6 @@ def _live_profiles(user: User | None) -> list[Profile]:
     return list(user.profiles.exclude(status=Profile.Status.DELETED).select_related("trade", "city"))
 
 
-def _existing_profiles(phone: str) -> list[Profile]:
-    """Pages a card may be linked to: active ones only (a suspended page never gets a card)."""
-    user = User.objects.filter(phone=phone).first()
-    return [p for p in _live_profiles(user) if p.status == Profile.Status.ACTIVE]
-
-
 def _may_create_another(profiles_list: list[Profile], *, total: int | None = None) -> bool:
     """`total` counts every live page of the account, suspended ones included (no ban evasion)."""
     count = len(profiles_list) if total is None else total
@@ -221,7 +216,12 @@ def _render_step(request, card: Card, state: dict, form, **extra):
                 "verify_url": request.path,
                 "autostart": autostart,
             }
-    return _page(request, "cards/activate.html", context)
+    response = _page(request, "cards/activate.html", context)
+    if context["turnstile_site_key"]:
+        csp.allow(response, csp.TURNSTILE)
+    if context.get("firebase"):
+        csp.allow(response, csp.FIREBASE)
+    return response
 
 
 def _send_card_code(request, card: Card, state: dict, phone: str, channel: str | None) -> None:
@@ -281,10 +281,8 @@ def _step_phone(request, card: Card, state: dict):
     if request.method == "POST" and form.is_valid():
         try:
             phone = accounts.normalize_phone(form.cleaned_data["phone"])
-            if not feature("page_creation") and not _existing_profiles(phone):
-                # Nothing to link the card to, and no new page allowed: say it before sending a code.
-                form.add_error("phone", str(PAGE_CREATION_CLOSED))
-                return _render_step(request, card, state, form)
+            # Page creation switched off: we do NOT say here whether this number has a page (that
+            # would reveal accounts to anyone holding a card). _step_profile refuses after the OTP.
             _send_card_code(request, card, state, phone, form.cleaned_data.get("channel") or None)
         except accounts.OTPError as exc:
             form.add_error("phone", str(exc))

@@ -58,3 +58,26 @@ Le plan v1.2 avait retenu l'OTP **par SMS uniquement**, via un agrégateur local
 - Suivi : taux de délivrance et coût par canal, erreurs Meta dans les logs (code d'erreur et `fbtrace_id`, jamais le
   code ni le jeton).
 - `OTPChallenge` gagne un champ `channel` (migration `accounts.0002`).
+
+## Durcissement Firebase (obligatoire avant d'activer le canal en production)
+
+Le code ne peut pas empêcher seul le « SMS pumping » : la clé web Firebase est publique et quelqu'un peut appeler
+Identity Toolkit directement, hors de nos plafonds. Côté code, `static/js/firebase-otp.js` ne demande **qu'un SMS par
+chargement de page**, et seulement quand le serveur vient de créer un défi (`data-autostart`) ; tout renvoi passe par
+notre serveur (formulaire « renvoyer le code » : délai, plafonds horaires, nouveau défi), jamais par une relance côté
+navigateur. Les jetons Firebase sont à usage unique (`sub` + `auth_time` mémorisés pendant
+`FIREBASE_MAX_AUTH_AGE_SECONDS`). La console Firebase / Google Cloud doit en plus être configurée ainsi — **case à cocher
+avant de passer `otp_firebase_sms_enabled` à vrai** :
+
+- [ ] **Politique de région SMS** (Authentication › Settings › SMS region policy) : *Allow* avec **CM (Cameroun)
+      uniquement** ; à élargir pays par pays, en même temps que `OTP_ALLOWED_PREFIXES`.
+- [ ] **App Check avec reCAPTCHA Enterprise**, **appliqué (enforced)** sur l'API Identity Toolkit (Authentication),
+      après une période en mode « monitoring » pour vérifier que les vrais utilisateurs passent.
+- [ ] **Quota quotidien de SMS** (Identity Toolkit › quotas « SMS sent per day ») réglé au volume attendu, et **alerte
+      budgétaire** Google Cloud (facturation › budgets) avec notification par e-mail à 50 %, 90 % et 100 %.
+- [ ] **Domaines autorisés** (Authentication › Settings › Authorized domains) : uniquement les domaines de production
+      (et de préproduction) ; retirer `localhost` et le domaine `*.firebaseapp.com` inutilisé si possible.
+- [ ] Clé d'API web **restreinte** dans Google Cloud (référents HTTP = nos domaines, API = Identity Toolkit et Token
+      Service uniquement).
+
+Revue de cette liste à chaque changement de pays ouvert et au moins une fois par trimestre.

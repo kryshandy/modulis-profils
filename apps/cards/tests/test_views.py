@@ -365,14 +365,6 @@ class TestActivationHardening:
         assert card.status == Card.Status.STOCK
         assert Profile.objects.filter(user=owner).count() == 1
 
-    def test_existing_profiles_excludes_suspended(self):
-        from apps.cards.views import _existing_profiles
-
-        owner = UserFactory(phone=PHONE)
-        active = ProfileFactory(user=owner)
-        ProfileFactory(user=owner, status=Profile.Status.SUSPENDED)
-        assert _existing_profiles(PHONE) == [active]
-
     def test_account_not_allowed_is_a_message_not_a_500(self, client, sms_outbox, django_capture_on_commit_callbacks):
         owner = UserFactory(phone=PHONE)
         profile = ProfileFactory(user=owner)

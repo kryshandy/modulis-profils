@@ -15,6 +15,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods, require_POST, require_safe
+from django_ratelimit.decorators import ratelimit
 
 from apps.dashboard.views.common import dash_render, profile_required
 from apps.public.http import set_private_no_store
@@ -232,8 +233,12 @@ def draft_css(request):
 # --- publication ------------------------------------------------------------------------------
 
 
+PUBLISH_RATE = "10/h"
+
+
 @require_http_methods(["GET", "HEAD", "POST"])
 @profile_required
+@ratelimit(key="user", rate=PUBLISH_RATE, method="POST", block=False, group="themes.publish")
 def publish(request):
     profile = request.profile
     if not services.themes_enabled():
@@ -241,6 +246,9 @@ def publish(request):
     draft = services.current_draft(profile)
     theme = services.get_theme(draft.get("theme")) or services.default_theme()
     if request.method == "POST":
+        if getattr(request, "limited", False):
+            messages.error(request, _("Tu as déjà publié beaucoup de fois cette heure-ci. Réessaie un peu plus tard."))
+            return redirect("themes:publish")
         try:
             services.publish(profile)
         except (ValidationError, services.ThemeError) as exc:

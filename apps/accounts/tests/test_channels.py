@@ -277,7 +277,8 @@ class TestRules:
         configure_firebase(settings)
         with django_capture_on_commit_callbacks(execute=True) as callbacks:
             challenge = services.request_otp(PHONE, "login", channel="firebase_sms")
-        assert callbacks == [] and sms_outbox == []
+        # Only the settings-cache invalidation may run (singleton created on first read): no send task.
+        assert [c for c in callbacks if c.__name__ != "invalidate"] == [] and sms_outbox == []
         assert challenge.channel == "firebase_sms" and challenge.code_hmac == ""
         with pytest.raises(services.InvalidCode):  # a typed code can never answer a Firebase challenge
             services.verify_otp(PHONE, "login", "")

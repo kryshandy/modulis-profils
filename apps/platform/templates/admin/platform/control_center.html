@@ -34,7 +34,7 @@
       </header>
 
       {% if section.code == "auth" %}
-        <table class="mp-table">
+        <table class="mp-table mp-table--channels">
           <caption class="mp-sr">{% translate "Canaux OTP" %}</caption>
           <thead><tr><th scope="col">{% translate "Canal" %}</th><th scope="col">{% translate "Interrupteur" %}</th><th scope="col">{% translate "Configuration" %}</th></tr></thead>
           <tbody>
@@ -42,7 +42,7 @@
             <tr>
               <td>{{ ch.label }}{% if ch.is_default %} <span class="mp-chip">{% translate "par défaut" %}</span>{% endif %}</td>
               <td>{% if ch.enabled %}<span class="mp-state mp-state--on">{% translate "activé" %}</span>{% else %}<span class="mp-state mp-state--off">{% translate "désactivé" %}</span>{% endif %}</td>
-              <td>{% if ch.configured is None %}<span class="mp-state mp-state--unknown">{% translate "configuration inconnue" %}</span>{% elif ch.configured %}<span class="mp-state mp-state--on">{% translate "configuré" %}</span>{% else %}<span class="mp-state mp-state--warn">{% translate "non configuré (variables d'environnement manquantes)" %}</span>{% endif %}</td>
+              <td>{% if ch.configured is None %}<span class="mp-state mp-state--unknown">{% translate "configuration inconnue" %}</span>{% elif ch.configured %}<span class="mp-state mp-state--on">{% translate "configuré" %}</span>{% else %}<span class="mp-state mp-state--warn">{% translate "non configuré" %}</span><span class="mp-table__help">{% translate "variables d'environnement manquantes" %}</span>{% endif %}</td>
             </tr>
           {% endfor %}
           </tbody>

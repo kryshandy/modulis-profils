@@ -2,7 +2,10 @@
    ES module, CSP-safe: configuration comes from data-* attributes of #firebase-otp, no inline script.
    Our server has already checked the number (whitelist, limits, blocked numbers, switches) before
    this page could start a send. Firebase sends and checks the SMS; we post the resulting ID token
-   (with the CSRF token) to data-verify-url, where the server verifies it before logging in. */
+   (with the CSRF token) to data-verify-url, where the server verifies it before logging in.
+   Anti SMS-pumping: this script asks Firebase for AT MOST ONE SMS per page load, and only when the
+   server set data-autostart (a fresh challenge it has just created). Every resend goes through our
+   server ("resend" form: delay, hourly caps, new challenge), never a client-only retry. */
 
 const root = document.querySelector("[data-firebase-otp]");
 const form = document.querySelector("[data-firebase-form]");
@@ -78,8 +81,7 @@ async function start() {
   const retryButton = $("[data-firebase-retry]");
   let verifier = null;
   let confirmation = null;
-  let sending = false;
-  let retries = 0;
+  let attempted = false; // one Firebase send per page load, whatever happens
 
   function resetVerifier() {
     if (verifier) { try { verifier.clear(); } catch (e) { /* already cleared */ } }
@@ -89,8 +91,8 @@ async function start() {
   }
 
   async function send() {
-    if (sending) { return; }
-    sending = true;
+    if (attempted) { return; }
+    attempted = true;
     showError("");
     if (retryWrap) { retryWrap.hidden = true; }
     setStatus(d.msgSending);
@@ -104,17 +106,23 @@ async function start() {
       confirmation = null;
       resetVerifier();
       showError(messageFor(error));
-      // A failed reCAPTCHA or a network error sent no SMS: allow two quick retries without the server.
-      if (retryWrap && retries < 2 && error && error.code !== "auth/too-many-requests" && error.code !== "auth/quota-exceeded") {
+      // Retrying always goes through the server (new challenge, server-side limits).
+      if (retryWrap && serverResend() && error && error.code !== "auth/too-many-requests" && error.code !== "auth/quota-exceeded") {
         retryWrap.hidden = false;
       }
-    } finally {
-      sending = false;
     }
   }
 
+  function serverResend() {
+    const input = document.querySelector("form input[name=action][value=resend]");
+    return input ? input.form : null;
+  }
+
   if (retryButton) {
-    retryButton.addEventListener("click", () => { retries += 1; send(); });
+    retryButton.addEventListener("click", () => {
+      const resendForm = serverResend();
+      if (resendForm) { resendForm.requestSubmit(); }
+    });
   }
 
   form.addEventListener("submit", async (event) => {

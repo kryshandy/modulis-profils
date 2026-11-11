@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, transaction
 from django.utils import timezone
@@ -624,7 +625,9 @@ def publish(profile: Profile) -> PublishResult:
     if indexable:
         urls = [profile.absolute_url, *related_urls(profile)]
         transaction.on_commit(lambda: queue_urls(urls))
-        if _instant_publish_enabled():
+        # At most one immediate flush per page every FLUSH_NOW_COOLDOWN: beyond that, the periodic
+        # queue flush sends the URLs (no way to hammer the search-engine APIs by re-publishing).
+        if _instant_publish_enabled() and cache.add(FLUSH_NOW_LOCK.format(pk=profile.pk), 1, FLUSH_NOW_COOLDOWN):
             instant = True
             transaction.on_commit(_flush_now)
     from apps.profiles.services import indexability_blockers
@@ -636,6 +639,10 @@ def publish(profile: Profile) -> PublishResult:
         blockers=[] if indexable else indexability_blockers(profile),
         instant=instant,
     )
+
+
+FLUSH_NOW_LOCK = "themes:flush-now:{pk}"
+FLUSH_NOW_COOLDOWN = 10 * 60  # seconds
 
 
 def _flush_now() -> None:
