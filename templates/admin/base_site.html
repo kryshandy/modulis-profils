@@ -23,4 +23,6 @@
 {% endif %}
 {% endblock %}
 
+{% block userlinks %}{% if has_permission %}<a class="mx-usertools__2fa" href="{% url 'admin:security_2fa_overview' %}">{% translate "Double authentification" %}</a> / {% endif %}{{ block.super }}{% endblock %}
+
 {% block nav-global %}{% endblock %}

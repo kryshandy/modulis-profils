@@ -3,7 +3,10 @@
 {% block title %}{% translate "Activer ma carte" %} — {{ SITE_NAME }}{% endblock %}
 {% block card_content %}
 <h1>{% translate "Activer ma carte" %}</h1>
-<p class="card-flow__progress">{% blocktranslate %}Étape {{ step_number }} sur {{ step_count }}{% endblocktranslate %}</p>
+<div class="card-flow__meter">
+  <p class="card-flow__progress">{% blocktranslate %}Étape {{ step_number }} sur {{ step_count }}{% endblocktranslate %}</p>
+  <ol class="steps card-flow__steps" aria-hidden="true">{% for _ in ""|center:step_count %}<li class="steps__item{% if forloop.counter < step_number %} is-done{% elif forloop.counter == step_number %} is-current{% endif %}"></li>{% endfor %}</ol>
+</div>
 <p class="card-flow__code">{% translate "Carte" %} <strong>{{ card.public_code }}</strong></p>
 
 {% if notice %}<p class="alert alert--info" role="status">{{ notice }}</p>{% endif %}

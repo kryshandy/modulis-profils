@@ -1,5 +1,5 @@
 {% extends "public/base_public.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block body_class %}home platform{% endblock %}
 {% block theme_color %}#EEF4F3{% endblock %}
 {% block styles %}{% include "partials/platform_head.html" %}{% endblock %}
@@ -76,39 +76,56 @@
   </div>
 </section>
 
+<section class="pf-marquee" aria-label="{% translate 'Quelques métiers présents' %}">
+  <div class="pf-marquee__track">
+    <ul class="pf-marquee__list">
+      <li>{% translate "Coiffure" %}</li><li>{% translate "Couture" %}</li><li>{% translate "Plomberie" %}</li><li>{% translate "Restauration" %}</li>
+      <li>{% translate "Mécanique" %}</li><li>{% translate "Esthétique" %}</li><li>{% translate "Photographie" %}</li><li>{% translate "Menuiserie" %}</li>
+      <li>{% translate "Électricité" %}</li><li>{% translate "Développement web" %}</li>
+    </ul>
+    <ul class="pf-marquee__list" aria-hidden="true">
+      <li>{% translate "Coiffure" %}</li><li>{% translate "Couture" %}</li><li>{% translate "Plomberie" %}</li><li>{% translate "Restauration" %}</li>
+      <li>{% translate "Mécanique" %}</li><li>{% translate "Esthétique" %}</li><li>{% translate "Photographie" %}</li><li>{% translate "Menuiserie" %}</li>
+      <li>{% translate "Électricité" %}</li><li>{% translate "Développement web" %}</li>
+    </ul>
+  </div>
+</section>
+
 <section class="pf-section pf-why">
   <div class="pf-wrap">
-    <div class="pf-head">
+    <div class="pf-head pf-reveal">
       <h2 class="pf-xl pf-head__title">{% translate "Les clients te cherchent. Sois là." %}</h2>
       <p class="pf-head__lead">{% translate "Quand quelqu’un tape ton métier et ta ville sur Google, ta page répond : qui tu es, ce que tu fais, où te trouver, et un bouton pour t’écrire." %}</p>
     </div>
     <ul class="pf-promises">
-      <li class="pf-promise pf-promise--coral"><h3>{% translate "Trouvé sur Google" %}</h3><p>{% translate "Ta page est pensée pour le référencement local : ton métier, ta ville, tes prestations, tes horaires." %}</p></li>
-      <li class="pf-promise pf-promise--saffron"><h3>{% translate "Contacté sur WhatsApp" %}</h3><p>{% translate "Un bouton, et le client t’écrit directement. Pas d’intermédiaire, pas de commission." %}</p></li>
-      <li class="pf-promise pf-promise--cobalt"><h3>{% translate "Prêt en 2 minutes" %}</h3><p>{% translate "Ton numéro, un code par SMS, ton métier : ta page est en ligne. Rien à installer." %}</p></li>
-      <li class="pf-promise pf-promise--teal"><h3>{% translate "Gratuit, pour de vrai" %}</h3><p>{% translate "La page, l’adresse et le QR code sont gratuits. Les offres payantes ajoutent des options, jamais l’essentiel." %}</p></li>
+      <li class="pf-reveal pf-promise pf-promise--coral"><h3>{% translate "Trouvé sur Google" %}</h3><p>{% translate "Ta page est pensée pour le référencement local : ton métier, ta ville, tes prestations, tes horaires." %}</p></li>
+      <li class="pf-reveal pf-promise pf-promise--saffron"><h3>{% translate "Contacté sur WhatsApp" %}</h3><p>{% translate "Un bouton, et le client t’écrit directement. Pas d’intermédiaire, pas de commission." %}</p></li>
+      <li class="pf-reveal pf-promise pf-promise--cobalt"><h3>{% translate "Prêt en 2 minutes" %}</h3><p>{% translate "Ton numéro, un code par SMS, ton métier : ta page est en ligne. Rien à installer." %}</p></li>
+      <li class="pf-reveal pf-promise pf-promise--teal"><h3>{% translate "Gratuit, pour de vrai" %}</h3><p>{% translate "La page, l’adresse et le QR code sont gratuits. Les offres payantes ajoutent des options, jamais l’essentiel." %}</p></li>
     </ul>
   </div>
 </section>
 
 <section class="pf-section pf-forest" id="comment">
   <div class="pf-wrap">
-    <div class="pf-head">
+    <div class="pf-head pf-reveal">
       <h2 class="pf-xl pf-head__title">{% translate "Comment ça marche" %}</h2>
       <p class="pf-head__lead">{% translate "Trois étapes, et tes clients peuvent te trouver, te voir et t’écrire." %}</p>
     </div>
     <ol class="pf-steps">
-      <li class="pf-step">
+      <li class="pf-step pf-reveal">
         <span class="pf-step__n" aria-hidden="true">01</span>
         <h3>{% translate "Crée ta page" %}</h3>
         <p>{% translate "Entre ton numéro, reçois un code par SMS, choisis ton métier. Pas de mot de passe à retenir." %}</p>
+        <span class="pf-otp" aria-hidden="true"><i>4</i><i>8</i><i>1</i><i>9</i></span>
       </li>
-      <li class="pf-step">
+      <li class="pf-step pf-reveal">
         <span class="pf-step__n" aria-hidden="true">02</span>
         <h3>{% translate "Choisis ton modèle" %}</h3>
         <p>{% translate "Un design pensé pour ton métier, tes couleurs, tes photos. Tu changes quand tu veux." %}</p>
+        <span class="pf-swatches" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
       </li>
-      <li class="pf-step">
+      <li class="pf-step pf-reveal">
         <span class="pf-step__n" aria-hidden="true">03</span>
         <h3>{% translate "Partage-la partout" %}</h3>
         <p>{% translate "Ton lien sur WhatsApp, ton QR code en vitrine, et la carte NFC Modulis : un simple contact avec un téléphone ouvre ta page." %}</p>
@@ -118,14 +135,14 @@
   </div>
 </section>
 
-<section class="pf-section pf-templates" id="modeles">
+<section class="pf-section pf-templates pf-panel pf-panel--saffron" id="modeles">
   <div class="pf-wrap pf-templates__grid">
     <div>
       <h2 class="pf-xl pf-head__title">{% translate "Un modèle pour chaque métier" %}</h2>
       <p class="pf-head__lead">{% translate "Coiffure, restauration, BTP, services, boutique : choisis le style qui te ressemble dans ton espace pro, essaie-le sur ta page, garde-le en un clic." %}</p>
       <a class="pf-btn pf-btn--lg" href="{{ signup_url }}?next=/espace/modeles/"><span class="pf-btn__dot" aria-hidden="true"></span>{% translate "Voir les modèles" %}</a>
     </div>
-    <ul class="pf-thumbs" aria-hidden="true">
+    <ul class="pf-thumbs pf-reveal" aria-hidden="true">
       <li class="pf-thumb pf-thumb--coral"><i></i><span>{% translate "Beauté" %}</span></li>
       <li class="pf-thumb pf-thumb--saffron"><i></i><span>{% translate "Restauration" %}</span></li>
       <li class="pf-thumb pf-thumb--cobalt"><i></i><span>{% translate "Services" %}</span></li>
@@ -135,7 +152,7 @@
 </section>
 
 {% if cities %}
-<section class="section pf-section" id="villes">
+<section class="section pf-section pf-cities" id="villes">
   <div class="pf-wrap">
     <h2 class="pf-kicker"><span class="pf-sq pf-sq--teal" aria-hidden="true"></span>{% translate "Villes" %}</h2>
     <ul class="chips pf-cloud">
@@ -160,14 +177,14 @@
 <section class="section pf-section pf-section--tight">
   <div class="pf-wrap">
     <h2 class="pf-kicker"><span class="pf-sq pf-sq--saffron" aria-hidden="true"></span>{% translate "Pages récentes" %}</h2>
-    <ul class="pro-list pf-pros">{% for p in recent %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+    <ul class="pro-list pf-pros pf-reveal">{% for p in recent %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
   </div>
 </section>
 {% endif %}
 
 <section class="section cta pf-cta">
   <div class="pf-wrap">
-    <h2 class="pf-xl pf-cta__title">{% translate "Prêt à être trouvé ?" %}</h2>
+    <h2 class="pf-xl pf-cta__title pf-reveal">{% translate "Prêt à être trouvé ?" %}</h2>
     <div class="pf-cta__row">
       <p>{% translate "Deux minutes, un code SMS, et ta page est en ligne. C’est gratuit." %}</p>
       <a class="pf-btn pf-btn--ink pf-btn--lg" href="{{ signup_url }}"><span class="pf-btn__dot" aria-hidden="true"></span>{% translate "Crée ta page pro gratuite" %}</a>
@@ -176,3 +193,4 @@
 </section>
 {% endblock %}
 {% block footer %}{% include "partials/platform_footer.html" %}{% endblock %}
+{% block scripts %}<script src="{% static 'js/platform.js' %}" defer></script>{% endblock %}

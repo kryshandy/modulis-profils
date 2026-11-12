@@ -25,3 +25,11 @@ def admin_recent_audit(context):
     user = getattr(request, "user", None)
     show = bool(user and user.has_perm("platform_settings.view_auditlog"))
     return {"entries": get_recent_audit() if show else [], "show": show}
+
+
+@register.simple_tag
+def staff_two_factor():
+    """Staff 2FA coverage for the control center (apps.security.services.two_factor_summary)."""
+    from apps.security.services import two_factor_summary
+
+    return two_factor_summary()

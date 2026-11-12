@@ -34,6 +34,7 @@
     <section class="card stack" data-tour="2" data-tour-title="{% translate 'Ta jauge de complétude' %}" data-tour-text="{% translate 'Plus ta page est complète, plus Google la montre. Touche une ligne pour la compléter.' %}">
       <h2 class="h2">{% translate "Ta page" %}</h2>
       {% include "dashboard/partials/gauge.html" with score=profile.completeness_score %}
+      {% if profile.completeness_score >= 100 %}<details class="checklist-done"><summary>{% translate "Voir ce que tu as complété" %}</summary>{% endif %}
       <ul class="checklist">
         {% for item in items %}
           <li class="checklist__item{% if item.done %} is-done{% endif %}">
@@ -45,6 +46,7 @@
           </li>
         {% endfor %}
       </ul>
+      {% if profile.completeness_score >= 100 %}</details>{% endif %}
     </section>
 
     <section class="card stack google">

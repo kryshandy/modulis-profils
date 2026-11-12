@@ -4,8 +4,18 @@
 {% block body_class %}auth{% endblock %}
 {% block header %}
 <header class="auth__brand">
-  {% icon "logo" "brand__mark brand__mark--lg" %}<span class="brand__name">Modulis <b>Pro</b></span>
+  <a class="brand" href="/">{% icon "logo" "brand__mark brand__mark--lg" %}<span class="brand__name">Modulis <b>Pro</b></span></a>
 </header>
+<aside class="auth__aside" aria-label="{% translate 'Pourquoi Modulis Profils' %}">
+  <p class="auth__aside-kicker"><span class="dot" aria-hidden="true"></span>{% translate "Modulis Profils" %}</p>
+  <p class="auth__aside-title">{% blocktranslate %}Ta page pro, <span>trouvée sur Google.</span>{% endblocktranslate %}</p>
+  <ul class="auth__facts">
+    <li><b>2 min</b><span>{% translate "pour mettre ta page en ligne" %}</span></li>
+    <li><b>0 F</b><span>{% translate "la page, l’adresse et le QR code" %}</span></li>
+    <li><b>1 code</b><span>{% translate "par WhatsApp ou SMS, sans mot de passe" %}</span></li>
+  </ul>
+  <span class="auth__aside-art thumbs" aria-hidden="true"><i></i><i></i><i></i></span>
+</aside>
 {% endblock %}
 {% block content %}
 <div class="auth__card card">

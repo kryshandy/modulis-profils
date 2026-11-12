@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% load i18n static admin_kpis %}
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'platform/control-center.css' %}">{% endblock %}
 {% block bodyclass %}{{ block.super }} mp-control-center{% endblock %}
 {% block breadcrumbs %}
@@ -96,6 +96,12 @@
           {% if check.detail %}<span class="mp-health__detail">{{ check.detail }}</span>{% endif %}
         </li>
       {% endfor %}
+      {% staff_two_factor as tfa %}
+      <li class="mp-health__item mp-health__item--{% if tfa.staff_without_2fa %}{% if tfa.required %}error{% else %}warn{% endif %}{% else %}ok{% endif %}">
+        <span class="mp-health__label">{% translate "Double authentification de l'équipe" %}</span>
+        <span class="mp-health__value">{% blocktranslate with n=tfa.staff_enrolled total=tfa.staff_total %}{{ n }} / {{ total }} comptes protégés{% endblocktranslate %}</span>
+        <span class="mp-health__detail">{% if tfa.staff_without_2fa %}{% blocktranslate count c=tfa.staff_without_2fa|length %}{{ c }} compte sans double authentification.{% plural %}{{ c }} comptes sans double authentification.{% endblocktranslate %}{% else %}{% translate "Toute l'équipe est protégée." %}{% endif %}</span>
+      </li>
     </ul>
   </section>
 

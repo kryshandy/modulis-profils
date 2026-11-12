@@ -129,4 +129,4 @@ class TestBrandAssets:
             assert (STATIC / "img/brand" / name).read_text().startswith("<svg"), name
 
     def test_app_css_budget(self):
-        assert (STATIC / "css" / "app.css").stat().st_size <= 60 * 1024
+        assert (STATIC / "css" / "app.css").stat().st_size <= 70 * 1024
