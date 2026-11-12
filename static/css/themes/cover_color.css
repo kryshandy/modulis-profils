@@ -1,23 +1,45 @@
-/* Hero "Bandeau de couleur": a primary band with soft accent shapes, the identity card overlapping it. */
-.t--cover_color .t-hero { padding-bottom: .5rem; }
-.t--cover_color .t-hero__band {
-  position: absolute; inset: 0 0 auto; height: 12.5rem; overflow: hidden;
-  background: linear-gradient(135deg, var(--c-primary) 0%, color-mix(in srgb, var(--c-primary) 72%, #000) 100%);
+/* Signature — Modulis editorial-bold. XXL variable headline (Archivo width axis), a colour composition where
+   the portrait becomes a sticker with an orbiting caption, key figures, then a colour slab with the marquee. */
+.t--cover_color { --fs-display: clamp(3.1rem, 12vw, 8.2rem); }
+@media (min-width: 48rem) { .t--cover_color { --fs-display: clamp(3.4rem, 9.4vw, 10.5rem); } }
+.t--cover_color .t-hero { padding-block: clamp(1.5rem, 5vw, 4.5rem) clamp(3rem, 6vw, 5rem); }
+.t--cover_color .t-hero__grid { display: grid; gap: clamp(2.5rem, 6vw, 4rem); }
+.t--cover_color .t-name { max-width: 11ch; font-variation-settings: "wdth" 120; letter-spacing: -.045em; line-height: .86; }
+
+.t-sig { position: relative; width: min(100%, 30rem); aspect-ratio: 1 / 1.02; justify-self: end; }
+.t-sig > span { position: absolute; display: block; }
+.t-sig__slab { inset: 0 0 13% 13%; overflow: hidden; border-radius: var(--r-lg); background: linear-gradient(150deg, var(--c-primary) 0%, var(--c-primary) 55%, var(--c-primary-deep) 100%); color: var(--c-on-primary); }
+.t-sig__slab::before { content: ""; position: absolute; inset: 0; opacity: .16; background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 44px); }
+.t-sig__mono { position: absolute; right: 7%; bottom: 6%; font: 800 clamp(5.5rem, 24vw, 12rem)/.8 var(--f-head); letter-spacing: -.06em; font-variation-settings: "wdth" 125; opacity: .96; }
+.t-sig__sun { right: -5%; top: -5%; width: 38%; aspect-ratio: 1; border-radius: 50%; background: var(--c-accent); }
+.t-sig__ring { left: 2%; top: 18%; width: 30%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--c-text); }
+.t-sig__dots { left: 0; top: 0; width: 26%; aspect-ratio: 1; opacity: .5; background: radial-gradient(var(--c-text) 1.4px, transparent 1.8px) 0 0 / 14px 14px; }
+.t-sig__sticker { left: 0; bottom: 0; display: grid !important; place-items: center; width: clamp(9rem, 38%, 12rem); aspect-ratio: 1; border-radius: 50%; background: var(--c-bg); box-shadow: 0 0 0 1px var(--c-line), 0 30px 50px -30px rgb(0 0 0 / .5); }
+.t-sig__sticker .profile-head__photo, .t-sig__arrow { width: 58%; height: auto; aspect-ratio: 1; border-radius: 50%; object-fit: cover; }
+.t-sig__arrow { display: grid; place-items: center; background: var(--c-accent); color: var(--c-on-accent); font: 700 2.4rem/1 var(--f-body); }
+.t-sig__orbit { position: absolute; inset: 0; width: 100%; height: 100%; animation: t-spin 26s linear infinite; }
+.t-sig__orbit text { font: 700 15px var(--f-body); letter-spacing: .14em; text-transform: uppercase; fill: var(--c-text); }
+@keyframes t-spin { to { transform: rotate(360deg); } }
+
+.t--cover_color .t-facts { margin-top: clamp(2.5rem, 6vw, 4.5rem); }
+.t--cover_color .t-band { margin-bottom: 0; }
+
+/* Sections: big titles, tactile service cards that fill with colour */
+.t--cover_color .t-section + .t-section { border-top-color: transparent; }
+.t--cover_color .t-section:nth-child(even of .t-section:not(.t-section--contact)) { background: var(--c-surface); }
+.t--cover_color .t-section:nth-child(even of .t-section:not(.t-section--contact)) .t-service, .t--cover_color .t-section:nth-child(even of .t-section:not(.t-section--contact)) .t-hours-card { background: var(--c-bg); }
+.t--cover_color .t-service { overflow: hidden; isolation: isolate; }
+.t--cover_color .t-service::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--c-primary); transform: translateY(101%); transition: transform .6s var(--ease); }
+.t--cover_color .t-service:hover::before { transform: none; }
+.t--cover_color .t-service:hover, .t--cover_color .t-service:hover > * { color: var(--c-on-primary); }
+.t--cover_color .t-service:hover .t-price { border-color: color-mix(in srgb, var(--c-on-primary) 35%, transparent); }
+.t--cover_color .t-service > * { transition: color .45s var(--ease); }
+.t--cover_color .t-lede { font-weight: 700; font-variation-settings: "wdth" 104; letter-spacing: -.03em; }
+
+@media (min-width: 48rem) {
+  .t--cover_color .t-hero__grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: end; }
+  .t-sig { justify-self: end; }
 }
-.t--cover_color .t-hero__band::before,
-.t--cover_color .t-hero__band::after { content: ""; position: absolute; border-radius: 50%; }
-.t--cover_color .t-hero__band::before { width: 22rem; height: 22rem; right: -7rem; top: -11rem; background: var(--c-accent); opacity: .35; }
-.t--cover_color .t-hero__band::after { width: 12rem; height: 12rem; left: -4rem; bottom: -7rem; border: 2px solid var(--c-on-primary); opacity: .18; }
-.t--cover_color .t-hero__card {
-  position: relative; margin-top: 4.5rem; padding: 0 1.25rem 1.5rem; text-align: center;
-  background: var(--c-surface); border-radius: var(--r-lg); box-shadow: var(--shadow); border: 1px solid var(--c-line);
-}
-.t--cover_color .profile-head__photo,
-.t--cover_color .t-initial { margin: -80px auto 1rem; border: 5px solid var(--c-surface); box-shadow: 0 0 0 3px var(--c-accent); }
-.t--cover_color .t-meta { justify-content: center; }
-.t--cover_color .t-actions { text-align: left; }
-@media (min-width: 40rem) {
-  .t--cover_color .t-hero__band { height: 15rem; }
-  .t--cover_color .t-hero__card { margin-top: 7rem; padding: 0 2.5rem 2rem; }
-  .t--cover_color .t-actions { justify-content: center; }
+@media (max-width: 47.99rem) {
+  .t-sig { justify-self: center; width: min(100%, 22rem); }
 }

@@ -1,10 +1,12 @@
-{% load public_images %}{% if gallery %}
-<section class="t-section t-section--gallery" id="realisations">
+{% load i18n public_images %}{% if gallery %}
+<section class="t-section t-section--gallery" id="realisations" aria-labelledby="t-h-gallery">
   <div class="t-wrap t-section__inner">
-    <h2 class="t-h2">{{ label }}</h2>
-    <ul class="gallery t-gallery">
-      {% for g in gallery %}<li><img {% img_attrs g %} alt="{{ g.alt }}"{% if g.lazy %} loading="lazy"{% endif %} decoding="async"></li>{% endfor %}
-    </ul>
+    <header class="t-sec-head" data-reveal><span class="t-index" aria-hidden="true"></span><h2 class="t-h2" id="t-h-gallery">{{ label }}</h2></header>
+    <div class="t-sec-body">
+      <ul class="gallery t-gallery t-gallery--{% if gallery|length > 5 %}many{% else %}{{ gallery|length }}{% endif %}">
+        {% for g in gallery %}<li class="t-gallery__item" data-reveal><a class="t-gallery__link" href="{{ g.full }}" data-lb="{{ forloop.counter0 }}" data-lb-caption="{{ g.caption }}"><img {% img_attrs g %} alt="{{ g.alt }}"{% if g.lazy %} loading="lazy"{% endif %} decoding="async"><span class="t-sr">{% translate "(agrandir)" %}</span></a></li>{% endfor %}
+      </ul>
+    </div>
   </div>
 </section>
 {% endif %}

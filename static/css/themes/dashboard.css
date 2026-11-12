@@ -115,6 +115,10 @@
 .tm-font--geometric { font-family: Avenir, Montserrat, Corbel, "URW Gothic", sans-serif; }
 .tm-font--mono { font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
 .tm-font--rounded { font-family: ui-rounded, "Hiragino Maru Gothic ProN", Quicksand, Comfortaa, "Arial Rounded MT", sans-serif; }
+/* 2026 display fonts: samples in a close system fallback (the webfonts load on the public pages only) */
+.tm-font--fraunces { font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif; font-weight: 400; letter-spacing: -.02em; }
+.tm-font--instrument { font-family: "Instrument Serif", "Iowan Old Style", Georgia, serif; font-weight: 400; font-style: normal; }
+.tm-font--bricolage { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 700; letter-spacing: -.04em; }
 .tm-corner { display: block; width: 44px; height: 30px; border: 3px solid var(--color-ink); border-right: 0; border-bottom: 0; }
 .tm-corner--rounded { border-top-left-radius: 18px; }
 .tm-corner--soft { border-top-left-radius: 7px; }

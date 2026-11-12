@@ -1,14 +1,17 @@
 {% extends "public/themes/_base.html" %}
+{# Carte — minimal luxury: a centred business card object, display serif, hairlines and a lot of air. #}
 {% block hero %}
 <header class="t-hero profile-head">
-  <div class="t-wrap">
-    <div class="t-hero__card">
-      <div class="t-hero__top">
-        {% include "public/themes/_photo.html" %}
-        <div class="t-hero__id">{% include "public/themes/_identity.html" %}</div>
-      </div>
-      {% include "public/themes/_actions.html" %}
+  <div class="t-wrap t-hero__inner">
+    <div class="t-card" data-parallax>
+      <span class="t-card__corner t-card__corner--a" aria-hidden="true"></span>
+      <span class="t-card__corner t-card__corner--b" aria-hidden="true"></span>
+      <div class="t-card__mono">{% if photo %}{% include "public/themes/_photo.html" %}{% else %}<span class="t-card__initials" aria-hidden="true">{{ initials }}</span>{% endif %}</div>
+      {% include "public/themes/_identity.html" %}
+      <span class="t-card__rule" aria-hidden="true"></span>
+      {% include "public/themes/_kicker.html" %}
     </div>
+    {% include "public/themes/_actions.html" %}
   </div>
 </header>
 {% endblock %}

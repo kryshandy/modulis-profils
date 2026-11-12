@@ -1,10 +1,20 @@
 {% load i18n %}{% if hours %}
-<section class="t-section t-section--hours" id="horaires">
+<section class="t-section t-section--hours" id="horaires" aria-labelledby="t-h-hours">
   <div class="t-wrap t-section__inner">
-    <h2 class="t-h2">{{ label }}</h2>
-    <dl class="t-hours">
-      {% for h in hours %}<div class="t-hours__row{% if not h.ranges %} is-closed{% endif %}"><dt>{{ h.day }}</dt><dd>{% if h.ranges %}{{ h.ranges }}{% else %}{% translate "Fermé" %}{% endif %}</dd></div>{% endfor %}
-    </dl>
+    <header class="t-sec-head" data-reveal><span class="t-index" aria-hidden="true"></span><h2 class="t-h2" id="t-h-hours">{{ label }}</h2></header>
+    <div class="t-sec-body">
+      <div class="t-hours-card" data-reveal>
+        {% if open_state %}<p class="t-hours-card__status">{% include "public/themes/_status.html" %}</p>{% endif %}
+        <table class="t-hours" data-hours data-l-open="{% translate 'Ouvert maintenant' %}" data-l-closed="{% translate 'Fermé' %}" data-l-closes="{% translate 'Ferme à {t}' %}" data-l-opens="{% translate 'Ouvre à {t}' %}" data-l-tomorrow="{% translate 'Ouvre demain à {t}' %}" data-l-day="{% translate 'Ouvre {d} à {t}' %}">
+          <caption class="t-sr">{% translate "Horaires d'ouverture, heure de Douala" %}</caption>
+          <tbody>
+            {% for h in hours %}<tr class="t-hours__row{% if h.today %} is-today{% endif %}{% if not h.ranges %} is-closed{% endif %}" data-ranges="{{ h.data }}"><th scope="row" data-today="{% translate "Aujourd'hui" %}">{{ h.day }}</th><td>{% if h.ranges %}{{ h.ranges }}{% else %}{% translate "Fermé" %}{% endif %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <p class="t-hours-card__tz">{% translate "Heure de Douala (UTC+1)" %}</p>
+      </div>
+    </div>
   </div>
 </section>
 {% endif %}

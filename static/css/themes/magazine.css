@@ -1,24 +1,41 @@
-/* Hero "Magazine": full-bleed photo with a legible shade, name set like a cover line. */
-.t--magazine .t-hero { min-height: 30rem; display: flex; align-items: flex-end; color: #FFFFFF; background: var(--c-primary); isolation: isolate; overflow: hidden; }
-.t--magazine .t-hero__media { position: absolute; inset: 0; z-index: -2; }
-.t--magazine .profile-head__photo { width: 100%; height: 100%; max-width: none; border-radius: 0; object-fit: cover; }
-.t--magazine .t-initial { width: 100%; height: 100%; border-radius: 0; font-size: 18rem; place-items: start end; padding: 1rem 1.5rem 0 0; color: var(--c-on-primary); opacity: .16; background: transparent; }
-.t--magazine .t-hero__shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(0 0 0 / .05) 0%, rgb(0 0 0 / .35) 40%, rgb(0 0 0 / .82) 100%); }
-/* No photo: a deep tint of the primary colour keeps white text above AA whatever the palette. */
-.t--magazine .t-hero--nophoto { background: color-mix(in srgb, var(--c-primary) 45%, #000); }
-.t--magazine .t-hero--nophoto .t-initial { color: var(--c-primary); opacity: .55; }
-.t--magazine .t-hero--nophoto .t-hero__shade { background: linear-gradient(160deg, transparent 30%, rgb(0 0 0 / .35)); }
-.t--magazine .t-hero__text { padding-top: 6rem; padding-bottom: 2rem; }
-.t--magazine .t-name { font-size: clamp(2.6rem, 11vw, 5.5rem); line-height: .95; color: #FFFFFF; }
-.t--magazine .t-hero .t-subtitle, .t--magazine .t-hero .t-meta { color: rgb(255 255 255 / .92); }
-.t--magazine .t-hero .t-eyebrow { color: #FFFFFF; opacity: .9; }
-.t--magazine .t-hero .t-badge { background: rgb(255 255 255 / .16); color: #FFFFFF; }
-.t--magazine .t-hero .btn--secondary { background: #FFFFFF; color: #111111; border-color: #FFFFFF; }
-.t--magazine .t-hero .btn--quiet { color: #FFFFFF; border-color: rgb(255 255 255 / .45); }
-.t--magazine .t-hero .btn--quiet:hover { border-color: #FFFFFF; }
-.t--magazine .t-hero a:focus-visible { outline-color: #FFFFFF; }
+/* Vitrine — a showcase for shops, food and visual trades: big framed image with a price tag, an accent
+   marquee strip, price cards where the figure is the hero. */
+.t--magazine { --fs-display: clamp(3rem, 9.4vw, 7.8rem); }
+.t--magazine .t-hero { padding-block: clamp(1.5rem, 5vw, 4.5rem) clamp(2.5rem, 6vw, 5rem); }
+.t--magazine .t-hero__grid { display: grid; gap: clamp(2rem, 6vw, 5rem); }
+.t--magazine .t-name { max-width: 12ch; }
+.t-hero__media { position: relative; padding-bottom: 2.5rem; }
+.t-hero__frame { position: relative; overflow: hidden; aspect-ratio: 4 / 5; border-radius: var(--r-lg); background: var(--c-primary); box-shadow: 0 50px 80px -50px rgb(0 0 0 / .55); }
+.no-photo .t-hero__frame { aspect-ratio: 1; }
+.t-hero__frame .profile-head__photo { position: absolute; inset: 0; transform: scale(1.04); transition: transform 1.6s var(--ease); }
+.t-hero__frame:hover .profile-head__photo { transform: scale(1); }
+.t-hero__tag { position: absolute; left: 1rem; right: 1rem; bottom: 0; display: grid; gap: .15rem; padding: 1rem 1.25rem; border-radius: var(--r-md); background: var(--c-surface); box-shadow: 0 24px 40px -24px rgb(0 0 0 / .5), inset 0 0 0 1px var(--c-line); }
+.t-hero__tag-k { font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--c-accent-text); }
+.t-hero__tag-v { font-weight: 650; font-size: 1.05rem; line-height: 1.25; }
+.t-hero__tag-p { font: var(--f-head-weight) 1.6rem/1.1 var(--f-head); letter-spacing: -.02em; font-variation-settings: var(--f-head-vary); color: var(--c-primary-ink); }
+
+/* Art without photo: bold stripes and a sun */
+.t--magazine .t-art { background: repeating-linear-gradient(-35deg, var(--c-primary) 0 2.2rem, var(--c-primary-deep) 2.2rem 4.4rem); }
+.t--magazine .t-art__a { width: 62%; right: -10%; top: -12%; bottom: auto; }
+.t--magazine .t-art__b { width: 84%; left: 8%; top: 8%; border-width: 2px; opacity: .55; }
+.t--magazine .t-art__c { display: none !important; }
+.t--magazine .t-art__mono { font-size: clamp(7rem, 30vw, 15rem); font-variation-settings: "wdth" 125; }
+
+.t--magazine .t-band { background: var(--c-accent); color: var(--c-on-accent); padding-block: clamp(.9rem, 2vw, 1.4rem); rotate: -1.2deg; margin: .5rem -1rem 1rem; }
+.t--magazine .t-marquee__item { font-size: clamp(1.8rem, 4.2vw, 3.6rem); }
+.t--magazine .t-marquee__sep { background: var(--c-on-accent); width: .7rem; }
+
+/* Price cards: the figure leads */
+.t--magazine .t-service { min-height: 0; }
+@media (min-width: 40rem) { .t--magazine .t-service { min-height: 14rem; } }
+.t--magazine .t-service__num { display: none; }
+.t--magazine .t-price { order: -1; margin: 0 0 auto; padding: 0 0 1.5rem; border: 0; font-size: clamp(1.9rem, 3.4vw, 2.6rem); line-height: 1; letter-spacing: -.035em; }
+.t--magazine .t-service:not(:has(.t-price))::before { content: ""; width: 2.2rem; height: 2.2rem; margin-bottom: auto; border-radius: 50%; background: var(--c-accent); }
+.t--magazine .t-service__title { padding-top: 1rem; border-top: 1px solid var(--c-line); }
+.t--magazine .t-section--gallery { background: var(--c-surface); }
+
 @media (min-width: 48rem) {
-  .t--magazine .t-hero { min-height: 36rem; }
-  .t--magazine .t-hero__text { padding-bottom: 3.5rem; }
-  .t--magazine .t-hero__text > * { max-width: 46rem; }
+  .t--magazine .t-hero__grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; }
+  .t-hero__media { padding-bottom: 0; padding-left: 2.5rem; }
+  .t-hero__tag { left: 0; right: auto; bottom: 2.5rem; max-width: 17rem; }
 }

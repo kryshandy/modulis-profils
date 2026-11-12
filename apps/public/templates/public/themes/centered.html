@@ -1,11 +1,23 @@
 {% extends "public/themes/_base.html" %}
+{% load i18n %}
+{# Bento — a grid of tiles (identity, portrait or gradient art, call to action, live status, key numbers). #}
 {% block hero %}
 <header class="t-hero profile-head">
-  <div class="t-wrap t-hero__inner">
-    {% include "public/themes/_photo.html" %}
-    {% include "public/themes/_identity.html" %}
-    <span class="t-rule" aria-hidden="true"></span>
-    {% include "public/themes/_actions.html" %}
+  <div class="t-wrap">
+    <div class="t-bento">
+      <div class="t-tile t-tile--id">
+        {% include "public/themes/_kicker.html" with no_status=1 %}
+        {% include "public/themes/_identity.html" %}
+      </div>
+      <div class="t-tile t-tile--media">{% include "public/themes/_photo.html" %}</div>
+      <div class="t-tile t-tile--cta">
+        <p class="t-tile__label">{% translate "Parlons de ton besoin" %}</p>
+        {% include "public/themes/_actions.html" %}
+      </div>
+      {% if open_state %}<div class="t-tile t-tile--status"><p class="t-tile__label">{% translate "En ce moment" %}</p>{% include "public/themes/_status.html" %}</div>{% endif %}
+      {% if services %}<div class="t-tile t-tile--stat"><p class="t-tile__big"><span data-count="{{ services|length }}">{{ services|length }}</span></p><p class="t-tile__label">{% translate "prestations proposées" %}</p></div>{% endif %}
+      {% if profile.city %}<div class="t-tile t-tile--place"><p class="t-tile__label">{% translate "Basé à" %}</p><p class="t-tile__big t-tile__big--text">{{ profile.city.name }}</p>{% if profile.district %}<p class="t-tile__sub">{{ profile.district }}</p>{% endif %}</div>{% endif %}
+    </div>
   </div>
 </header>
 {% endblock %}

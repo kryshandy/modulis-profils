@@ -1,7 +1,7 @@
-{% load i18n static %}<nav class="actions t-actions" aria-label="{% translate 'Contacter' %}">
-  {% if whatsapp_url %}<a class="btn btn--primary" href="{{ whatsapp_url }}" rel="{{ contact_rel }}" data-track="whatsapp"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#whatsapp"></use></svg>{{ cta_label }}</a>{% endif %}
-  {% if phone %}<a class="btn {% if whatsapp_url %}btn--secondary{% else %}btn--primary{% endif %}" href="tel:{{ phone }}" data-track="call"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#phone"></use></svg>{% translate "Appeler" %}</a>{% endif %}
-  {% if email %}<a class="btn btn--quiet" href="mailto:{{ email }}" data-track="email">{% translate "Email" %}</a>{% endif %}
-  {% if maps_url %}<a class="btn btn--quiet" href="{{ maps_url }}" rel="{{ contact_rel }}" data-track="maps">{% translate "Itinéraire" %}</a>{% endif %}
-  <a class="btn btn--quiet" href="/{{ profile.slug }}/contact.vcf" rel="nofollow" data-track="vcard">{% translate "Enregistrer le contact" %}</a>
-</nav>
+{% load i18n static %}<div class="t-actions">
+  {% if whatsapp_url %}<a class="btn btn--primary" href="{{ whatsapp_url }}" rel="{{ contact_rel }}" data-track="whatsapp" data-magnetic><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#whatsapp"></use></svg><span>{{ cta_label }}</span></a>{% endif %}
+  {% if phone %}<a class="btn {% if whatsapp_url %}btn--secondary{% else %}btn--primary{% endif %}" href="tel:{{ phone }}" data-track="call"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#phone"></use></svg><span>{% translate "Appeler" %}</span></a>{% endif %}
+  {% if "contact" not in theme.visible_sections %}{% if email %}<a class="btn btn--quiet" href="mailto:{{ email }}" data-track="email"><span>{% translate "Email" %}</span></a>{% endif %}
+  {% if maps_url %}<a class="btn btn--quiet" href="{{ maps_url }}" rel="{{ contact_rel }}" data-track="maps"><span>{% translate "Itinéraire" %}</span></a>{% endif %}
+  <a class="btn btn--quiet" href="/{{ profile.slug }}/contact.vcf" rel="nofollow" data-track="vcard"><span>{% translate "Enregistrer le contact" %}</span></a>{% endif %}
+</div>

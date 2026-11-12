@@ -1,0 +1,1 @@
+{% if services %}<div class="t-marquee" aria-hidden="true"><div class="t-marquee__track">{% for copy in "1234" %}<span class="t-marquee__group">{% for s in services %}<span class="t-marquee__item">{{ s.title }}</span><i class="t-marquee__sep"></i>{% endfor %}</span>{% endfor %}</div></div>{% endif %}

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import datetime
 from urllib.parse import quote, urlencode
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -13,7 +15,7 @@ from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
 from django.shortcuts import render
 from django.templatetags.static import static
 from django.urls import NoReverseMatch, reverse
-from django.utils import translation
+from django.utils import timezone, translation
 from django.utils.cache import patch_cache_control
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -62,6 +64,8 @@ DAY_LABELS = {
     "su": gettext_lazy("Dimanche"),
 }
 _DIGITS_RE = re.compile(r"\D+")
+_SENTENCE_END_RE = re.compile(r"[.!?…](?=\s+[A-ZÀ-ÖØ-Þ0-9«“\"])")
+PAGE_TZ = ZoneInfo("Africa/Douala")  # opening hours are local to the pros (Cameroon, UTC+1, no DST)
 
 
 # --- helpers ---------------------------------------------------------------------------------
@@ -414,40 +418,165 @@ def _gallery(media, alt: str) -> list[dict]:
             sizes=responsive.GALLERY_SIZES,
             original_width=m.width or None,
         )
-        gallery.append({**image, "url": image["src"], "alt": clean_text(m.caption) or alt, "lazy": index > 0})
+        gallery.append(
+            {
+                **image,
+                "url": image["src"],
+                "full": m.image.url,  # lightbox / no-JS link: the largest stored copy
+                "alt": clean_text(m.caption) or alt,
+                "caption": clean_text(m.caption),
+                "lazy": index > 0,
+            }
+        )
     return gallery
 
 
-def _hours(profile: Profile) -> list[dict]:
+def _day_ranges(hours: dict, day: str) -> list[tuple[str, str]]:
+    ranges = (r for r in hours.get(day) or [] if isinstance(r, list | tuple) and len(r) == 2)
+    return [(a, b) for a, b in ranges if isinstance(a, str) and isinstance(b, str) and a < b]
+
+
+def _local_now(now=None) -> datetime:
+    return (now or timezone.now()).astimezone(PAGE_TZ)
+
+
+def opening_state(opening_hours, now=None) -> dict | None:
+    """“Ouvert maintenant / Fermé” of a page, computed in Africa/Douala time (None without hours).
+
+    {"open": bool, "label": "Ouvert maintenant", "detail": "Ferme à 18:00"}. Pages are cached a few
+    minutes: static/js/site-motion.js recomputes the state in the browser from the same data.
+    """
+    hours = opening_hours if isinstance(opening_hours, dict) else {}
+    if not any(_day_ranges(hours, day) for day in OPENING_DAYS):
+        return None
+    local = _local_now(now)
+    today, clock = local.weekday(), local.strftime("%H:%M")
+    for start, end in _day_ranges(hours, OPENING_DAYS[today]):
+        if start <= clock < end:
+            return {"open": True, "label": _("Ouvert maintenant"), "detail": _("Ferme à %(t)s") % {"t": end}}
+    for offset in range(8):
+        day = OPENING_DAYS[(today + offset) % 7]
+        later = [start for start, _end in _day_ranges(hours, day) if offset or start > clock]
+        if not later:
+            continue
+        if offset == 0:
+            detail = _("Ouvre à %(t)s") % {"t": later[0]}
+        elif offset == 1:
+            detail = _("Ouvre demain à %(t)s") % {"t": later[0]}
+        else:
+            detail = _("Ouvre %(d)s à %(t)s") % {"d": str(DAY_LABELS[day]).lower(), "t": later[0]}
+        return {"open": False, "label": _("Fermé"), "detail": detail}
+    return None  # pragma: no cover - unreachable: at least one range exists
+
+
+def _hours(profile: Profile, now=None) -> list[dict]:
     hours = profile.opening_hours if isinstance(profile.opening_hours, dict) else {}
     if not hours:
         return []
+    today = OPENING_DAYS[_local_now(now).weekday()]
     rows = []
     for day in OPENING_DAYS:
-        ranges = [r for r in hours.get(day) or [] if isinstance(r, list | tuple) and len(r) == 2]
-        rows.append({"day": str(DAY_LABELS[day]), "ranges": ", ".join(f"{a}–{b}" for a, b in ranges)})
+        ranges = _day_ranges(hours, day)
+        rows.append(
+            {
+                "key": day,
+                "day": str(DAY_LABELS[day]),
+                "ranges": " · ".join(f"{a} – {b}" for a, b in ranges),
+                "data": ",".join(f"{a}-{b}" for a, b in ranges),
+                "today": day == today,
+            }
+        )
     return rows
 
 
-def font_stylesheet_url() -> str:
-    """Self-hosted Archivo (static/css/fonts.css, brand design system); empty if not collected yet."""
+def split_bio(bio: str) -> tuple[str, str]:
+    """(lede, rest): the first sentence of the bio shown big (editorial lede), the rest as prose.
+
+    Only a clean first sentence (40–220 characters, on the first line) becomes the lede; otherwise
+    the whole bio stays in the prose. The text is never altered, only cut in two.
+    """
+    bio = (bio or "").strip()
+    match = _SENTENCE_END_RE.search(bio)
+    if not match or not 40 <= match.end() <= min(220, len(bio.split("\n", 1)[0])):
+        return "", bio
+    lede, rest = bio[: match.end()].strip(), bio[match.end() :].strip()
+    return (lede, rest) if rest else ("", bio)
+
+
+def name_fit(name: str) -> str:
+    """Size step of the XXL page title so long words never break mid-word ("" = full size)."""
+    words = (name or "").split()
+    longest, total = max((len(w) for w in words), default=0), len(name or "")
+    if longest >= 11 or total >= 28:
+        return "xs"
+    if longest >= 9 or total >= 20:
+        return "s"
+    return "m" if longest >= 7 else ""
+
+
+def initials(name: str) -> str:
+    words = [w for w in re.split(r"[\s\-'’]+", name or "") if w[:1].isalnum()]
+    return "".join(w[0] for w in words[:2]).upper() or "·"
+
+
+def _static_or_empty(path: str) -> str:
+    if not path:
+        return ""
     try:
-        return static("css/fonts.css")
+        return static(path)
     except ValueError:  # missing from the static manifest: system fonts only
         return ""
 
 
+def font_stylesheet_url(theme: themes.ResolvedTheme | None = None) -> str:
+    """Self-hosted @font-face stylesheet of the theme's font pair (Archivo by default)."""
+    return _static_or_empty(theme.font_css if theme else "css/fonts.css")
+
+
 def _theme_context(profile: Profile, theme: themes.ResolvedTheme, stylesheet_url: str) -> dict:
     category = theme.theme.category
+    font_css = font_stylesheet_url(theme) if theme.uses_webfont else ""
+    hours = _hours(profile)
     return {
         "theme": theme,
         "sections": [{"key": key, "label": themes.section_label(key, category)} for key in theme.visible_sections()],
         "theme_css_url": stylesheet_url,
-        "font_css_url": font_stylesheet_url() if theme.uses_webfont else "",
+        "font_css_url": font_css,
+        "font_preload_url": _static_or_empty(theme.font_preload) if font_css else "",
         "theme_color": theme.tokens["primary"],
         "cta_label": theme.cta_label or _("Écrire sur WhatsApp"),
-        "hours": _hours(profile),
+        "hours": hours,
+        "open_days": sum(1 for h in hours if h["ranges"]),
+        "open_state": opening_state(profile.opening_hours),
     }
+
+
+SECTION_ANCHORS = {
+    "about": "presentation",
+    "services": "prestations",
+    "gallery": "realisations",
+    "hours": "horaires",
+    "area": "zone",
+    "links": "liens",
+    "contact": "contact",
+}
+NAV_SECTIONS = ("about", "services", "gallery", "hours", "contact")
+
+
+def _nav_sections(context: dict) -> list[dict]:
+    """In-page navigation: the main visible sections that actually render (same tests as their templates)."""
+    present = {
+        "about": bool(context["profile"].bio),
+        "services": bool(context["services"]),
+        "gallery": bool(context["gallery"]),
+        "hours": bool(context["hours"]),
+        "contact": True,
+    }
+    return [
+        {"anchor": SECTION_ANCHORS[s["key"]], "label": s["label"]}
+        for s in context["sections"]
+        if s["key"] in NAV_SECTIONS and present[s["key"]]
+    ]
 
 
 def _profile_context(
@@ -478,10 +607,10 @@ def _profile_context(
     crumbs = _profile_breadcrumb(profile, name)
     photo = None
     if profile.photo:
-        display, max_variant = themes.PHOTO_DISPLAY.get(
-            theme.layout, (responsive.AVATAR_SIZE, responsive.AVATAR_MAX_VARIANT)
+        display, max_variant, sizes = themes.PHOTO_DISPLAY.get(
+            theme.layout, (responsive.AVATAR_SIZE, responsive.AVATAR_MAX_VARIANT, "")
         )
-        photo = responsive.responsive_image(profile.photo, display_width=display, max_width=max_variant)
+        photo = responsive.responsive_image(profile.photo, display_width=display, max_width=max_variant, sizes=sizes)
     # JSON-LD image: the real photo only (og.png is noindex), never a placeholder (audit #1)
     entity = jsonld.profile_entity(profile, image_url=profile.photo.url if profile.photo else "")
     graph = jsonld.page_graph(
@@ -499,7 +628,7 @@ def _profile_context(
     }
     whatsapp = _digits(profile.whatsapp)
     similar = selectors.similar_profiles(profile)
-    return {
+    context = {
         **_theme_context(profile, theme, stylesheet_url or f"/{profile.slug}/theme.css?v={theme.version}"),
         "preview": preview,
         "profile": profile,
@@ -531,6 +660,18 @@ def _profile_context(
         "owner_private": owner_private,
         "photo_alt": _("Photo de %(name)s") % {"name": name},
     }
+    lede, bio_rest = split_bio(profile.bio)
+    context.update(
+        {
+            "bio_lede": lede,
+            "bio_rest": bio_rest,
+            "initials": initials(name),
+            "name_fit": name_fit(name),
+            "prices_count": sum(1 for s in services if s.price_label),
+            "nav_sections": _nav_sections(context),
+        }
+    )
+    return context
 
 
 @require_safe

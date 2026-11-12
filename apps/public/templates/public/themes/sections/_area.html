@@ -1,15 +1,18 @@
 {% load i18n %}{% if profile.address or profile.district or profile.service_area or profile.city %}
-<section class="t-section t-section--area" id="zone">
+<section class="t-section t-section--area" id="zone" aria-labelledby="t-h-area">
   <div class="t-wrap t-section__inner">
-    <h2 class="t-h2">{{ label }}</h2>
-    <div class="t-area-card">
-      <span class="t-area-card__pin" aria-hidden="true"></span>
-      <div class="t-area-card__text">
-        {% if profile.address %}<p class="t-area-card__line"><strong>{{ profile.address }}</strong></p>{% endif %}
-        <p class="t-area-card__line">{{ profile.district }}{% if profile.district and profile.city %}, {% endif %}{{ profile.city.name }}</p>
-        {% if profile.service_area %}<p class="t-area-card__line t-muted">{% blocktranslate with area=profile.service_area %}Intervient : {{ area }}{% endblocktranslate %}</p>{% endif %}
+    <header class="t-sec-head" data-reveal><span class="t-index" aria-hidden="true"></span><h2 class="t-h2" id="t-h-area">{{ label }}</h2></header>
+    <div class="t-sec-body">
+      <div class="t-area" data-reveal>
+        <div class="t-area__map" aria-hidden="true"><span class="t-area__ring"></span><span class="t-area__pin"></span></div>
+        <div class="t-area__text">
+          {% if profile.city %}<p class="t-area__city">{{ profile.city.name }}</p>{% endif %}
+          {% if profile.address %}<p class="t-area__line">{{ profile.address }}</p>{% endif %}
+          {% if profile.district %}<p class="t-area__line">{{ profile.district }}</p>{% endif %}
+          {% if profile.service_area %}<p class="t-area__line t-muted">{% blocktranslate with area=profile.service_area %}Intervient : {{ area }}{% endblocktranslate %}</p>{% endif %}
+          {% if maps_url %}<a class="t-link" href="{{ maps_url }}" rel="{{ contact_rel }}">{% translate "Voir l'itinéraire" %}<span class="t-arrow" aria-hidden="true">↗</span></a>{% endif %}
+        </div>
       </div>
-      {% if maps_url %}<a class="btn btn--quiet" href="{{ maps_url }}" rel="{{ contact_rel }}">{% translate "Voir sur la carte" %}</a>{% endif %}
     </div>
   </div>
 </section>

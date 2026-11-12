@@ -1,0 +1,6 @@
+{% load i18n %}{% if services or gallery or hours or profile.city %}<dl class="t-facts">
+  {% if services %}<div class="t-fact"><dt>{% translate "Prestations" %}</dt><dd><span data-count="{{ services|length }}">{{ services|length }}</span></dd></div>{% endif %}
+  {% if gallery %}<div class="t-fact"><dt>{% translate "Réalisations en images" %}</dt><dd><span data-count="{{ gallery|length }}">{{ gallery|length }}</span></dd></div>{% endif %}
+  {% if open_days %}<div class="t-fact"><dt>{% translate "Jours d'ouverture par semaine" %}</dt><dd><span data-count="{{ open_days }}">{{ open_days }}</span><small>/7</small></dd></div>{% endif %}
+  {% if profile.city %}<div class="t-fact t-fact--text"><dt>{% translate "Basé à" %}</dt><dd>{{ profile.city.name }}</dd></div>{% endif %}
+</dl>{% endif %}

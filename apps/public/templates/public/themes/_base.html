@@ -1,22 +1,28 @@
 {% extends "public/base_public.html" %}
 {% load i18n static public_images public_theme %}
 {# Every theme renders through this file: same <head> (title, meta, canonical, robots, Open Graph), #}
-{# same JSON-LD @graph, a single h1 (in the hero partial) and the same breadcrumb. No inline style/script. #}
+{# same JSON-LD @graph, a single h1 (in the hero) and the same breadcrumb. No inline style/script. #}
+{# Layouts override {% block hero %} (and {% block page %} when the whole body is rearranged). #}
 {% block theme_color %}{{ theme_color }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{% static 'css/themes/base.css' %}">
+{% block styles %}{% if font_preload_url %}<link rel="preload" href="{{ font_preload_url }}" as="font" type="font/woff2" crossorigin>
+  {% endif %}<link rel="stylesheet" href="{% static 'css/themes/base.css' %}">
   <link rel="stylesheet" href="{% static 'css/themes/'|add:theme.layout|add:'.css' %}">
   {% if font_css_url %}<link rel="stylesheet" href="{{ font_css_url }}">
   {% endif %}<link rel="stylesheet" href="{{ theme_css_url }}">{% endblock %}
 {% block head %}{% if photo %}<link rel="preload" as="image" {% preload_attrs photo %} fetchpriority="high">{% endif %}{% if preview %}
   <base target="_blank">{% endif %}{% endblock %}
-{% block body_class %}t t--{{ theme.layout }} t-font--{{ theme.font_pair }} t-theme--{{ theme.theme.code }}{% endblock %}
+{% block body_class %}t t--{{ theme.layout }} t-font--{{ theme.font_pair }} t-theme--{{ theme.theme.code }}{% if photo %} has-photo{% else %} no-photo{% endif %}{% endblock %}
 
 {% block header %}
-<header class="t-bar">
+<a class="t-skip" href="#main">{% translate "Aller au contenu" %}</a>
+<div class="t-progress" aria-hidden="true"></div>
+<header class="t-bar" data-bar>
   <div class="t-wrap t-bar__inner">
-    <span class="t-bar__mark" aria-hidden="true">{{ profile.display_name|first|upper }}</span>
-    <span class="t-bar__name">{{ profile.display_name }}</span>
-    <a class="t-bar__link" href="#contact">{% translate "Contact" %}</a>
+    <a class="t-bar__brand" href="#top"><span class="t-bar__mark" aria-hidden="true">{{ initials }}</span><span class="t-bar__name">{{ profile.display_name }}</span></a>
+    {% if nav_sections|length > 2 %}<nav class="t-bar__nav" aria-label="{% translate 'Sur cette page' %}">
+      <ul>{% for n in nav_sections %}{% if n.anchor != "contact" %}<li><a href="#{{ n.anchor }}" data-nav="{{ n.anchor }}">{{ n.label }}</a></li>{% endif %}{% endfor %}</ul>
+    </nav>{% endif %}
+    {% if "contact" in theme.visible_sections %}<a class="t-bar__cta" href="#contact" data-nav="contact">{% translate "Contact" %}<span class="t-arrow" aria-hidden="true">→</span></a>{% elif whatsapp_url %}<a class="t-bar__cta" href="{{ whatsapp_url }}" rel="{{ contact_rel }}">WhatsApp<span class="t-arrow" aria-hidden="true">→</span></a>{% endif %}
   </div>
 </header>
 {% endblock %}
@@ -26,22 +32,27 @@
 {% if owner_private %}
 <p class="t-notice t-notice--warn" role="status">{% translate "Ta page est privée : toi seul la vois. Rends-la publique depuis ton espace pour que tes clients la trouvent." %}</p>
 {% endif %}
-<article class="t-page"{% if not preview %} data-profile-id="{{ profile.pk }}"{% endif %}>
+<article class="t-page" id="top"{% if not preview %} data-profile-id="{{ profile.pk }}"{% endif %}>
+  {% block page %}
   {% block hero %}{% endblock %}
+  {% block band %}{% endblock %}
   <div class="t-body">
     {% for s in sections %}{% section_template s.key as tpl %}{% include tpl with label=s.label %}{% endfor %}
   </div>
-  <p class="share t-share t-wrap"><a class="btn btn--quiet" href="{{ share_url }}" rel="{{ contact_rel }}" data-track="share"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#share"></use></svg>{% translate "Partager sur WhatsApp" %}</a></p>
+  {% endblock %}
+  <p class="t-share t-wrap"><a class="t-share__link" href="{{ share_url }}" rel="{{ contact_rel }}" data-track="share"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#share"></use></svg>{% translate "Partager cette page sur WhatsApp" %}</a></p>
 </article>
 
 {% if similar %}
-<section class="t-similar t-wrap similar">
-  <h2 class="t-h2">{{ similar_title }}</h2>
-  <ul class="pro-list">{% for p in similar %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+<section class="t-similar similar" aria-labelledby="t-similar-title">
+  <div class="t-wrap">
+    <h2 class="t-similar__title" id="t-similar-title">{{ similar_title }}</h2>
+    <ul class="pro-list">{% for p in similar %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+  </div>
 </section>
 {% endif %}
 
-<div class="t-wrap">{% include "public/_breadcrumb.html" %}</div>
+<div class="t-wrap t-crumbs">{% include "public/_breadcrumb.html" %}</div>
 {% if not preview %}<img class="pixel" src="/p/{{ profile.pk }}.gif" width="1" height="1" alt="" loading="eager">{% endif %}
 {% endblock %}
 
@@ -53,7 +64,7 @@
 </aside>
 {% endif %}
 <footer class="site-footer t-footer">
-  <p><a href="/">{{ SITE_NAME }}</a> · <a href="{{ report_url }}" rel="nofollow">{% translate "Signaler cette page" %}</a></p>
+  <p><span class="t-footer__name">{{ profile.display_name }}</span> · <a href="/">{{ SITE_NAME }}</a> · <a href="{{ report_url }}" rel="nofollow">{% translate "Signaler cette page" %}</a></p>
 </footer>
 {% if whatsapp_url or phone %}
 <nav class="t-dock" aria-label="{% translate 'Contact rapide' %}">
@@ -61,5 +72,7 @@
   {% if phone %}<a class="btn {% if whatsapp_url %}btn--secondary{% else %}btn--primary{% endif %}" href="tel:{{ phone }}" data-track="call"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#phone"></use></svg>{% translate "Appeler" %}</a>{% endif %}
 </nav>
 {% endif %}
+{% if gallery %}{% include "public/themes/_lightbox.html" %}{% endif %}
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/profile.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/profile.js' %}" defer></script>
+  <script src="{% static 'js/site-motion.js' %}" defer></script>{% endblock %}

@@ -1,14 +1,22 @@
-{% load i18n public_theme %}
-<section class="t-section t-section--contact" id="contact">
-  <div class="t-wrap t-section__inner">
-    <div class="t-contact">
-      <h2 class="t-h2">{{ label }}</h2>
-      <p class="t-contact__lead">{% blocktranslate with name=profile.display_name %}Une question, un devis, un rendez-vous ? {{ name }} te répond directement.{% endblocktranslate %}</p>
-      <ul class="t-contact__list">
-        {% if phone %}<li><span class="t-contact__label">{% translate "Téléphone" %}</span><a href="tel:{{ phone }}">{{ phone|pretty_phone }}</a></li>{% endif %}
-        {% if whatsapp_url %}<li><span class="t-contact__label">WhatsApp</span><a href="{{ whatsapp_url }}" rel="{{ contact_rel }}">{{ cta_label }}</a></li>{% endif %}
-        {% if email %}<li><span class="t-contact__label">{% translate "Email" %}</span><a href="mailto:{{ email }}">{{ email }}</a></li>{% endif %}
-        <li><span class="t-contact__label">{% translate "Carte de contact" %}</span><a href="/{{ profile.slug }}/contact.vcf" rel="nofollow">{% translate "Enregistrer dans mon téléphone" %}</a></li>
+{% load i18n static public_theme %}
+<section class="t-section t-section--contact" id="contact" aria-labelledby="t-h-contact">
+  <div class="t-wrap">
+    <div class="t-cta" data-reveal>
+      <span class="t-cta__deco" aria-hidden="true"></span>
+      <div class="t-cta__head">
+        <span class="t-index" aria-hidden="true"></span>
+        <h2 class="t-h2 t-cta__title" id="t-h-contact">{{ label }}</h2>
+        <p class="t-cta__lead">{% blocktranslate with name=profile.display_name %}Une question, un devis, un rendez-vous ? {{ name }} te répond directement.{% endblocktranslate %}</p>
+        <div class="t-cta__actions">
+          {% if whatsapp_url %}<a class="btn btn--invert btn--xl" href="{{ whatsapp_url }}" rel="{{ contact_rel }}" data-track="whatsapp" data-magnetic><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#whatsapp"></use></svg><span>{{ cta_label }}</span></a>{% endif %}
+          {% if phone %}<a class="btn btn--ghost btn--xl" href="tel:{{ phone }}" data-track="call"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#phone"></use></svg><span>{% translate "Appeler" %}</span></a>{% endif %}
+        </div>
+      </div>
+      <ul class="t-cta__list">
+        {% if phone %}<li><span class="t-cta__label">{% translate "Téléphone" %}</span><a href="tel:{{ phone }}">{{ phone|pretty_phone }}</a></li>{% endif %}
+        {% if email %}<li><span class="t-cta__label">{% translate "Email" %}</span><a href="mailto:{{ email }}" data-track="email">{{ email }}</a></li>{% endif %}
+        {% if maps_url %}<li><span class="t-cta__label">{% translate "Adresse" %}</span><a href="{{ maps_url }}" rel="{{ contact_rel }}" data-track="maps">{% if profile.address %}{{ profile.address }}{% else %}{{ profile.district }}{% endif %}{% if profile.city %}, {{ profile.city.name }}{% endif %}</a></li>{% endif %}
+        <li><span class="t-cta__label">{% translate "Carte de contact" %}</span><a href="/{{ profile.slug }}/contact.vcf" rel="nofollow" data-track="vcard">{% translate "Enregistrer dans mon téléphone" %}</a></li>
       </ul>
     </div>
   </div>

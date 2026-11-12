@@ -1,0 +1,9 @@
+{% load i18n %}<dialog class="t-lightbox" id="t-lightbox" aria-label="{% translate 'Photos en grand' %}" data-lightbox>
+  <figure class="t-lightbox__fig">
+    <img class="t-lightbox__img" src="{{ gallery.0.full }}" alt="{{ gallery.0.alt }}" width="{{ gallery.0.width }}" height="{{ gallery.0.height }}" loading="lazy" decoding="async" data-lb-img>
+    <figcaption class="t-lightbox__cap"><span data-lb-count aria-live="polite">1 / {{ gallery|length }}</span> <span data-lb-cap>{{ gallery.0.caption }}</span></figcaption>
+  </figure>
+  <button class="t-lightbox__btn t-lightbox__btn--close" type="button" aria-label="{% translate 'Fermer' %}" data-lb-close><span aria-hidden="true">✕</span></button>
+  {% if gallery|length > 1 %}<button class="t-lightbox__btn t-lightbox__btn--prev" type="button" aria-label="{% translate 'Photo précédente' %}" data-lb-prev><span aria-hidden="true">←</span></button>
+  <button class="t-lightbox__btn t-lightbox__btn--next" type="button" aria-label="{% translate 'Photo suivante' %}" data-lb-next><span aria-hidden="true">→</span></button>{% endif %}
+</dialog>

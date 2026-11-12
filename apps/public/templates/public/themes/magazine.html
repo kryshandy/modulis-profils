@@ -1,12 +1,19 @@
 {% extends "public/themes/_base.html" %}
+{% load i18n %}
+{# Vitrine — showcase for shops and food: a big framed image with a price tag, a marquee strip, price cards. #}
 {% block hero %}
-<header class="t-hero profile-head{% if not photo %} t-hero--nophoto{% endif %}">
-  <div class="t-hero__media">{% include "public/themes/_photo.html" %}</div>
-  <div class="t-hero__shade" aria-hidden="true"></div>
-  <div class="t-wrap t-hero__text">
-    {% if profile.city %}<p class="t-eyebrow">{{ profile.city.name }}</p>{% endif %}
-    {% include "public/themes/_identity.html" %}
-    {% include "public/themes/_actions.html" %}
+<header class="t-hero profile-head">
+  <div class="t-wrap t-hero__grid">
+    <div class="t-hero__text">
+      {% include "public/themes/_kicker.html" %}
+      {% include "public/themes/_identity.html" %}
+      {% include "public/themes/_actions.html" %}
+    </div>
+    <div class="t-hero__media">
+      <div class="t-hero__frame" data-parallax="inner">{% include "public/themes/_photo.html" %}</div>
+      {% with first=services.0 %}{% if first %}<p class="t-hero__tag"><span class="t-hero__tag-k">{% translate "À la une" %}</span><span class="t-hero__tag-v">{{ first.title }}</span>{% if first.price_label %}<span class="t-hero__tag-p">{{ first.price_label }}</span>{% endif %}</p>{% endif %}{% endwith %}
+    </div>
   </div>
 </header>
 {% endblock %}
+{% block band %}{% if services %}<div class="t-band">{% include "public/themes/_marquee.html" %}</div>{% endif %}{% endblock %}

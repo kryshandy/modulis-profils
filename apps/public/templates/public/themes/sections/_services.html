@@ -1,15 +1,18 @@
 {% if services %}
-<section class="t-section t-section--services" id="prestations">
+<section class="t-section t-section--services" id="prestations" aria-labelledby="t-h-services">
   <div class="t-wrap t-section__inner">
-    <h2 class="t-h2">{{ label }}</h2>
-    <ul class="services t-services">
-      {% for s in services %}
-      <li class="service t-service">
-        <div class="t-service__head"><h3 class="service__title t-service__title">{{ s.title }}</h3>{% if s.price_label %}<span class="service__price t-price">{{ s.price_label }}</span>{% endif %}</div>
-        {% if s.description %}<p class="service__desc t-service__desc">{{ s.description }}</p>{% endif %}
-      </li>
-      {% endfor %}
-    </ul>
+    <header class="t-sec-head" data-reveal><span class="t-index" aria-hidden="true"></span><h2 class="t-h2" id="t-h-services">{{ label }}</h2></header>
+    <div class="t-sec-body">
+      <ol class="services t-services">
+        {% for s in services %}<li class="service t-service" data-reveal>
+          <span class="t-service__num" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span>
+          <h3 class="service__title t-service__title">{{ s.title }}</h3>
+          {% if s.description %}<p class="service__desc t-service__desc">{{ s.description }}</p>{% endif %}
+          {% if s.price_label %}<p class="service__price t-price">{{ s.price_label }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
   </div>
 </section>
 {% endif %}

@@ -1,19 +1,52 @@
-/* Hero "Carte de visite": an elevated card with an accent edge, portrait and identity side by side. */
-.t--card .t-hero { padding: 1.5rem 0 .5rem; }
-.t--card .t-hero__card {
-  position: relative; overflow: hidden; padding: 1.5rem 1.25rem 1.4rem 1.5rem; isolation: isolate;
-  background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--r-lg); box-shadow: var(--shadow);
-}
-.t--card .t-hero__card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 6px; background: linear-gradient(var(--c-primary), var(--c-accent)); }
-.t--card .t-hero__card::after { content: ""; position: absolute; right: -3rem; top: -3rem; width: 9rem; height: 9rem; border-radius: var(--r-lg); background: var(--c-soft); transform: rotate(18deg); z-index: -1; }
-.t--card .t-hero__top { display: flex; flex-direction: column; gap: 1rem; }
-.t--card .profile-head__photo,
-.t--card .t-initial { width: 104px; height: 104px; border-radius: var(--r-md); }
-.t--card .t-initial { font-size: 2.6rem; }
-.t--card .t-name { font-size: clamp(1.9rem, 7vw, 2.9rem); }
-@media (min-width: 40rem) {
-  .t--card .t-hero { padding: 3rem 0 1rem; }
-  .t--card .t-hero__card { padding: 2.25rem 2.5rem; }
-  .t--card .t-hero__top { flex-direction: row; align-items: center; gap: 1.75rem; }
-  .t--card .profile-head__photo, .t--card .t-initial { width: 140px; height: 140px; }
+/* Carte — minimal luxury: a centred business card object (display serif, hairlines, accent corners),
+   then a narrow centred column with an elegant price list. Beauty, prestige, independent practices. */
+.t--card { --fs-display: clamp(2.9rem, 9vw, 6.4rem); --fs-h2: clamp(2.4rem, 5.4vw, 4.4rem); --wrap: 72rem; }
+.t--card .t-hero { padding-block: clamp(2rem, 7vw, 6rem) clamp(2.5rem, 6vw, 4.5rem); }
+.t--card .t-hero__inner { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.t-card { position: relative; width: min(100%, 44rem); padding: clamp(2.5rem, 7vw, 4.5rem) clamp(1.5rem, 6vw, 4rem); border-radius: var(--r-lg); background: var(--c-surface); box-shadow: 0 1px 0 var(--c-line), 0 50px 90px -60px rgb(0 0 0 / .55); }
+.t-card::before { content: ""; position: absolute; inset: 12px; border-radius: max(0px, calc(var(--r-lg) - 8px)); border: 1px solid var(--c-line); pointer-events: none; }
+.t-card__corner { position: absolute; width: 2.4rem; height: 2.4rem; border: 0 solid var(--c-accent); }
+.t-card__corner--a { left: 24px; top: 24px; border-width: 1.5px 0 0 1.5px; }
+.t-card__corner--b { right: 24px; bottom: 24px; border-width: 0 1.5px 1.5px 0; }
+.t-card__mono { display: grid; place-items: center; width: clamp(6.5rem, 18vw, 8.5rem); aspect-ratio: 1; margin: 0 auto clamp(1.5rem, 4vw, 2.25rem); border-radius: 50%; overflow: hidden; background: var(--c-primary); color: var(--c-on-primary); box-shadow: 0 0 0 6px var(--c-surface), 0 0 0 7px var(--c-line); }
+.t-card__mono .profile-head__photo { width: 100%; height: 100%; }
+.t-card__initials { font: 400 clamp(2.6rem, 7vw, 3.4rem)/1 var(--f-head); letter-spacing: .02em; }
+.t--card .t-name { letter-spacing: -.02em; line-height: .95; }
+.t--card .t-subtitle { margin-top: 1.1rem; font: 600 .8rem/1.5 var(--f-body); letter-spacing: .24em; text-transform: uppercase; color: var(--c-muted); }
+.t-card__rule { display: block; width: 4.5rem; height: 1px; margin: 1.6rem auto; background: var(--c-accent); position: relative; }
+.t-card__rule::after { content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; translate: -50% -50%; rotate: 45deg; background: var(--c-accent); }
+.t--card .t-kicker { justify-content: center; margin: 0; }
+.t--card .t-chip, .t--card .t-status { background: transparent; }
+.t--card .t-chip--verified { background: var(--c-text); }
+.t--card .t-actions { justify-content: center; margin-top: 2rem; }
+
+/* Narrow, centred editorial column */
+.t--card .t-section__inner { display: block !important; max-width: 50rem; }
+.t--card .t-sec-head { position: static !important; align-items: center; text-align: center; }
+.t--card .t-index::before { content: "— " counter(t-sec, decimal-leading-zero) " —"; box-shadow: none; padding: 0; }
+.t--card .t-index { color: var(--c-accent-text); }
+.t--card .t-h2 { font-weight: 400; line-height: 1; }
+.t--card .t-about { text-align: center; }
+.t--card .t-lede { margin-inline: auto; font-weight: 400; font-size: clamp(1.7rem, 3.6vw, 2.7rem); line-height: 1.18; letter-spacing: -.01em; }
+.t--card .t-prose { margin-inline: auto; }
+.t--card .t-services { display: block; border-top: 1px solid var(--c-line); }
+.t--card .t-service { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .25rem 1.5rem; align-items: baseline; min-height: 0; padding: 1.35rem .25rem; border-radius: 0; background: none; box-shadow: none; border-bottom: 1px solid var(--c-line); }
+.t--card .t-service:hover { transform: none; box-shadow: none; }
+.t--card .t-service__num { display: none; }
+.t--card .t-service__title { font-weight: 400; font-size: clamp(1.4rem, 2.6vw, 1.85rem); }
+.t--card .t-service__desc { grid-column: 1; }
+.t--card .t-price { grid-row: 1; grid-column: 2; margin: 0; padding: 0; border: 0; font-weight: 400; font-size: clamp(1.15rem, 2vw, 1.45rem); }
+.t--card .t-hours-card { margin-inline: auto; }
+.t--card .t-area { margin-inline: auto; }
+.t--card .t-links { justify-content: center; }
+.t--card .t-cta { text-align: center; justify-items: center; }
+.t--card .t-cta__lead { margin-inline: auto; }
+.t--card .t-cta__actions { justify-content: center; }
+.t--card .t-cta__list { width: min(100%, 30rem); }
+.t--card .t-cta__title { font-weight: 400; }
+.t--card .t-cta__deco { right: 50%; translate: 50% 0; top: -5rem; }
+.t--card .t-cta__list li { justify-items: center; }
+
+@media (min-width: 64rem) {
+  .t--card .t-cta { grid-template-columns: 1fr; }
 }

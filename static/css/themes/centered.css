@@ -1,14 +1,70 @@
-/* Hero "Centré, épuré": generous whitespace, small round portrait, thin accent rule. */
-.t--centered .t-hero { padding: 2.75rem 0 1.25rem; text-align: center; background: radial-gradient(60rem 22rem at 50% -6rem, var(--c-soft), transparent 70%); }
-.t--centered .t-hero__inner { max-width: 44rem; }
-.t--centered .profile-head__photo,
-.t--centered .t-initial { width: 132px; height: 132px; margin: 0 auto 1.4rem; box-shadow: 0 0 0 6px var(--c-surface), 0 0 0 7px var(--c-line); }
-.t--centered .t-initial { font-size: 3.2rem; }
-.t--centered .t-name { font-size: clamp(2.2rem, 8vw, 3.6rem); }
-.t--centered .t-meta { justify-content: center; }
-.t--centered .t-actions { text-align: left; }
-.t--centered .t-h2::before { border-radius: 50%; transform: none; }
-@media (min-width: 40rem) {
-  .t--centered .t-hero { padding: 4.5rem 0 2rem; }
-  .t--centered .t-actions { justify-content: center; }
+/* Bento — the page as a grid of tiles: identity, portrait or gradient art, call to action, live status,
+   key numbers; every section below is a tile too. Tech, freelance, health, education. */
+.t--centered { --fs-display: clamp(2.9rem, 8.4vw, 7rem); --fs-h2: clamp(2rem, 4.8vw, 3.8rem); --sec: .75rem; }
+.t--centered .t-hero { padding-block: clamp(.75rem, 3vw, 1.75rem) 0; }
+.t-bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.t-tile { position: relative; min-width: 0; overflow: hidden; padding: clamp(1.25rem, 3vw, 2rem); border-radius: var(--r-lg); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line); }
+.t-tile--id, .t-tile--media, .t-tile--cta, .t-tile--place { grid-column: span 2; }
+.t-tile--id { display: flex; flex-direction: column; justify-content: flex-end; min-height: 0; padding-top: 2.25rem; }
+.t--centered .t-name { letter-spacing: -.05em; line-height: .92; }
+.t-tile--media { padding: 0; aspect-ratio: 4 / 3; }
+.t-tile--media .profile-head__photo { position: absolute; inset: 0; }
+.t-tile__label { font-size: .85rem; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
+.t-tile__big { margin-top: auto; font: var(--f-head-weight) clamp(3rem, 8vw, 5.5rem)/.9 var(--f-head); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.t-tile__big--text { font-size: clamp(1.5rem, 2.2vw, 2.2rem); letter-spacing: -.03em; }
+.t-tile__sub { margin-top: .35rem; }
+.t-tile--stat, .t-tile--place, .t-tile--status { display: flex; flex-direction: column; gap: .75rem; min-height: 10.5rem; }
+.t-tile--cta { background: var(--c-primary); color: var(--c-on-primary); box-shadow: none; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; }
+.t-tile--cta .t-actions { margin-top: 0; }
+.t-tile--cta .btn--primary { --b-bg: var(--c-on-primary); --b-fg: var(--c-primary); box-shadow: none; }
+.t-tile--cta .btn--secondary { --b-fg: var(--c-on-primary); --b-hover: var(--c-on-primary); --b-hover-fg: var(--c-primary); }
+.t-tile--cta .btn--quiet { --b-fg: var(--c-on-primary); box-shadow: inset 0 0 0 1px currentColor; }
+.t-tile--stat { background: var(--c-accent); color: var(--c-on-accent); box-shadow: none; }
+.t-tile--place { background: var(--c-text); color: var(--c-bg); box-shadow: none; }
+.t-tile--status { background: var(--c-soft); color: var(--c-on-soft); }
+.t-tile--status .t-status { flex-wrap: wrap; margin-top: auto; background: none; box-shadow: none; padding: 0; font: var(--f-head-weight) clamp(1.35rem, 2.6vw, 1.8rem)/1.1 var(--f-head); letter-spacing: -.02em; color: inherit; }
+.t-tile--status .t-status__detail { flex-basis: 100%; font: 500 .95rem/1.3 var(--f-body); letter-spacing: 0; color: inherit; }
+.t-tile--status .t-status__detail::before { content: none; }
+.t-tile--status .t-status__dot { width: .8rem; height: .8rem; }
+
+/* Gradient-mesh art without photo */
+.t--centered .t-art { background: radial-gradient(60% 70% at 18% 20%, var(--c-accent) 0, transparent 70%), radial-gradient(70% 80% at 85% 85%, var(--c-primary) 0, transparent 72%), var(--c-primary-deep); }
+.t--centered .t-art__a { width: 34%; right: 8%; top: 10%; bottom: auto; background: var(--c-on-primary); opacity: .12; }
+.t--centered .t-art__b { width: 70%; left: -14%; top: auto; bottom: -26%; opacity: .4; }
+.t--centered .t-art__mono { font-size: clamp(5rem, 18vw, 9rem); letter-spacing: -.07em; }
+
+/* Sections as tiles */
+.t--centered .t-body { padding-top: .75rem; }
+.t--centered .t-section { padding-block: 0 .75rem; border: 0 !important; }
+.t--centered .t-section__inner { padding: clamp(1.5rem, 4.5vw, 3.5rem); border-radius: var(--r-lg); background: var(--c-surface); box-shadow: inset 0 0 0 1px var(--c-line); }
+.t--centered .t-section__inner.t-wrap { width: auto; margin-inline: max(var(--gutter), calc((100% - var(--wrap)) / 2 + var(--gutter))); }
+.t--centered .t-service, .t--centered .t-hours-card { background: var(--c-bg); box-shadow: none; }
+.t--centered .t-service { min-height: 10rem; }
+.t--centered .t-price { display: inline-flex; align-self: flex-start; border: 0; padding: .35rem .8rem; border-radius: 999px; background: var(--c-surface); font-size: 1.05rem; }
+.t--centered .t-area__map { background-color: var(--c-bg); }
+.t--centered .t-cta { border-radius: var(--r-lg); }
+.t--centered .t-section--contact .t-wrap { padding-inline: max(var(--gutter), env(safe-area-inset-left)); }
+.t--centered .t-share { padding-top: 1.75rem; }
+
+@media (min-width: 64rem) {
+  .t-bento { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-flow: dense; }
+  .t-tile--id { grid-column: span 8; grid-row: span 2; min-height: 27rem; padding: clamp(2rem, 3.5vw, 3rem); }
+  .t-tile--media { grid-column: span 4; grid-row: span 2; aspect-ratio: auto; }
+  .t-tile--cta { grid-column: span 5; }
+  .t-tile--status { grid-column: span 3; }
+  .t-tile--stat, .t-tile--place { grid-column: span 2; }
+  .t-bento:not(:has(.t-tile--status)) .t-tile--cta { grid-column: span 8; }
+  .t-bento:not(:has(.t-tile--stat)) .t-tile--cta { grid-column: span 7; }
+  .t-bento:not(:has(.t-tile--status)):not(:has(.t-tile--stat)) .t-tile--cta { grid-column: span 10; }
+  .t-bento:not(:has(.t-tile--place)) .t-tile--cta { grid-column: span 7; }
+  .t--centered .t-section__inner { gap: 1rem 3.5rem; }
+  .t--centered .t-section__inner > .t-sec-head { top: calc(var(--bar-h) + 2.5rem); }
+  /* Section tiles: short sections (hours, area, links) pair up two by two; a lone one spans the row */
+  .t--centered .t-body { display: flex; flex-wrap: wrap; gap: 0 .75rem; max-width: var(--wrap); margin-inline: auto; padding-inline: var(--gutter); }
+  .t--centered .t-body > .t-section { display: flex; flex: 1 1 100%; min-width: 0; }
+  .t--centered .t-body > .t-section--hours, .t--centered .t-body > .t-section--area, .t--centered .t-body > .t-section--links { flex: 1 1 34%; }
+  .t--centered .t-body .t-wrap { flex: 1; width: auto; max-width: none; margin-inline: 0; padding-inline: 0; }
+  .t--centered .t-body .t-section__inner.t-wrap { margin-inline: 0; padding: clamp(1.5rem, 4.5vw, 3.5rem); }
+  .t--centered .t-section--hours .t-section__inner, .t--centered .t-section--area .t-section__inner, .t--centered .t-section--links .t-section__inner { display: block; }
+  .t--centered .t-section--hours .t-sec-head, .t--centered .t-section--area .t-sec-head, .t--centered .t-section--links .t-sec-head { position: static; margin-bottom: 2rem; }
 }

@@ -1,3 +1,2 @@
-{% load i18n %}<h1 class="profile-head__name t-name">{{ profile.display_name }}</h1>
+<h1 class="profile-head__name t-name{% if name_fit %} t-name--{{ name_fit }}{% endif %}">{{ profile.display_name }}</h1>
 {% if subtitle %}<h2 class="profile-head__title t-subtitle">{{ subtitle }}</h2>{% endif %}
-{% if profile.is_verified or profile.district or profile.service_area %}<p class="t-meta">{% if profile.is_verified %}<span class="badge badge--verified t-badge">✓ {% translate "Profil vérifié" %}</span>{% endif %}{% if profile.district or profile.service_area %}<span class="profile-head__area t-area">{{ profile.district }}{% if profile.district and profile.service_area %} · {% endif %}{{ profile.service_area }}</span>{% endif %}</p>{% endif %}

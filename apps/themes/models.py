@@ -29,12 +29,13 @@ class Theme(models.Model):
         UNIVERSEL = "universel", _("Universel")
 
     class Layout(models.TextChoices):
-        SPLIT_PHOTO = "split_photo", _("Photo à côté du titre")
-        COVER_COLOR = "cover_color", _("Bandeau de couleur")
-        CENTERED = "centered", _("Centré, épuré")
-        CARD = "card", _("Carte de visite")
-        EDITORIAL = "editorial", _("Éditorial")
-        MAGAZINE = "magazine", _("Magazine")
+        # Keys are stable (stored in ProfileTheme); labels name the 2026 art directions.
+        SPLIT_PHOTO = "split_photo", _("Studio — colonne image fixe")
+        COVER_COLOR = "cover_color", _("Signature — typographie XXL")
+        CENTERED = "centered", _("Bento — grille de tuiles")
+        CARD = "card", _("Carte — luxe épuré")
+        EDITORIAL = "editorial", _("Éditorial — serif magazine")
+        MAGAZINE = "magazine", _("Vitrine — grande image")
 
     code = models.SlugField(_("code"), max_length=40, unique=True)
     name = models.CharField(_("nom"), max_length=60)

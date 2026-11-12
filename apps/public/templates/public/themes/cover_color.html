@@ -1,13 +1,28 @@
 {% extends "public/themes/_base.html" %}
+{# Signature — Modulis editorial-bold: XXL variable headline, colour composition with the portrait as a sticker, #}
+{# key facts, then a colour slab with the services marquee. Looks complete with or without a photo. #}
 {% block hero %}
 <header class="t-hero profile-head">
-  <div class="t-hero__band" aria-hidden="true"></div>
   <div class="t-wrap">
-    <div class="t-hero__card">
-      {% include "public/themes/_photo.html" %}
-      {% include "public/themes/_identity.html" %}
-      {% include "public/themes/_actions.html" %}
+    <div class="t-hero__grid">
+      <div class="t-hero__text">
+        {% include "public/themes/_kicker.html" %}
+        {% include "public/themes/_identity.html" %}
+        {% include "public/themes/_actions.html" %}
+      </div>
+      <div class="t-sig" data-parallax>
+        <span class="t-sig__slab" aria-hidden="true"><span class="t-sig__mono">{{ initials }}</span></span>
+        <span class="t-sig__sun" aria-hidden="true"></span>
+        <span class="t-sig__ring" aria-hidden="true"></span>
+        <span class="t-sig__dots" aria-hidden="true"></span>
+        <span class="t-sig__sticker">
+          {% if photo %}{% include "public/themes/_photo.html" %}{% else %}<span class="t-sig__arrow" aria-hidden="true">↘</span>{% endif %}
+          <svg class="t-sig__orbit" viewBox="0 0 200 200" aria-hidden="true" focusable="false"><path id="t-orbit" d="M100 100m-80 0a80 80 0 1 1 160 0a80 80 0 1 1-160 0" fill="none"/><text><textPath href="#t-orbit" textLength="500" lengthAdjust="spacingAndGlyphs">{{ subtitle|default:profile.display_name }} • {{ subtitle|default:profile.display_name }} • </textPath></text></svg>
+        </span>
+      </div>
     </div>
+    {% include "public/themes/_facts.html" %}
   </div>
 </header>
 {% endblock %}
+{% block band %}{% if services %}<div class="t-band">{% include "public/themes/_marquee.html" %}</div>{% endif %}{% endblock %}

@@ -95,14 +95,51 @@ def normalize_sections(value) -> list[dict]:
 # --- fonts, corners, layouts ------------------------------------------------------------------
 
 SYSTEM_STACK = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+ARCHIVO_STACK = f'"Archivo", {SYSTEM_STACK}'
+# Self-hosted webfonts (SIL OFL 1.1, static/fonts/): `css` declares the faces, `preload` is the display
+# face fetched early. A pair never needs more than two font files (public page budget).
+# `vary` = font-variation-settings of the big headings (Archivo width axis), "normal" otherwise.
 FONT_PAIRS = {
     "archivo": {
         "label": gettext_lazy("Archivo (Modulis)"),
-        "head": f'"Archivo", {SYSTEM_STACK}',
-        "body": f'"Archivo", {SYSTEM_STACK}',
+        "head": ARCHIVO_STACK,
+        "body": ARCHIVO_STACK,
         "weight": "800",
+        "tracking": "-0.035em",
+        "vary": '"wdth" 112',
+        "webfont": True,
+        "css": "css/fonts.css",
+        "preload": "fonts/archivo-variable.woff2",
+    },
+    "fraunces": {
+        "label": gettext_lazy("Fraunces (éditorial)"),
+        "head": '"Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif',
+        "body": ARCHIVO_STACK,
+        "weight": "380",
+        "tracking": "-0.035em",
+        "webfont": True,
+        "css": "css/themes/fonts-fraunces.css",
+        "preload": "fonts/fraunces-variable-latin.woff2",
+    },
+    "instrument": {
+        "label": gettext_lazy("Instrument Serif (luxe)"),
+        "head": '"Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia, serif',
+        "body": ARCHIVO_STACK,
+        "weight": "400",
         "tracking": "-0.02em",
         "webfont": True,
+        "css": "css/themes/fonts-instrument.css",
+        "preload": "fonts/instrument-serif-latin.woff2",
+    },
+    "bricolage": {
+        "label": gettext_lazy("Bricolage (studio)"),
+        "head": f'"Bricolage Grotesque", {SYSTEM_STACK}',
+        "body": f'"Bricolage Grotesque", {SYSTEM_STACK}',
+        "weight": "700",
+        "tracking": "-0.04em",
+        "webfont": True,
+        "css": "css/themes/fonts-bricolage.css",
+        "preload": "fonts/bricolage-grotesque-variable-latin.woff2",
     },
     "system": {
         "label": gettext_lazy("Moderne"),
@@ -149,12 +186,20 @@ FONT_PAIRS = {
     },
 }
 CORNERS = {
-    "rounded": {"label": gettext_lazy("Arrondis"), "lg": "22px", "md": "14px", "sm": "10px"},
-    "soft": {"label": gettext_lazy("Légers"), "lg": "12px", "md": "8px", "sm": "6px"},
+    "rounded": {"label": gettext_lazy("Arrondis"), "lg": "28px", "md": "18px", "sm": "12px"},
+    "soft": {"label": gettext_lazy("Légers"), "lg": "14px", "md": "10px", "sm": "6px"},
     "sharp": {"label": gettext_lazy("Droits"), "lg": "2px", "md": "2px", "sm": "0"},
 }
-# Avatar display size per layout (px): the photo srcset never downloads more than needed.
-PHOTO_DISPLAY = {"split_photo": (320, 800), "editorial": (280, 800), "magazine": (480, 800)}
+# Portrait slot per layout: (display width px, largest variant, `sizes`). The srcset never downloads
+# more than the slot needs; Signature keeps a 160 px portrait (a sticker in its composition).
+PHOTO_DISPLAY = {
+    "cover_color": (160, 400, "160px"),
+    "card": (176, 400, "176px"),
+    "split_photo": (520, 800, "(min-width: 64rem) 40vw, 100vw"),
+    "editorial": (420, 800, "(min-width: 64rem) 26rem, 80vw"),
+    "magazine": (560, 800, "(min-width: 64rem) 36rem, 100vw"),
+    "centered": (360, 800, "(min-width: 64rem) 24rem, 90vw"),
+}
 LAYOUTS = tuple(Theme.Layout.values)
 CTA_MAX = 40
 
@@ -256,6 +301,7 @@ def derive_tokens(palette: dict) -> dict:
         "accent": accent,
         "on-accent": readable_on(accent),
         "accent-ink": ensure_contrast(accent, [bg, surface], 3.0),  # large/decorative text only
+        "accent-text": ensure_contrast(accent, [bg, surface]),  # accent as small text (kickers, indexes): AA
         "bg": bg,
         "surface": surface,
         "text": text,
@@ -263,6 +309,9 @@ def derive_tokens(palette: dict) -> dict:
         "line": mix(surface, text, 0.16 if dark else 0.12),
         "soft": mix(surface, primary, 0.14 if dark else 0.08),
         "on-soft": ensure_contrast(text, [mix(surface, primary, 0.14 if dark else 0.08)]),
+        # decorative only (shapes, gradients, glows): never behind text
+        "primary-deep": mix(primary, "#000000", 0.34),
+        "accent-soft": mix(bg, accent, 0.24),
         "scheme": "dark" if dark else "light",
     }
 
@@ -336,6 +385,16 @@ class ResolvedTheme:
     def uses_webfont(self) -> bool:
         return bool(self.font.get("webfont"))
 
+    @property
+    def font_css(self) -> str:
+        """Static path of the @font-face stylesheet ("" for system fonts)."""
+        return self.font.get("css", "") if self.uses_webfont else ""
+
+    @property
+    def font_preload(self) -> str:
+        """Static path of the display face to preload ("" for system fonts)."""
+        return self.font.get("preload", "") if self.uses_webfont else ""
+
     def css(self) -> str:
         t, font, radius = self.tokens, self.font, CORNERS[self.corners]
         props = [
@@ -347,6 +406,7 @@ class ResolvedTheme:
             f"--f-body:{font['body']}",
             f"--f-head-weight:{font['weight']}",
             f"--f-head-tracking:{font['tracking']}",
+            f"--f-head-vary:{font.get('vary', 'normal')}",
             f"color-scheme:{t['scheme']}",
         ]
         return "/* Modulis — theme " + self.theme.code + " */\n:root{" + ";".join(props) + "}\n"
@@ -486,6 +546,28 @@ def _check_usable(profile: Profile, theme: Theme) -> None:
         raise ThemeError(_("Ce modèle n'est plus disponible."))
     if theme.is_premium and not has_premium(profile):
         raise ThemeError(_("Ce modèle est réservé aux offres Essentiel et Pro."))
+
+
+@transaction.atomic
+def assign_theme(profile: Profile, theme: Theme) -> ProfileTheme:
+    """Make `theme` (with its defaults) the live theme of `profile`, no entitlement check.
+
+    For trusted callers only (demo data, support): pros go through start_with_theme + publish.
+    """
+    data = theme_defaults(theme)
+    pt = ProfileTheme.objects.select_for_update().filter(profile=profile).first() or ProfileTheme(profile=profile)
+    pt.theme = theme
+    pt.palette = data["palette"]
+    pt.font_pair = data["font_pair"]
+    pt.corners = data["corners"]
+    pt.hero_variant = data["hero_variant"]
+    pt.cta_label = data["cta_label"]
+    pt.sections = data["sections"]
+    pt.draft = {}
+    pt.published_at = timezone.now()
+    pt.published_version += 1
+    pt.save()
+    return pt
 
 
 @transaction.atomic

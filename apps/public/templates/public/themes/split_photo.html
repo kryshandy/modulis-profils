@@ -1,12 +1,22 @@
 {% extends "public/themes/_base.html" %}
-{% block hero %}
-<header class="t-hero profile-head">
-  <div class="t-wrap t-hero__grid">
-    <div class="t-hero__text">
+{% load public_theme %}
+{# Studio — two columns: a sticky media panel (portrait or generative art) and the whole page scrolling beside it. #}
+{% block page %}
+<div class="t-studio">
+  <div class="t-studio__media">
+    <div class="t-studio__frame" data-parallax="inner">{% include "public/themes/_photo.html" %}</div>
+    {% if open_state %}<p class="t-studio__badge">{% include "public/themes/_status.html" %}</p>{% endif %}
+  </div>
+  <div class="t-studio__main">
+    <header class="t-hero profile-head">
+      {% include "public/themes/_kicker.html" with no_status=1 %}
       {% include "public/themes/_identity.html" %}
       {% include "public/themes/_actions.html" %}
+      {% include "public/themes/_facts.html" %}
+    </header>
+    <div class="t-body">
+      {% for s in sections %}{% section_template s.key as tpl %}{% include tpl with label=s.label %}{% endfor %}
     </div>
-    <div class="t-hero__media">{% include "public/themes/_photo.html" %}</div>
   </div>
-</header>
+</div>
 {% endblock %}

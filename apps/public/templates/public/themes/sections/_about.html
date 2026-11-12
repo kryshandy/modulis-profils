@@ -1,8 +1,11 @@
 {% if profile.bio %}
-<section class="t-section t-section--about" id="presentation">
+<section class="t-section t-section--about" id="presentation" aria-labelledby="t-h-about">
   <div class="t-wrap t-section__inner">
-    <h2 class="t-h2">{{ label }}</h2>
-    <div class="bio t-prose">{{ profile.bio|linebreaks }}</div>
+    <header class="t-sec-head" data-reveal><span class="t-index" aria-hidden="true"></span><h2 class="t-h2" id="t-h-about">{{ label }}</h2></header>
+    <div class="t-sec-body t-about">
+      {% if bio_lede %}<p class="t-lede" data-reveal>{{ bio_lede }}</p>{% endif %}
+      <div class="bio t-prose" data-reveal>{{ bio_rest|linebreaks }}</div>
+    </div>
   </div>
 </section>
 {% endif %}

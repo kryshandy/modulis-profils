@@ -1,15 +1,36 @@
-/* Hero "Photo à côté du titre": big portrait framed by an accent block, text left on desktop. */
-.t--split_photo .t-hero { padding: 1.75rem 0 1rem; overflow: hidden; }
-.t--split_photo .t-hero__grid { display: grid; gap: 1.75rem; }
-.t--split_photo .t-hero__media { order: -1; position: relative; justify-self: center; width: min(74vw, 22rem); margin-right: 1.1rem; }
-.t--split_photo .t-hero__media::before { content: ""; position: absolute; inset: 1.1rem -1.1rem -1.1rem 1.1rem; border-radius: var(--r-lg); background: var(--c-accent); }
-.t--split_photo .profile-head__photo,
-.t--split_photo .t-initial { position: relative; width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: var(--r-lg); box-shadow: var(--shadow); }
-.t--split_photo .t-initial { font-size: 7rem; }
-.t--split_photo .t-name { font-size: clamp(2.3rem, 9vw, 4.25rem); }
-.t--split_photo .t-subtitle { color: var(--c-primary-ink); font-weight: 600; }
-@media (min-width: 48rem) {
-  .t--split_photo .t-hero { padding: 4rem 0 2.5rem; }
-  .t--split_photo .t-hero__grid { grid-template-columns: 1.15fr .85fr; align-items: center; gap: 3.5rem; }
-  .t--split_photo .t-hero__media { order: 0; width: calc(100% - 1.1rem); max-width: 24rem; justify-self: end; }
+/* Studio — two columns on desktop: a sticky media panel (portrait or generative art) and the page scrolling
+   beside it. On a phone the panel opens the page as a framed cover. */
+.t--split_photo { --fs-display: clamp(3rem, 8vw, 7.2rem); --fs-h2: clamp(2.2rem, 4.6vw, 4rem); }
+.t-studio__media { position: relative; padding: .5rem var(--gutter) 0; }
+.t-studio__frame { position: relative; overflow: hidden; aspect-ratio: 4 / 5; max-height: 72svh; width: 100%; border-radius: var(--r-lg); background: var(--c-primary); }
+.no-photo .t-studio__frame { aspect-ratio: 5 / 4; }
+.t-studio__frame .profile-head__photo { position: absolute; inset: 0; }
+.t-studio__badge { position: absolute; left: calc(var(--gutter) + 1rem); bottom: 1rem; }
+.t-studio__badge .t-status { box-shadow: 0 10px 30px -12px rgb(0 0 0 / .45); }
+.t-studio__main { min-width: 0; padding-inline: var(--gutter); }
+.t-studio__main .t-wrap { padding-inline: 0; max-width: none; }
+.t--split_photo .t-hero { padding-block: clamp(2rem, 6vw, 4.5rem) clamp(2.5rem, 5vw, 4rem); }
+.t--split_photo .t-section__inner { display: block !important; }
+.t--split_photo .t-sec-head { position: static !important; }
+.t--split_photo .t-section { padding-block: clamp(3.5rem, 7vw, 6rem); }
+
+/* Art without photo: outlined monogram, architect grid, accent sun */
+.t--split_photo .t-art__c { opacity: .22; background: linear-gradient(currentColor 1px, transparent 1px) 0 0 / 100% 12.5%, linear-gradient(90deg, currentColor 1px, transparent 1px) 0 0 / 12.5% 100%; }
+.t--split_photo .t-art__a { width: 46%; right: 9%; top: 9%; bottom: auto; }
+.t--split_photo .t-art__b { width: 120%; left: -55%; top: auto; bottom: -70%; opacity: .5; }
+.t--split_photo .t-art__mono { place-items: end start; padding: 0 0 4% 6%; font-size: clamp(8rem, 34vw, 19rem); line-height: .78; color: transparent; -webkit-text-stroke: 2px var(--c-on-primary); font-variation-settings: "wdth" 125; }
+
+.t--split_photo .t-service { min-height: 0; }
+.t--split_photo .t-service__num { padding-bottom: .5rem; margin-bottom: 0; }
+.t--split_photo .t-lede { max-width: 24ch; }
+
+@media (min-width: 64rem) {
+  .t-studio { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
+  .t-studio__media { position: sticky; top: var(--bar-h); height: calc(100svh - var(--bar-h)); padding: 0 0 var(--gutter) var(--gutter); }
+  .t-studio__frame, .no-photo .t-studio__frame { height: 100%; max-height: none; aspect-ratio: auto; }
+  .t-studio__badge { left: calc(var(--gutter) + 1.25rem); bottom: calc(var(--gutter) + 1.25rem); }
+  .t-studio__main { padding-inline: clamp(2.5rem, 5vw, 5.5rem) var(--gutter); }
+  .t--split_photo .t-services { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .t--split_photo .t-cta { grid-template-columns: 1fr; }
+  .t--split_photo .t-share { text-align: left; }
 }
