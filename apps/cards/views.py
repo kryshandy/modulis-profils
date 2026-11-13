@@ -30,6 +30,7 @@ from apps.billing import services as billing
 from apps.core import csp
 from apps.core.turnstile import verify_turnstile
 from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
+from apps.legal.services import record_acceptance
 from apps.platform.services import feature
 from apps.profiles import services as profiles
 from apps.profiles.models import Profile
@@ -425,6 +426,8 @@ def _step_profile(request, card: Card, state: dict):
 def _finish(request, card: Card, user, profile: Profile):
     """Card activated: log in and continue in the pro space (onboarding if the page is new)."""
     _clear_state(request, card)
+    if not user.terms_version:  # first acceptance: the phone step states that continuing accepts the CGU
+        record_acceptance(user)
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")  # rotates the session key
     request.session["activated_card"] = card.public_code
     request.session[SESSION_PROFILE_KEY] = profile.pk  # the dashboard opens on the page just linked

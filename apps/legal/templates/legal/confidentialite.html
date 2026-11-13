@@ -1,0 +1,153 @@
+{% extends "legal/_layout.html" %}
+{% block doc_name %}Politique de confidentialité{% endblock %}
+{% block doc_description %}Comment {{ SITE_NAME }} collecte, utilise, protège et conserve vos données personnelles, et comment exercer vos droits.{% endblock %}
+{% block doc_heading %}Politique de confidentialité{% endblock %}
+{% block toc %}
+  <li><a href="#responsable">Responsable du traitement</a></li>
+  <li><a href="#collecte">Données collectées</a></li>
+  <li><a href="#finalites">Finalités et bases légales</a></li>
+  <li><a href="#public">Ce qui est public</a></li>
+  <li><a href="#destinataires">Destinataires et prestataires</a></li>
+  <li><a href="#transferts">Transferts hors du Cameroun</a></li>
+  <li><a href="#conservation">Durées de conservation</a></li>
+  <li><a href="#securite">Sécurité</a></li>
+  <li><a href="#droits">Vos droits</a></li>
+  <li><a href="#cookies">Cookies</a></li>
+  <li><a href="#mineurs">Mineurs</a></li>
+  <li><a href="#evolution">Évolution de cette politique</a></li>
+{% endblock %}
+{% block doc %}
+<div class="lg-summary">
+  <p class="lg-summary__title">L'essentiel en 30 secondes</p>
+  <ul>
+    <li>Nous collectons ce qu'il faut pour faire fonctionner votre page, <strong>rien de plus</strong>. Aucune publicité, aucun traceur publicitaire.</li>
+    <li>Vos données ne sont <strong>jamais vendues</strong> ni louées.</li>
+    <li>Les statistiques de visite sont calculées <strong>sans conserver l'adresse IP</strong> des visiteurs.</li>
+    <li>Vous pouvez <strong>télécharger</strong> vos données et <strong>tout supprimer</strong> vous-même, à tout moment, depuis vos paramètres.</li>
+  </ul>
+  <p class="lg-summary__note">Ce résumé aide à la lecture ; seul le texte complet ci-dessous fait foi.</p>
+</div>
+
+<section id="responsable">
+  <h2><span class="lg-num">01</span>Responsable du traitement</h2>
+  <p>Le responsable du traitement des données personnelles collectées sur {{ SITE_NAME }} est {{ legal.name }}{% if legal.form %}, {{ legal.form }}{% endif %}{% if legal.address %}, {{ legal.address }}{% endif %}. Pour toute question relative à vos données ou pour exercer vos droits : <a href="mailto:{{ legal.privacy_email }}">{{ legal.privacy_email }}</a>.</p>
+  <p>Cette politique est établie conformément à la loi n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun et à la loi n° 2010/012 du 21 décembre 2010 relative à la cybersécurité et à la cybercriminalité.</p>
+</section>
+
+<section id="collecte">
+  <h2><span class="lg-num">02</span>Données collectées</h2>
+  <div class="lg-table" role="region" aria-label="Données collectées" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Personnes</th><th scope="col">Données</th><th scope="col">Source</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Professionnels (compte)</th><td>Numéro de téléphone, date de vérification, email de secours (facultatif), nom, pays, langue, date d'acceptation des CGU, dates de connexion.</td><td>Vous</td></tr>
+        <tr><th scope="row">Professionnels (page)</th><td>Nom affiché, métier, ville, quartier, zone d'intervention, présentation, prestations et prix indicatifs, horaires, photos, liens, numéro WhatsApp et téléphone publics (facultatifs), position sur la carte (facultative), modèle et couleurs choisis.</td><td>Vous ou un agent Modulis, avec votre accord</td></tr>
+        <tr><th scope="row">Cartes et offres</th><td>Cartes reliées et leur statut, offre souscrite, dates, paiements (montant, moyen, référence de transaction).</td><td>Vous, l'opérateur de paiement</td></tr>
+        <tr><th scope="row">Visiteurs des pages</th><td>Type d'événement (visite, scan de carte, clic sur appeler ou WhatsApp), date, type d'appareil, site d'origine, indicateur « robot », et une empreinte anonyme recalculée chaque jour à partir de l'adresse IP. <strong>L'adresse IP elle-même n'est jamais enregistrée.</strong></td><td>Automatique</td></tr>
+        <tr><th scope="row">Auteurs de signalements</th><td>Motif, message, contact facultatif, empreinte anonyme de l'adresse IP (lutte contre les abus).</td><td>Vous</td></tr>
+        <tr><th scope="row">Sécurité</th><td>Codes de connexion (conservés uniquement sous forme chiffrée irréversible), nombre d'essais, empreinte de l'adresse IP, journal des actions de l'équipe Modulis.</td><td>Automatique</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Les photos envoyées sont réencodées : leurs métadonnées (modèle d'appareil, date, <strong>géolocalisation</strong>) sont supprimées avant publication. Nous ne collectons aucune donnée sensible (santé, religion, opinions…) ; n'en publiez pas sur votre page.</p>
+</section>
+
+<section id="finalites">
+  <h2><span class="lg-num">03</span>Finalités et bases légales</h2>
+  <ul>
+    <li><strong>Créer et gérer votre compte, publier votre page, relier vos cartes</strong> : exécution du contrat (CGU).</li>
+    <li><strong>Vous connecter par code</strong> et sécuriser les comptes (limites d'essais, blocage des abus) : exécution du contrat et intérêt légitime à protéger la Plateforme.</li>
+    <li><strong>Référencer votre page</strong> dans les moteurs de recherche et l'annuaire : exécution du contrat, à votre demande.</li>
+    <li><strong>Vous fournir vos statistiques</strong> de visites et de scans : exécution du contrat.</li>
+    <li><strong>Gérer les offres payantes</strong>, les paiements et vous rappeler les échéances : exécution du contrat et obligations comptables.</li>
+    <li><strong>Traiter les signalements</strong> et modérer les contenus : obligation légale et intérêt légitime.</li>
+    <li><strong>Vous envoyer des informations commerciales</strong> : uniquement avec votre consentement, retirable à tout moment.</li>
+  </ul>
+</section>
+
+<section id="public">
+  <h2><span class="lg-num">04</span>Ce qui est public</h2>
+  <p>Une page pro est faite pour être vue : tout ce que vous y publiez (nom, métier, textes, photos, coordonnées publiques, horaires) est accessible à tous, peut être téléchargé sous forme de fiche contact, partagé et indexé par les moteurs de recherche. Votre numéro de connexion n'est <strong>jamais affiché</strong> : seuls les numéros que vous choisissez de rendre publics le sont.</p>
+</section>
+
+<section id="destinataires">
+  <h2><span class="lg-num">05</span>Destinataires et prestataires</h2>
+  <p>Vos données sont accessibles aux seuls membres habilités de l'équipe Modulis, dans la limite de leurs fonctions (support, modération, facturation), avec une authentification à deux facteurs et un journal de leurs actions. Nous faisons appel aux prestataires suivants, qui n'utilisent les données que pour notre compte :</p>
+  <div class="lg-table" role="region" aria-label="Prestataires" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Prestataire</th><th scope="col">Rôle</th><th scope="col">Données concernées</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">{% if legal.host_name %}{{ legal.host_name }}{% else %}Hébergeur (voir mentions légales){% endif %}</th><td>Hébergement des serveurs et des sauvegardes</td><td>Toutes</td></tr>
+        <tr><th scope="row">Meta Platforms (WhatsApp Business)</th><td>Envoi des codes et messages WhatsApp</td><td>Numéro, contenu du message</td></tr>
+        <tr><th scope="row">Google (Firebase Authentication)</th><td>Envoi et vérification des codes par SMS</td><td>Numéro, données techniques de l'appareil</td></tr>
+        <tr><th scope="row">Opérateur ou agrégateur SMS</th><td>Envoi de SMS (codes, rappels)</td><td>Numéro, contenu du message</td></tr>
+        <tr><th scope="row">Cloudflare (Turnstile)</th><td>Protection anti-robots des formulaires</td><td>Données techniques du navigateur</td></tr>
+        <tr><th scope="row">Opérateurs Mobile Money</th><td>Paiement des offres</td><td>Numéro payeur, montant, référence</td></tr>
+        <tr><th scope="row">Moteurs de recherche (IndexNow, Google Search Console)</th><td>Notification des pages publiées ou modifiées</td><td>Adresse de la page uniquement</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Nous ne vendons, ne louons et n'échangeons jamais vos données. Nous pouvons les communiquer à une autorité judiciaire ou administrative lorsque la loi l'exige.</p>
+</section>
+
+<section id="transferts">
+  <h2><span class="lg-num">06</span>Transferts hors du Cameroun</h2>
+  <p>Certains prestataires (Meta, Google, Cloudflare, et le cas échéant l'hébergeur) traitent des données hors du Cameroun. Ces transferts se limitent aux données nécessaires au service rendu et sont encadrés par les engagements contractuels de protection des données de ces prestataires, conformément aux conditions prévues par la loi.</p>
+</section>
+
+<section id="conservation">
+  <h2><span class="lg-num">07</span>Durées de conservation</h2>
+  <div class="lg-table" role="region" aria-label="Durées de conservation" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Données</th><th scope="col">Durée</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Compte et page</th><td>Tant que la page existe ; effacement immédiat à la suppression (le compte est anonymisé avec sa dernière page)</td></tr>
+        <tr><th scope="row">Codes de connexion</th><td>5 minutes de validité, traces d'essais effacées après 30 jours</td></tr>
+        <tr><th scope="row">Événements bruts de visite</th><td>13 mois, puis seuls des totaux journaliers anonymes sont conservés</td></tr>
+        <tr><th scope="row">Signalements traités, journal de l'équipe</th><td>3 ans</td></tr>
+        <tr><th scope="row">Paiements et factures</th><td>10 ans (obligations comptables)</td></tr>
+        <tr><th scope="row">Adresse d'une page supprimée</th><td>Seule une empreinte irréversible est gardée, pour ne jamais la réattribuer</td></tr>
+        <tr><th scope="row">Sauvegardes</th><td>Copies quotidiennes conservées 7 jours, hebdomadaires 4 semaines, mensuelles 12 mois, puis détruites. Une donnée supprimée disparaît donc des sauvegardes en 12 mois au plus ; elles ne sont utilisées que pour la remise en service après un incident.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="securite">
+  <h2><span class="lg-num">08</span>Sécurité</h2>
+  <p>Nous appliquons des mesures adaptées aux risques : connexions chiffrées (HTTPS), codes de connexion stockés sous forme chiffrée irréversible et limités en nombre d'essais, authentification à deux facteurs obligatoire pour l'équipe, adresse d'administration non publique, politique de sécurité du contenu stricte, sauvegardes quotidiennes stockées hors des serveurs d'application, journal des actions sensibles. En cas de violation de données présentant un risque pour vous, nous vous en informerons ainsi que l'autorité compétente, dans les conditions prévues par la loi.</p>
+</section>
+
+<section id="droits">
+  <h2><span class="lg-num">09</span>Vos droits</h2>
+  <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, d'opposition, de limitation et de portabilité de vos données, ainsi que du droit de retirer votre consentement à tout moment. La plupart s'exercent directement, sans attendre :</p>
+  <ul>
+    <li><strong>Accès et portabilité</strong> : Paramètres &gt; Mes données &gt; « Télécharger mes données » (fichier JSON lisible et réutilisable).</li>
+    <li><strong>Rectification</strong> : modifiez votre page dans l'espace pro, à tout moment.</li>
+    <li><strong>Effacement</strong> : Paramètres &gt; Supprimer ma page.</li>
+  </ul>
+  <p>Pour toute autre demande, écrivez à <a href="mailto:{{ legal.privacy_email }}">{{ legal.privacy_email }}</a> depuis l'email de secours de votre compte ou en indiquant le numéro concerné ; nous pouvons vous demander de confirmer votre identité par un code. Nous répondons dans un délai d'un mois. Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir l'autorité de protection des données à caractère personnel compétente au Cameroun.</p>
+  <p>Une personne qui figure sur une page sans son accord (photo, nom, numéro) peut en demander le retrait par le lien « Signaler cette page » ou par email.</p>
+</section>
+
+<section id="cookies">
+  <h2><span class="lg-num">10</span>Cookies</h2>
+  <p>{{ SITE_NAME }} n'utilise <strong>aucun cookie publicitaire ni traceur tiers</strong> de mesure d'audience. Seuls des cookies strictement nécessaires sont déposés, ce qui explique l'absence de bandeau de consentement :</p>
+  <ul>
+    <li><code>sessionid</code> : vous garde connecté à l'espace pro (30 jours ; 8 heures pour l'équipe) ;</li>
+    <li><code>csrftoken</code> : protège les formulaires contre les envois frauduleux ;</li>
+    <li>lors de la connexion seulement : les services de vérification anti-robots (Cloudflare Turnstile) et d'envoi de SMS (Firebase) peuvent stocker des données techniques nécessaires à leur fonctionnement.</li>
+  </ul>
+  <p>Les pages pros publiques ne déposent aucun cookie.</p>
+</section>
+
+<section id="mineurs">
+  <h2><span class="lg-num">11</span>Mineurs</h2>
+  <p>Le service est destiné aux professionnels majeurs. Si vous pensez qu'un mineur a créé une page, écrivez-nous : nous la supprimerons.</p>
+</section>
+
+<section id="evolution">
+  <h2><span class="lg-num">12</span>Évolution de cette politique</h2>
+  <p>Cette politique peut évoluer avec le service ou la loi. La version en vigueur est toujours publiée sur cette page, avec sa date ; en cas de changement important, elle vous est présentée à votre prochaine connexion.</p>
+</section>
+{% endblock %}

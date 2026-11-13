@@ -19,7 +19,7 @@
   {% if turnstile_site_key %}<div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>{% endif %}
   <button class="btn btn--primary btn--block btn--lg" type="submit" data-busy="{% translate 'Envoi du code…' %}">{% translate "Recevoir mon code" %}</button>
 </form>
-<p class="small muted">{% translate "En continuant, tu acceptes de recevoir un message WhatsApp ou un SMS de Modulis Profils. Ton numéro n'est jamais affiché sans ton accord." %}</p>
+<p class="small muted auth-legal">{% blocktranslate trimmed %}En continuant, tu acceptes nos <a href="/cgu" target="_blank" rel="noopener">conditions d'utilisation</a> et notre <a href="/confidentialite" target="_blank" rel="noopener">politique de confidentialité</a>, et de recevoir ton code par WhatsApp ou SMS. Ton numéro n'est jamais affiché sans ton accord.{% endblocktranslate %}</p>
 {% endif %}
 {% endblock %}
 {% block scripts %}

@@ -68,6 +68,7 @@
     {% elif creating %}{% translate "Créer ma page et activer la carte" %}
     {% else %}{% translate "Activer la carte" %}{% endif %}
   </button>
+  {% if step == "phone" %}<p class="small muted">{% blocktranslate trimmed %}En continuant, tu acceptes nos <a href="/cgu" target="_blank" rel="noopener">conditions d'utilisation</a> et notre <a href="/confidentialite" target="_blank" rel="noopener">politique de confidentialité</a>.{% endblocktranslate %}</p>{% endif %}
 </form>
 
 {% if step == "otp" %}

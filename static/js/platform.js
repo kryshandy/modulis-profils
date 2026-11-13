@@ -12,6 +12,7 @@
     entries.forEach(function (entry) {
       if (!entry.isIntersecting) return;
       entry.target.classList.add("is-in");
+      entry.target.classList.remove("is-pending");
       io.unobserve(entry.target);
     });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });

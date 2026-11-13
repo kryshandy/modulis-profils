@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "apps.themes",
     "apps.dashboard",
     "apps.security",
+    "apps.legal",
     "apps.public",
 ]
 
@@ -71,6 +72,7 @@ MIDDLEWARE = [
     "apps.core.middleware.AdminLoginThrottleMiddleware",
     "apps.core.middleware.StaffTwoFactorMiddleware",  # after OTPMiddleware: admin locked until 2FA
     "apps.platform.middleware.MaintenanceModeMiddleware",  # after auth: staff bypass
+    "apps.legal.middleware.TermsAcceptanceMiddleware",  # pro space locked until current CGU accepted
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
@@ -260,6 +262,26 @@ STAFF_2FA_WINDOW_SECONDS = 10 * 60
 
 # Support contact shown in the pro space help page (E.164, WhatsApp). Empty = hidden.
 SUPPORT_WHATSAPP = env("SUPPORT_WHATSAPP", default="")
+
+# Legal pages (/cgu, /confidentialite, /mentions-legales, apps.legal). Empty fields are hidden on the
+# pages; in production a system check (legal.W001) lists the identity fields still missing.
+LEGAL_ENTITY_NAME = env("LEGAL_ENTITY_NAME", default="Modulis Tech")
+LEGAL_FORM = env("LEGAL_FORM", default="")  # e.g. "SARL au capital de 1 000 000 FCFA"
+LEGAL_RCCM = env("LEGAL_RCCM", default="")
+LEGAL_NIU = env("LEGAL_NIU", default="")
+LEGAL_ADDRESS = env("LEGAL_ADDRESS", default="")
+LEGAL_EMAIL = env("LEGAL_EMAIL", default="hello@modulis.tech")
+LEGAL_PHONE = env("LEGAL_PHONE", default="+237 6 78 23 96 36")
+LEGAL_PUBLICATION_DIRECTOR = env("LEGAL_PUBLICATION_DIRECTOR", default="")
+LEGAL_PRIVACY_EMAIL = env("LEGAL_PRIVACY_EMAIL", default="") or LEGAL_EMAIL
+LEGAL_HOST_NAME = env("LEGAL_HOST_NAME", default="")
+LEGAL_HOST_ADDRESS = env("LEGAL_HOST_ADDRESS", default="")
+LEGAL_COURT_CITY = env("LEGAL_COURT_CITY", default="Douala")
+
+# Host-side backups (docker/backup, docs/SAUVEGARDES.md). The web container mounts the backup folder
+# read-only here to show the last backup on the admin index. Empty = no backup status shown.
+BACKUP_STATUS_DIR = env("BACKUP_STATUS_DIR", default="")
+BACKUP_MAX_AGE_HOURS = env.int("BACKUP_MAX_AGE_HOURS", default=26)
 
 LOGGING = {
     "version": 1,

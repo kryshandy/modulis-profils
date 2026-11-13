@@ -43,6 +43,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_field_agent = models.BooleanField(_("agent terrain"), default=False)
     date_joined = models.DateTimeField(_("inscrit le"), default=timezone.now)
     last_seen_at = models.DateTimeField(_("vu pour la dernière fois"), null=True, blank=True)
+    # Version of the CGU + privacy policy accepted (apps.legal.conf.LEGAL_VERSION) and when.
+    terms_version = models.CharField(_("version des CGU acceptée"), max_length=10, blank=True)
+    terms_accepted_at = models.DateTimeField(_("CGU acceptées le"), null=True, blank=True)
 
     objects = UserManager()
 

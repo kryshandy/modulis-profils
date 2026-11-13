@@ -40,5 +40,6 @@ urlpatterns = [
     path("statistiques", pages.stats, name="stats"),
     path("parametres", pages.settings_view, name="settings"),
     path("parametres/adresse-disponible", pages.slug_check, name="slug_check"),
+    path("parametres/mes-donnees", pages.data_export, name="data_export"),
     path("aide", pages.help_view, name="help"),
 ]

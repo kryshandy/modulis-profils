@@ -46,6 +46,13 @@
   </form>
 </section>
 
+<section class="card stack" id="mes-donnees">
+  <h2 class="h2">{% translate "Mes données" %}</h2>
+  <p class="muted">{% translate "Télécharge tout ce que Modulis Profils conserve sur toi et tes pages (compte, textes, prestations, liens, adresses des photos, cartes, offres, statistiques), dans un fichier réutilisable." %}</p>
+  <p><a class="btn btn--ghost" href="{% url 'dashboard:data_export' %}" download>{% translate "Télécharger mes données" %}</a></p>
+  <p class="small muted">{% blocktranslate trimmed %}Tu as accepté nos <a href="/cgu" target="_blank" rel="noopener">conditions d'utilisation</a> et notre <a href="/confidentialite" target="_blank" rel="noopener">politique de confidentialité</a>{% endblocktranslate %}{% if request.user.terms_accepted_at %} {% blocktranslate with date=request.user.terms_accepted_at|date:"j F Y" %}le {{ date }}{% endblocktranslate %}{% endif %}.</p>
+</section>
+
 <section class="card stack card--danger" id="supprimer">
   <h2 class="h2">{% translate "Supprimer ma page" %}</h2>
   <p class="muted">{% translate "Ta page, tes photos et tes textes seront effacés pour toujours. Tes cartes NFC seront désactivées. On ne peut pas revenir en arrière." %}</p>

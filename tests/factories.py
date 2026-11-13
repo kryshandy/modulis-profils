@@ -6,6 +6,7 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.cards.models import Card, CardBatch
 from apps.core.models import City, Country, Trade
+from apps.legal.conf import LEGAL_VERSION
 from apps.profiles.models import Profile, ProfileService, SlugRegistry
 
 
@@ -24,6 +25,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     full_name = factory.Faker("name", locale="fr_FR")
     phone_verified_at = factory.LazyFunction(timezone.now)
     country = factory.LazyFunction(cameroon)
+    terms_version = LEGAL_VERSION  # accepted the current CGU (apps.legal); "" to test the acceptance screen
+    terms_accepted_at = factory.LazyFunction(timezone.now)
 
 
 class CityFactory(factory.django.DjangoModelFactory):

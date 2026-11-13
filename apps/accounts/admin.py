@@ -125,7 +125,14 @@ class UserAdmin(BaseUserAdmin):
     )
     search_fields = ("phone", "full_name", "email", "profiles__slug")
     ordering = ("-date_joined",)
-    readonly_fields = ("date_joined", "last_seen_at", "last_login", "phone_verified_at")
+    readonly_fields = (
+        "date_joined",
+        "last_seen_at",
+        "last_login",
+        "phone_verified_at",
+        "terms_version",
+        "terms_accepted_at",
+    )
     inlines = [ProfileInline]
     fieldsets = (
         (None, {"fields": ("phone", "password")}),
@@ -136,6 +143,7 @@ class UserAdmin(BaseUserAdmin):
             {"classes": ("collapse",), "fields": ("is_staff", "is_superuser", "groups", "user_permissions")},
         ),
         (_("Dates"), {"fields": ("date_joined", "last_seen_at", "last_login")}),
+        (_("Conditions d'utilisation"), {"fields": ("terms_version", "terms_accepted_at")}),
     )
     add_fieldsets = (
         (

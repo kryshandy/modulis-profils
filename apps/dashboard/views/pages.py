@@ -5,9 +5,12 @@ from __future__ import annotations
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django_ratelimit.decorators import ratelimit
@@ -17,6 +20,8 @@ from apps.cards.services import CardError, activate_card, check_activation_code,
 from apps.core import csp
 from apps.core.turnstile import verify_turnstile
 from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
+from apps.legal.export import export_user_data
+from apps.platform.services import audit
 from apps.profiles import services as profiles
 
 from ..forms import DeleteProfileForm, LanguageForm, LinkCardForm, RecoveryEmailForm, SlugForm
@@ -283,3 +288,20 @@ def slug_check(request):
 def help_view(request):
     support = getattr(settings, "SUPPORT_WHATSAPP", "")
     return dash_render(request, "dashboard/help.html", {"support_whatsapp": support.lstrip("+")})
+
+
+@login_required
+@require_GET
+@ratelimit(key="user", rate="10/h", block=False)
+def data_export(request):
+    """Right of access and portability: download everything about the account as JSON."""
+    if getattr(request, "limited", False):
+        messages.error(request, _("Tu as déjà téléchargé tes données plusieurs fois. Réessaie dans une heure."))
+        return redirect("dashboard:settings")
+    data = export_user_data(request.user)
+    audit(request.user, "data_export", target=f"user:{request.user.pk}")
+    response = JsonResponse(data, encoder=DjangoJSONEncoder, json_dumps_params={"ensure_ascii": False, "indent": 2})
+    filename = f"modulis-mes-donnees-{timezone.localdate().isoformat()}.json"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Cache-Control"] = "no-store"
+    return response

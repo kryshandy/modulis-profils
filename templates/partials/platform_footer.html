@@ -29,7 +29,11 @@
     <p class="pf-wordmark" aria-hidden="true"><span>M</span><span>O</span><span>D</span><span>U</span><span>L</span><span>I</span><span>S</span></p>
     <div class="pf-footer__base">
       <span>© {% now "Y" %} Modulis Tech · {{ SITE_NAME }}</span>
-      <span>{% translate "Pages pros gratuites" %}</span>
+      <nav class="pf-footer__legal" aria-label="{% translate 'Informations légales' %}">
+        <a href="{% url 'legal:terms' %}">{% translate "CGU" %}</a>
+        <a href="{% url 'legal:privacy' %}">{% translate "Confidentialité" %}</a>
+        <a href="{% url 'legal:notice' %}">{% translate "Mentions légales" %}</a>
+      </nav>
     </div>
   </div>
 </footer>

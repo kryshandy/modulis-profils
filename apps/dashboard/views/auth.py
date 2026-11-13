@@ -38,6 +38,7 @@ from apps.accounts.services import (
 from apps.core import csp
 from apps.core.turnstile import verify_turnstile
 from apps.core.utils import client_ip, ratelimit_ip_key, security_ip_hash
+from apps.legal.services import record_acceptance
 from apps.platform.services import feature
 
 from ..forms import CodeForm, PhoneForm
@@ -202,6 +203,8 @@ def firebase_verify_view(request):
 def _complete_login(request, phone: str):
     """Log the verified phone in. Raises OTPError (AccountNotAllowed) for staff or disabled accounts."""
     user, _created = get_or_create_user(phone)
+    if not user.terms_version:  # first acceptance: the login page states that continuing accepts the CGU
+        record_acceptance(user)
     if not user.is_active:  # get_or_create_user already refuses it: never rely on a single check
         raise OTPError(_("Ce compte ne peut pas se connecter avec un code. Contacte le support Modulis."))
     nxt = request.session.get(SESSION_NEXT, "")

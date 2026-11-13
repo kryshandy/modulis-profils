@@ -1,0 +1,193 @@
+{% extends "legal/_layout.html" %}
+{% block doc_name %}Conditions générales d'utilisation{% endblock %}
+{% block doc_description %}Conditions générales d'utilisation de {{ SITE_NAME }} : pages pros gratuites, cartes NFC, offres, contenus, modération et responsabilités.{% endblock %}
+{% block doc_heading %}Conditions générales d'utilisation{% endblock %}
+{% block toc %}
+  <li><a href="#objet">Objet et acceptation</a></li>
+  <li><a href="#definitions">Définitions</a></li>
+  <li><a href="#compte">Compte et connexion</a></li>
+  <li><a href="#page">Votre page pro</a></li>
+  <li><a href="#cartes">Cartes NFC et QR codes</a></li>
+  <li><a href="#offres">Offres et paiements</a></li>
+  <li><a href="#engagements">Vos engagements</a></li>
+  <li><a href="#interdits">Contenus interdits</a></li>
+  <li><a href="#contenus">Vos contenus</a></li>
+  <li><a href="#propriete">Propriété de Modulis</a></li>
+  <li><a href="#moderation">Signalement et suspension</a></li>
+  <li><a href="#donnees">Données personnelles</a></li>
+  <li><a href="#disponibilite">Disponibilité et sauvegardes</a></li>
+  <li><a href="#responsabilite">Responsabilités</a></li>
+  <li><a href="#suppression">Suppression de votre page</a></li>
+  <li><a href="#messages">Messages que nous envoyons</a></li>
+  <li><a href="#modifications">Modification des CGU</a></li>
+  <li><a href="#droit">Droit applicable et litiges</a></li>
+  <li><a href="#contact">Contact</a></li>
+{% endblock %}
+{% block doc %}
+<div class="lg-summary">
+  <p class="lg-summary__title">L'essentiel en 30 secondes</p>
+  <ul>
+    <li>Votre page pro est <strong>gratuite</strong>. Les offres payantes sont facultatives, payées à l'avance et <strong>jamais renouvelées automatiquement</strong>.</li>
+    <li>Vous restez <strong>propriétaire</strong> de vos textes et photos. Vous nous autorisez seulement à les héberger et à les afficher.</li>
+    <li>Vous êtes responsable de ce que vous publiez : informations exactes, activité légale, pas de contenu d'autrui sans autorisation.</li>
+    <li>Vos données ne sont <strong>jamais vendues</strong>. Vous pouvez les télécharger ou tout supprimer à tout moment depuis vos paramètres.</li>
+    <li>Une page qui enfreint ces règles peut être suspendue ; vous êtes prévenu et pouvez contester.</li>
+  </ul>
+  <p class="lg-summary__note">Ce résumé aide à la lecture ; seul le texte complet ci-dessous fait foi.</p>
+</div>
+
+<section id="objet">
+  <h2><span class="lg-num">01</span>Objet et acceptation</h2>
+  <p>Les présentes conditions générales d'utilisation (« CGU ») encadrent l'utilisation de {{ SITE_NAME }} (la « Plateforme »), accessible à l'adresse {{ legal.site_url }} et éditée par {{ legal.name }}{% if legal.form %}, {{ legal.form }}{% endif %} (« Modulis », « nous »), dont l'identité complète figure dans les <a href="{% url 'legal:notice' %}">mentions légales</a>.</p>
+  <p>La Plateforme permet aux professionnels (artisans, commerçants, indépendants, professions libérales, entreprises) de créer gratuitement une page de présentation accessible à une adresse unique, optimisée pour les moteurs de recherche, et de la relier à des cartes de visite NFC ou à des QR codes. Elle est distincte du site vitrine de Modulis (<a href="https://www.modulis.tech/" rel="noopener">modulis.tech</a>) et des prestations sur devis de l'agence, qui font l'objet de conditions propres.</p>
+  <p>En créant un compte, en activant une carte ou en utilisant l'espace pro, vous acceptez les présentes CGU et la <a href="{% url 'legal:privacy' %}">politique de confidentialité</a>. Votre acceptation est enregistrée avec la date et la version du texte. Les visiteurs qui consultent simplement une page pro sont soumis aux articles 8, 10, 11 et 14.</p>
+</section>
+
+<section id="definitions">
+  <h2><span class="lg-num">02</span>Définitions</h2>
+  <dl class="lg-defs">
+    <dt>Utilisateur ou professionnel</dt><dd>Toute personne, physique ou morale, titulaire d'un compte sur la Plateforme.</dd>
+    <dt>Visiteur</dt><dd>Toute personne qui consulte une page pro, scanne une carte ou un QR code, sans compte.</dd>
+    <dt>Page pro</dt><dd>La page publique d'un utilisateur, accessible à une adresse du type {{ legal.site_url }}/votre-nom.</dd>
+    <dt>Espace pro</dt><dd>La zone privée (/espace/) où l'utilisateur crée, modifie, partage et supprime sa page.</dd>
+    <dt>Carte NFC</dt><dd>Une carte ou un badge physique contenant une puce NFC et/ou un QR code, qui renvoie vers une page pro.</dd>
+    <dt>Contenus</dt><dd>Tous les éléments publiés par l'utilisateur : nom, métier, textes, prestations, prix, horaires, photos, liens, coordonnées.</dd>
+    <dt>Modèle</dt><dd>Une présentation graphique proposée par Modulis (mise en page, polices, couleurs) que l'utilisateur applique à sa page.</dd>
+    <dt>Offre</dt><dd>La formule gratuite ou une formule payante (Essentiel, Pro, Équipe) donnant accès à des fonctions supplémentaires.</dd>
+  </dl>
+</section>
+
+<section id="compte">
+  <h2><span class="lg-num">03</span>Compte et connexion</h2>
+  <p>L'inscription est ouverte aux personnes majeures et capables de contracter, ainsi qu'aux personnes morales représentées par une personne habilitée. Un compte correspond à un numéro de téléphone ; vous ne pouvez pas créer de compte au nom d'un tiers sans son autorisation.</p>
+  <p>La connexion se fait sans mot de passe, par un code à usage unique envoyé par WhatsApp ou par SMS au numéro indiqué. Vous êtes responsable de l'accès à ce numéro et à votre téléphone. Ne communiquez jamais votre code : <strong>Modulis ne vous le demandera jamais</strong>, ni par téléphone, ni par message.</p>
+  <p>Si vous changez de numéro, mettez à jour votre compte ou prévenez-nous : un numéro abandonné peut être réattribué par l'opérateur à une autre personne. Signalez-nous sans délai toute utilisation de votre compte que vous n'avez pas autorisée, à {{ legal.email }}.</p>
+  <p>Un agent de terrain Modulis peut créer une page pour vous, avec votre accord et à partir des informations que vous lui donnez. À votre première connexion, vous vérifiez ces informations et acceptez les présentes CGU ; vous pouvez demander à tout moment la correction ou la suppression d'une page créée pour vous.</p>
+</section>
+
+<section id="page">
+  <h2><span class="lg-num">04</span>Votre page pro</h2>
+  <h3>Adresse unique</h3>
+  <p>Votre page reçoit une adresse unique, générée automatiquement à partir de votre nom, que vous pouvez modifier dans vos paramètres. L'ancienne adresse redirige alors vers la nouvelle pendant au moins douze mois. Certaines adresses sont réservées (noms de métiers, de villes, de marques, pages de la Plateforme). Modulis peut modifier une adresse qui porte atteinte aux droits d'un tiers (marque, nom commercial, usurpation d'identité), en vous en informant.</p>
+  <h3>Modèles et personnalisation</h3>
+  <p>Vous pouvez choisir un modèle et personnaliser couleurs, polices et sections. Les modèles évoluent : Modulis peut les améliorer, en ajouter ou en retirer, en conservant vos contenus.</p>
+  <h3>Publication et référencement</h3>
+  <p>Votre page est publiée dès sa validation et proposée aux moteurs de recherche (sitemap, IndexNow) lorsqu'elle est suffisamment complète. Une page trop incomplète reste consultable mais n'est pas proposée à l'indexation, pour protéger la qualité de l'ensemble des pages. Le classement dans les résultats dépend uniquement des moteurs de recherche, qui sont indépendants de Modulis : <strong>aucune position ni aucun délai d'apparition ne peut être garanti</strong>.</p>
+  <p>Les informations de votre page sont publiques par nature : elles peuvent être consultées, enregistrées (fiche contact .vcf), partagées et reprises par les moteurs de recherche, qui peuvent en garder une copie en cache après une modification ou une suppression.</p>
+</section>
+
+<section id="cartes">
+  <h2><span class="lg-num">05</span>Cartes NFC et QR codes</h2>
+  <p>La commande, la fabrication, la personnalisation et la livraison des cartes physiques font l'objet d'un devis et des conditions de vente de Modulis, communiqués avant la commande. Les présentes CGU s'appliquent à leur utilisation sur la Plateforme.</p>
+  <p>Une carte s'active en la reliant à votre page, après vérification de votre numéro. Une carte activée est liée à votre compte : vous pouvez changer le contenu de votre page à volonté sans changer de carte. En cas de perte ou de vol, déclarez la carte perdue depuis votre espace pro (rubrique « Mes cartes ») : elle est désactivée immédiatement et n'affiche plus votre page.</p>
+  <p>Le bon fonctionnement de la lecture NFC dépend aussi du téléphone du visiteur (NFC activé, modèle compatible) ; le QR code imprimé sert de solution de secours. Une carte reste fonctionnelle même si votre offre payante expire. Si vous supprimez votre page, vos cartes sont désactivées.</p>
+</section>
+
+<section id="offres">
+  <h2><span class="lg-num">06</span>Offres et paiements</h2>
+  <p>La page pro de base est <strong>gratuite</strong>, sans limite de durée. Des offres payantes (par exemple Essentiel, Pro, Équipe) ajoutent des fonctions : badge, statistiques avancées, retrait de la mention Modulis, plusieurs pages, etc. Le contenu de chaque offre et son prix, toutes taxes comprises, en francs CFA (XAF), sont indiqués avant tout paiement.</p>
+  <ul>
+    <li><strong>Paiement</strong> : à l'avance, pour la durée indiquée (en principe un an), par Mobile Money ou auprès d'un agent ou d'un bureau Modulis contre reçu.</li>
+    <li><strong>Pas de renouvellement automatique</strong> : nous vous rappelons l'échéance 30 jours, 7 jours et le jour même. Sans renouvellement, la page revient à l'offre gratuite : vos contenus, votre adresse et vos cartes sont conservés, seules les fonctions payantes se désactivent.</li>
+    <li><strong>Remboursement</strong> : une offre commencée n'est pas remboursable, sauf paiement en double, erreur de notre part ou impossibilité d'utiliser le service qui nous est imputable ; dans ces cas, contactez-nous dans les 30 jours. Les droits que vous tenez de la loi en tant que consommateur ne sont pas affectés.</li>
+    <li><strong>Évolution des prix</strong> : un changement de prix ne s'applique jamais à une période déjà payée.</li>
+  </ul>
+</section>
+
+<section id="engagements">
+  <h2><span class="lg-num">07</span>Vos engagements</h2>
+  <p>En utilisant la Plateforme, vous vous engagez à :</p>
+  <ul>
+    <li>fournir des informations exactes, à jour et qui vous concernent (identité, métier, coordonnées, prix indicatifs, horaires) ;</li>
+    <li>exercer une activité licite et détenir les autorisations, diplômes, agréments ou inscriptions exigés pour votre profession (notamment pour les professions de santé, du droit, du bâtiment ou de la finance) ;</li>
+    <li>ne publier que des contenus dont vous détenez les droits ou pour lesquels vous avez l'autorisation des personnes concernées (photos de clients, de salariés, réalisations, logos) ;</li>
+    <li>respecter vos propres obligations envers vos clients (information sur les prix, garanties, devis, fiscalité) : Modulis n'intervient pas dans vos relations commerciales ;</li>
+    <li>ne pas perturber la Plateforme : pas de création automatisée de comptes ou de pages, pas d'extraction massive de données, pas de contournement des limites ou des mesures de sécurité, pas de tentative d'accès à un compte ou à une zone qui ne vous appartient pas.</li>
+  </ul>
+</section>
+
+<section id="interdits">
+  <h2><span class="lg-num">08</span>Contenus interdits</h2>
+  <p>Sont interdits sur les pages pros et dans les signalements :</p>
+  <ul class="lg-cols">
+    <li>les contenus illicites, ou faisant la promotion d'activités illicites (contrefaçon, produits ou services interdits, médicaments sans autorisation, jeux d'argent non autorisés) ;</li>
+    <li>l'usurpation d'identité, d'une marque ou d'une qualité professionnelle ;</li>
+    <li>les arnaques, offres trompeuses, faux avis, promesses de gains, ventes pyramidales ;</li>
+    <li>les contenus haineux, discriminatoires, violents, harcelants ou diffamatoires ;</li>
+    <li>les contenus à caractère sexuel ou pornographique, et tout contenu impliquant des mineurs de façon inappropriée ;</li>
+    <li>la publication de données personnelles d'autrui sans son accord ;</li>
+    <li>les liens vers des logiciels malveillants, du hameçonnage ou des sites frauduleux ;</li>
+    <li>tout contenu portant atteinte aux droits d'auteur, au droit à l'image ou à la vie privée d'un tiers.</li>
+  </ul>
+</section>
+
+<section id="contenus">
+  <h2><span class="lg-num">09</span>Vos contenus</h2>
+  <p>Vous restez propriétaire de vos contenus. Pour faire fonctionner le service, vous accordez à Modulis, pour le monde entier et pour la durée de leur publication, une autorisation <strong>gratuite et non exclusive</strong> de les héberger, de les reproduire, de les adapter techniquement (redimensionnement, compression, conversion des images, suppression des métadonnées et de la géolocalisation des photos), de les afficher sur votre page, dans l'annuaire de la Plateforme, dans les aperçus de partage (WhatsApp, réseaux sociaux) et de les transmettre aux moteurs de recherche.</p>
+  <p>Cette autorisation prend fin à la suppression du contenu ou de votre page, sous réserve des copies techniques temporaires (caches, sauvegardes) supprimées selon les durées indiquées dans la politique de confidentialité. Modulis ne montrera pas votre page comme exemple dans sa communication commerciale sans votre accord exprès.</p>
+  <p>Vous garantissez Modulis contre toute réclamation d'un tiers relative à vos contenus.</p>
+</section>
+
+<section id="propriete">
+  <h2><span class="lg-num">10</span>Propriété de Modulis</h2>
+  <p>La Plateforme, son code, sa structure, ses modèles, ses illustrations, le nom et le logo Modulis sont protégés et restent la propriété de Modulis ou de ses partenaires. Vous pouvez utiliser les modèles uniquement pour votre page sur la Plateforme ; toute reproduction ou réutilisation en dehors de la Plateforme est interdite sans autorisation écrite. Les polices utilisées sont distribuées sous leurs licences libres respectives.</p>
+</section>
+
+<section id="moderation">
+  <h2><span class="lg-num">11</span>Signalement et suspension</h2>
+  <p>Chaque page comporte un lien « Signaler cette page ». Tout visiteur peut ainsi nous signaler un contenu qui lui semble illicite ou contraire aux présentes CGU ; les signalements sont examinés par l'équipe Modulis. Un signalement abusif ou de mauvaise foi peut lui-même engager la responsabilité de son auteur.</p>
+  <p>En cas de manquement aux présentes CGU, de contenu manifestement illicite, de risque pour les visiteurs ou sur demande d'une autorité, Modulis peut, selon la gravité : demander une correction, masquer un contenu, suspendre la page (elle n'est plus visible et ne peut plus être modifiée), désactiver des cartes, ou supprimer le compte. Sauf urgence ou obligation légale, vous êtes informé du motif et pouvez présenter vos observations en écrivant à {{ legal.email }} ; nous vous répondons dans un délai raisonnable et levons la mesure si elle n'est pas justifiée.</p>
+</section>
+
+<section id="donnees">
+  <h2><span class="lg-num">12</span>Données personnelles</h2>
+  <p>Modulis traite vos données conformément à la loi camerounaise applicable, notamment la loi n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel, et à la <a href="{% url 'legal:privacy' %}">politique de confidentialité</a>, qui précise les données collectées, leurs finalités, leurs durées de conservation et vos droits (accès, rectification, effacement, portabilité, opposition).</p>
+  <p>Vos statistiques de visite sont calculées sans conserver l'adresse IP des visiteurs. Vous pouvez télécharger l'ensemble de vos données depuis Paramètres &gt; Mes données.</p>
+</section>
+
+<section id="disponibilite">
+  <h2><span class="lg-num">13</span>Disponibilité et sauvegardes</h2>
+  <p>Modulis s'efforce de rendre la Plateforme accessible en permanence, sans pouvoir le garantir : des interruptions peuvent survenir pour maintenance (annoncée lorsque c'est possible), mise à jour, panne, défaillance d'un fournisseur (hébergeur, opérateur, WhatsApp, service SMS) ou cas de force majeure. L'envoi des codes de connexion dépend de ces fournisseurs.</p>
+  <p>Les données de la Plateforme (base de données et photos) sont sauvegardées automatiquement chaque jour, hors des serveurs d'application. Ces sauvegardes servent à la remise en service après un incident ; elles ne remplacent pas la conservation par vos soins des originaux de vos photos et textes.</p>
+  <p>Modulis peut faire évoluer, ajouter ou retirer des fonctions. Une fonction incluse dans une offre payante en cours n'est pas retirée avant la fin de la période payée, sauf à être remplacée par une fonction équivalente.</p>
+</section>
+
+<section id="responsabilite">
+  <h2><span class="lg-num">14</span>Responsabilités</h2>
+  <p>Pour les contenus publiés par les utilisateurs, Modulis agit en qualité d'hébergeur : elle ne contrôle pas ces contenus avant leur publication, mais agit promptement pour retirer ou rendre inaccessible un contenu manifestement illicite dès qu'elle en a connaissance, conformément à la loi n° 2010/021 du 21 décembre 2010 régissant le commerce électronique au Cameroun.</p>
+  <p>Les informations d'une page pro (prix, horaires, qualifications, disponibilité) sont fournies par le professionnel, sous sa seule responsabilité. Modulis n'est pas partie aux échanges, devis, ventes ou prestations conclus entre un professionnel et ses clients, et ne garantit ni la qualité, ni la conformité, ni la réalité des prestations proposées. Un badge « vérifié » atteste seulement les vérifications indiquées lors de son attribution.</p>
+  <p>Modulis est responsable des dommages directs résultant d'un manquement prouvé à ses obligations. Dans la limite permise par la loi, elle n'est pas responsable des dommages indirects (perte de clientèle, de chiffre d'affaires, d'image) ; pour une offre payante, sa responsabilité est limitée au montant payé pour la période en cours. Ces limites ne s'appliquent pas en cas de faute lourde ou intentionnelle, ni aux droits que les consommateurs tiennent de la loi.</p>
+</section>
+
+<section id="suppression">
+  <h2><span class="lg-num">15</span>Suppression de votre page</h2>
+  <p>Vous pouvez supprimer votre page à tout moment depuis Paramètres &gt; Supprimer ma page. La suppression est immédiate et définitive : textes, photos, prestations et liens sont effacés, l'adresse affiche « page supprimée » (code 410) pour que les moteurs de recherche la retirent, vos cartes sont désactivées, et votre compte est anonymisé lorsque sa dernière page est supprimée. Pensez à télécharger vos données avant.</p>
+  <p>Une offre payante en cours prend fin avec la suppression, sans remboursement de la période restante. L'adresse d'une page supprimée n'est pas réattribuée à une autre personne.</p>
+</section>
+
+<section id="messages">
+  <h2><span class="lg-num">16</span>Messages que nous envoyons</h2>
+  <p>Nous vous envoyons par WhatsApp ou SMS les messages nécessaires au service : codes de connexion, activation de carte, rappels d'échéance d'une offre, informations sur votre page (suspension, changement des CGU). Nous ne vous envoyons pas de messages publicitaires sans votre accord ; vous pouvez retirer cet accord à tout moment.</p>
+</section>
+
+<section id="modifications">
+  <h2><span class="lg-num">17</span>Modification des CGU</h2>
+  <p>Modulis peut modifier les présentes CGU, notamment pour suivre l'évolution du service ou de la loi. La nouvelle version est publiée sur cette page avec sa date. En cas de changement important, elle vous est présentée à votre prochaine connexion et doit être acceptée pour continuer à utiliser l'espace pro ; si vous la refusez, vous pouvez télécharger vos données et supprimer votre page. Votre page publique reste en ligne pendant ce temps.</p>
+</section>
+
+<section id="droit">
+  <h2><span class="lg-num">18</span>Droit applicable et litiges</h2>
+  <p>Les présentes CGU sont soumises au droit camerounais, notamment à la loi n° 2010/012 du 21 décembre 2010 relative à la cybersécurité et à la cybercriminalité, à la loi n° 2010/021 du 21 décembre 2010 régissant le commerce électronique et à la loi-cadre n° 2011/012 du 6 mai 2011 portant protection du consommateur.</p>
+  <p>En cas de différend, écrivez-nous d'abord à {{ legal.email }} : nous cherchons une solution amiable dans un délai de 30 jours. À défaut d'accord, le litige est porté devant les juridictions compétentes de {{ legal.court_city }}, sous réserve des règles impératives qui permettent à un consommateur de saisir la juridiction de son domicile.</p>
+  <p>Si une clause des présentes CGU est déclarée nulle, les autres restent applicables. Le fait de ne pas se prévaloir d'une clause ne vaut pas renonciation à celle-ci.</p>
+</section>
+
+<section id="contact">
+  <h2><span class="lg-num">19</span>Contact</h2>
+  <ul class="lg-contact">
+    <li>Email : <a href="mailto:{{ legal.email }}">{{ legal.email }}</a></li>
+    {% if legal.phone %}<li>Téléphone et WhatsApp : <a href="tel:{{ legal.phone_href }}">{{ legal.phone }}</a></li>{% endif %}
+    {% if legal.address %}<li>Courrier : {{ legal.name }}, {{ legal.address }}</li>{% endif %}
+  </ul>
+</section>
+{% endblock %}

@@ -18,6 +18,7 @@ admin.site.index_title = "Tableau de bord"
 urlpatterns = [
     path("healthz", healthz, name="healthz"),
     path(settings.ADMIN_URL, admin.site.urls),
+    path("", include("apps.legal.urls")),  # /cgu, /confidentialite, /mentions-legales, /espace/conditions
     path("espace/modeles/", include("apps.themes.urls")),  # site templates gallery, preview, publish
     path("espace/", include("apps.dashboard.urls")),
     path("c/", include("apps.cards.urls")),

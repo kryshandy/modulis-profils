@@ -1,0 +1,37 @@
+{% extends "public/base_public.html" %}
+{% load i18n static %}
+{# Legal documents: plain French text, versioned in git (apps.legal.conf.LEGAL_VERSION). #}
+{% block title %}{% block doc_name %}{% endblock %} – {{ SITE_NAME }}{% endblock %}
+{% block seo %}<meta name="robots" content="index, follow">
+  <meta name="description" content="{% block doc_description %}{% endblock %}">
+  <link rel="canonical" href="{{ SITE_URL }}{{ request.path }}">{% endblock %}
+{% block body_class %}platform platform--legal{% endblock %}
+{% block theme_color %}#063A39{% endblock %}
+{% block styles %}{% include "partials/platform_head.html" %}<link rel="stylesheet" href="{% static 'css/legal.css' %}">{% endblock %}
+{% block header %}{% include "partials/platform_header.html" %}{% endblock %}
+{% block content %}
+<header class="lg-hero">
+  <div class="pf-wrap">
+    <p class="lg-kicker"><span aria-hidden="true">✦</span> Informations légales · {{ legal.name }}</p>
+    <h1 class="lg-title">{% block doc_heading %}{% endblock %}</h1>
+    <p class="lg-meta">Version du {{ legal_date|date:"j F Y" }} · applicable à {{ SITE_NAME }} ({{ legal.site_url }})</p>
+    <nav class="lg-tabs" aria-label="Documents légaux">
+      <a href="{% url 'legal:terms' %}"{% if doc == "terms" %} aria-current="page"{% endif %}>Conditions d'utilisation</a>
+      <a href="{% url 'legal:privacy' %}"{% if doc == "privacy" %} aria-current="page"{% endif %}>Confidentialité</a>
+      <a href="{% url 'legal:notice' %}"{% if doc == "notice" %} aria-current="page"{% endif %}>Mentions légales</a>
+    </nav>
+  </div>
+</header>
+<div class="pf-wrap lg-body">
+  <aside class="lg-toc" aria-labelledby="lg-toc-title">
+    <p class="lg-toc__title" id="lg-toc-title">Sommaire</p>
+    <ol>{% block toc %}{% endblock %}</ol>
+    <p class="lg-toc__contact">Une question ? <a href="mailto:{{ legal.email }}">{{ legal.email }}</a></p>
+  </aside>
+  <article class="lg-doc">
+    {% block doc %}{% endblock %}
+    <p class="lg-end">Document en vigueur depuis le {{ legal_date|date:"j F Y" }} (version {{ legal_version }}). Les versions précédentes sont disponibles sur simple demande à <a href="mailto:{{ legal.email }}">{{ legal.email }}</a>.</p>
+  </article>
+</div>
+{% endblock %}
+{% block footer %}{% include "partials/platform_footer.html" %}{% endblock %}

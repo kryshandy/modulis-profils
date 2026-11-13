@@ -140,6 +140,7 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
 @media (prefers-reduced-motion: no-preference) {
   .platform .pf-reveal { transition: opacity .9s var(--pf-ease), transform .9s var(--pf-ease); }
   .platform .pf-reveal.is-pending { opacity: 0; transform: translateY(32px); }
+  .platform .pf-reveal.is-in { opacity: 1; transform: none; }
   .platform .pf-step.pf-reveal:nth-child(2) { transition-delay: .08s; } .platform .pf-step.pf-reveal:nth-child(3) { transition-delay: .16s; }
 }
 
@@ -406,3 +407,8 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
 @media (prefers-reduced-motion: reduce) {
   .platform *, .platform *::before, .platform *::after { animation: none !important; transition-duration: .01ms !important; }
 }
+
+/* Legal links in the footer base line (all platform pages). */
+.platform .pf-footer__legal { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.platform .pf-footer__legal a { color: var(--pf-mint); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.platform .pf-footer__legal a:hover { color: var(--pf-on-forest); text-decoration: underline; }

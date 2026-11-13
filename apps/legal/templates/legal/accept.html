@@ -1,0 +1,37 @@
+{% extends "legal/_layout.html" %}
+{% block doc_name %}Conditions d'utilisation à accepter{% endblock %}
+{% block seo %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block content %}
+<section class="lg-accept">
+  <div class="pf-wrap">
+    <div class="lg-accept__card">
+      <p class="lg-kicker"><span aria-hidden="true">✦</span> {% if first_time %}Avant de commencer{% else %}Mise à jour du {{ legal_date|date:"j F Y" }}{% endif %}</p>
+      <h1 class="lg-accept__title">{% if first_time %}Nos règles du jeu, en clair{% else %}Nos conditions ont évolué{% endif %}</h1>
+      <p class="lg-accept__lead">{% if first_time %}Pour utiliser ton espace pro, prends une minute pour lire nos conditions d'utilisation et notre politique de confidentialité.{% else %}Pour continuer à utiliser ton espace pro, accepte la nouvelle version. Ta page publique reste en ligne pendant ce temps.{% endif %}</p>
+      <ul class="lg-accept__points">
+        {% for change in changes %}<li>{{ change }}</li>{% endfor %}
+      </ul>
+      <p class="lg-accept__docs">
+        <a href="{% url 'legal:terms' %}" target="_blank" rel="noopener">Lire les conditions d'utilisation</a>
+        <a href="{% url 'legal:privacy' %}" target="_blank" rel="noopener">Lire la politique de confidentialité</a>
+      </p>
+      <form method="post" class="lg-accept__form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <label class="lg-check{% if error %} lg-check--error{% endif %}">
+          <input type="checkbox" name="accept" value="1" required{% if error %} aria-invalid="true" aria-describedby="accept-error"{% endif %}>
+          <span>J'ai lu et j'accepte les conditions d'utilisation et la politique de confidentialité de {{ SITE_NAME }}.</span>
+        </label>
+        {% if error %}<p class="lg-check__error" id="accept-error" role="alert">Coche la case pour continuer.</p>{% endif %}
+        <button class="pf-btn pf-btn--lg" type="submit"><span class="pf-btn__dot" aria-hidden="true"></span>Continuer</button>
+      </form>
+      <div class="lg-accept__alt">
+        <p>Tu ne souhaites pas accepter ?</p>
+        <a href="{% url 'dashboard:data_export' %}">Télécharger mes données</a>
+        <form method="post" action="{% url 'dashboard:logout' %}">{% csrf_token %}<button type="submit" class="lg-link">Me déconnecter</button></form>
+        <p class="lg-accept__hint">Pour supprimer ta page, écris-nous à <a href="mailto:{{ legal.privacy_email }}">{{ legal.privacy_email }}</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

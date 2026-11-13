@@ -1,0 +1,59 @@
+{% extends "legal/_layout.html" %}
+{% block doc_name %}Mentions légales{% endblock %}
+{% block doc_description %}Éditeur, directeur de la publication, hébergeur et contact de {{ SITE_NAME }}, une solution {{ legal.name }}.{% endblock %}
+{% block doc_heading %}Mentions légales{% endblock %}
+{% block toc %}
+  <li><a href="#editeur">Éditeur</a></li>
+  <li><a href="#publication">Publication</a></li>
+  <li><a href="#hebergement">Hébergement</a></li>
+  <li><a href="#contenus-tiers">Contenus des professionnels</a></li>
+  <li><a href="#pi">Propriété intellectuelle</a></li>
+  <li><a href="#credits">Crédits</a></li>
+{% endblock %}
+{% block doc %}
+<section id="editeur">
+  <h2><span class="lg-num">01</span>Éditeur</h2>
+  <dl class="lg-defs lg-defs--card">
+    <dt>Raison sociale</dt><dd>{{ legal.name }}</dd>
+    {% if legal.form %}<dt>Forme juridique</dt><dd>{{ legal.form }}</dd>{% endif %}
+    {% if legal.rccm %}<dt>RCCM</dt><dd>{{ legal.rccm }}</dd>{% endif %}
+    {% if legal.niu %}<dt>N° d'identifiant unique (NIU)</dt><dd>{{ legal.niu }}</dd>{% endif %}
+    {% if legal.address %}<dt>Siège</dt><dd>{{ legal.address }}</dd>{% endif %}
+    <dt>Email</dt><dd><a href="mailto:{{ legal.email }}">{{ legal.email }}</a></dd>
+    {% if legal.phone %}<dt>Téléphone</dt><dd><a href="tel:{{ legal.phone_href }}">{{ legal.phone }}</a></dd>{% endif %}
+    <dt>Site de l'entreprise</dt><dd><a href="https://www.modulis.tech/" rel="noopener">modulis.tech</a></dd>
+  </dl>
+  <p>{{ SITE_NAME }} est une plateforme de pages professionnelles et de cartes de visite NFC éditée par {{ legal.name }}, entreprise de prestations de services technologiques et digitales.</p>
+</section>
+
+<section id="publication">
+  <h2><span class="lg-num">02</span>Publication</h2>
+  {% if legal.director %}<p>Directeur de la publication : {{ legal.director }}.</p>{% endif %}
+  <p>Pour toute demande concernant le contenu du site : <a href="mailto:{{ legal.email }}">{{ legal.email }}</a>. Pour les données personnelles : <a href="mailto:{{ legal.privacy_email }}">{{ legal.privacy_email }}</a>.</p>
+</section>
+
+<section id="hebergement">
+  <h2><span class="lg-num">03</span>Hébergement</h2>
+  {% if legal.host_name %}
+  <p>Le site est hébergé par {{ legal.host_name }}{% if legal.host_address %}, {{ legal.host_address }}{% endif %}.</p>
+  {% else %}
+  <p>Les coordonnées de l'hébergeur sont communiquées sur simple demande à <a href="mailto:{{ legal.email }}">{{ legal.email }}</a>.</p>
+  {% endif %}
+  <p>Les données sont sauvegardées chaque jour hors des serveurs d'application.</p>
+</section>
+
+<section id="contenus-tiers">
+  <h2><span class="lg-num">04</span>Contenus des professionnels</h2>
+  <p>Les pages pros sont rédigées par les professionnels eux-mêmes, sous leur responsabilité. {{ legal.name }} en assure l'hébergement. Pour signaler un contenu illicite, utilisez le lien « Signaler cette page » présent en bas de chaque page, ou écrivez à <a href="mailto:{{ legal.email }}">{{ legal.email }}</a> en précisant l'adresse de la page et le motif.</p>
+</section>
+
+<section id="pi">
+  <h2><span class="lg-num">05</span>Propriété intellectuelle</h2>
+  <p>La marque et le logo Modulis, la structure du site, ses modèles, textes et illustrations sont la propriété de {{ legal.name }}. Toute reproduction sans autorisation écrite est interdite. Les contenus des pages pros appartiennent à leurs auteurs (voir les <a href="{% url 'legal:terms' %}#contenus">conditions d'utilisation</a>).</p>
+</section>
+
+<section id="credits">
+  <h2><span class="lg-num">06</span>Crédits</h2>
+  <p>Conception et développement : {{ legal.name }}. Polices de caractères : Archivo, Fraunces, Instrument Serif et Bricolage Grotesque, sous licence SIL Open Font License, auto-hébergées (aucun appel à un service de polices tiers).</p>
+</section>
+{% endblock %}
