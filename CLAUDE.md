@@ -17,6 +17,7 @@ Aucun framework JS. Aucune ressource externe (CDN, polices) sur les pages publiq
 
 ## Règles non négociables
 - Dépôt distant : `origin` = https://github.com/kryshandy/modulis-profils (décision du porteur, 11 nov. 2026). Seule la session principale pousse, après `make check` vert ; **jamais de push forcé** ni de réécriture d'historique. Pas d'Actions GitHub ni de hook `pre-commit` téléchargé : les vérifications restent locales.
+- Données : jamais de `docker compose down -v` ni de suppression de volume sans `make backup` + `make backup-verify` récents (docs/SAUVEGARDES.md, ADR-0011). Toute nouvelle collecte ou conservation de données personnelles se reflète dans `apps/legal/templates/legal/confidentialite.html` ; tout changement important des CGU augmente `LEGAL_VERSION`.
 - Rendu serveur pour toute page publique ; aucun contenu indexable injecté en JavaScript ; CSP stricte, donc aucun script ni style en ligne.
 - Une application ne modifie pas les modèles d'une autre : elle passe par le `services.py` de celle-ci.
 - Toute création de profil passe par `profiles.services.create_profile` / `get_or_create_profile` (anti-doublon par téléphone E.164).

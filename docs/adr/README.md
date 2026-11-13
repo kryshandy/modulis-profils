@@ -15,5 +15,6 @@ Statuts : Proposée → Acceptée → (Remplacée par ADR-xxxx).
 | 0008 | Développement dans Docker sous WSL2 Ubuntu | Acceptée |
 | 0009 | OTP par WhatsApp Cloud API, SMS Firebase ou passerelle | Acceptée |
 | 0010 | Double authentification (TOTP) obligatoire pour l'équipe | Acceptée |
+| 0011 | Sauvegardes de la base et des médias hors Docker (dossier de l'hôte, chiffrement, hors site, test de restauration) | Acceptée |
 
 Elles passent à « Acceptée » quand vous validez le plan.

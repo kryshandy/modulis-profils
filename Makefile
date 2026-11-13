@@ -7,7 +7,7 @@ VENV ?= $(HOME)/.venvs/modulis-profils
 PY := $(VENV)/bin/python
 COMPOSE := docker compose
 
-.PHONY: help venv install lint fmt test cov check migrations migrate run seed-demo up down logs dtest dshell dmanage admin pages backup backup-list backup-verify restore backup-repo
+.PHONY: help venv install lint fmt test cov check migrations migrate run seed-demo up up-force down logs dtest dshell dmanage admin pages backup backup-list backup-verify restore backup-repo
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -48,11 +48,15 @@ run: ## Serveur de dev sans Docker (SQLite)
 seed-demo: ## Données de démonstration (profils, lot de cartes)
 	$(PY) manage.py seed_demo
 
-up: ## Docker : démarre web + worker + postgres + redis
+up: ## Docker : démarre web + worker + postgres + redis + sauvegardes (sauvegarde avant reconstruction)
+	@if $(COMPOSE) ps --status running --services 2>/dev/null | grep -qx db; then 		echo "→ Sauvegarde de sécurité avant reconstruction…"; 		$(COMPOSE) run --rm --build backup backup.sh manual avant-build >/dev/null || { echo "Sauvegarde impossible : reconstruction annulée (make up-force pour passer outre)"; exit 1; }; 	fi
 	$(COMPOSE) up -d --build
 	@echo "→ http://localhost:8000   admin : http://localhost:8000/gestion/"
 
-down: ## Docker : arrête
+up-force: ## Docker : comme make up, sans la sauvegarde préalable
+	$(COMPOSE) up -d --build
+
+down: ## Docker : arrête (les données restent ; ne JAMAIS ajouter -v sans sauvegarde récente)
 	$(COMPOSE) down
 
 logs: ## Docker : journaux (les SMS de dev s'affichent ici)
@@ -73,6 +77,22 @@ admin: ## Docker : crée un compte de l'équipe (mot de passe, 2FA à la 1re con
 
 pages: ## Docker : parcours de toutes les pages (public, espace pro, admin) et liste des erreurs
 	$(COMPOSE) exec -T web python manage.py shell < scripts/check_pages.py
+
+backup: ## Sauvegarde immédiate base + médias vers BACKUP_DIR (hors Docker)
+	$(COMPOSE) run --rm backup backup.sh manual $(label)
+
+backup-list: ## Liste les sauvegardes disponibles
+	$(COMPOSE) run --rm backup list.sh
+
+backup-verify: ## Restauration test de la dernière sauvegarde (ou name=…) dans une base jetable
+	$(COMPOSE) run --rm backup verify.sh $(or $(name),latest)
+
+restore: ## Restaure une sauvegarde (name=latest|2026-11-13_023000) — arrête web/worker pendant l'opération
+	@test -n "$(name)" || { echo "Usage : make restore name=latest   (voir make backup-list)"; exit 1; }
+	$(COMPOSE) stop web worker
+	$(COMPOSE) run --rm backup restore.sh $(name) $(only) --yes
+	$(COMPOSE) start web worker
+	@echo "→ Restauration terminée. Vérifiez http://localhost:8000"
 
 backup-repo: ## Copie de sauvegarde du dépôt git (bundle) — DEST=/mnt/d/backups
 	bash scripts/wsl/backup-repo.sh $(DEST)

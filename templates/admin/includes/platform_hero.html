@@ -7,6 +7,13 @@
       {% for chip in state.chips %}
         <li><span class="mp-state {% if chip.on %}mp-state--on{% else %}mp-state--off{% endif %}">{{ chip.label }} : {% if chip.on %}{% translate "activé" %}{% else %}{% translate "désactivé" %}{% endif %}</span></li>
       {% endfor %}
+      {% with b=state.backup %}
+        {% if b.state == "ok" %}<li><span class="mp-state mp-state--on" title="{{ b.last.path }}">{% blocktranslate with h=b.age_hours %}Sauvegarde : il y a {{ h }} h{% endblocktranslate %}{% if b.last.encrypted %} · {% translate "chiffrée" %}{% endif %}{% if b.last.offsite == "ok" %} · {% translate "hors site" %}{% endif %}</span></li>
+        {% elif b.state == "late" %}<li><span class="mp-state mp-state--error">{% blocktranslate with h=b.age_hours %}Sauvegarde en retard : {{ h }} h{% endblocktranslate %}</span></li>
+        {% elif b.state == "missing" %}<li><span class="mp-state mp-state--error">{% translate "Aucune sauvegarde trouvée" %}</span></li>
+        {% else %}<li><span class="mp-state mp-state--off">{% translate "Sauvegardes : non suivies ici" %}</span></li>{% endif %}
+        {% if b.last.offsite == "failed" %}<li><span class="mp-state mp-state--error">{% translate "Copie hors site en échec" %}</span></li>{% endif %}
+      {% endwith %}
       {% if state.announcement %}<li><span class="mp-chip">{% translate "Annonce affichée aux pros" %}</span></li>{% endif %}
     </ul>
   </div>

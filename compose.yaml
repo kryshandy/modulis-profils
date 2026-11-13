@@ -10,6 +10,10 @@ x-django: &django
   volumes:
     - .:/app
     - media:/app/media
+    # Backup folder of the host, read-only: the admin index shows the last backup (BACKUP_STATUS_DIR).
+    - ${BACKUP_DIR:-./backups}:/backups:ro
+  environment: &django-env
+    BACKUP_STATUS_DIR: /backups
   depends_on:
     db:
       condition: service_healthy
@@ -20,6 +24,7 @@ services:
   web:
     <<: *django
     environment:
+      <<: *django-env
       RUN_MIGRATIONS: "1"
     ports:
       - "${WEB_HOST_PORT:-8000}:8000"
@@ -58,6 +63,32 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # Sauvegardes HORS de Docker (docs/SAUVEGARDES.md) : base + médias écrits dans un dossier de l'hôte
+  # (BACKUP_DIR, par défaut ./backups). Ils survivent à `docker compose down -v`, aux reconstructions
+  # d'images, au nettoyage des volumes et à la réinstallation de Docker.
+  backup:
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PGHOST: db
+      PGUSER: modulis
+      PGPASSWORD: modulis
+      PGDATABASE: modulis_profils
+      BACKUP_HOST_DIR: ${BACKUP_DIR:-./backups}
+    volumes:
+      - ${BACKUP_DIR:-./backups}:/backups
+      - media:/media
+      # Off-site copy (optional): rclone configuration of the host, read-only.
+      - ${RCLONE_CONFIG_DIR:-./docker/backup/rclone}:/root/.config/rclone:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:

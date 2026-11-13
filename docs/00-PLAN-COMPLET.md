@@ -465,7 +465,7 @@ Chaque lot se termine par une note courte : concepts Django vus (ORM, migrations
 |---|---|---|
 | Continu | Surveillance de disponibilité (page profil + `/c/` test) | Uptime Kuma (auto-hébergé) ou service équivalent |
 | Continu | Erreurs applicatives | journaux + GlitchTip (compatible Sentry, auto-hébergeable) |
-| Quotidien | Sauvegarde PostgreSQL + médias, chiffrée, hors serveur, rétention 7 j / 4 sem. / 12 mois | `pg_dump` + `restic` |
+| Quotidien | Sauvegarde PostgreSQL + médias, chiffrée, hors serveur, rétention 7 j / 4 sem. / 12 mois | service `backup` (`pg_dump` + `tar` + gpg + rclone), voir `docs/SAUVEGARDES.md` et ADR-0011 |
 | Quotidien | Rapprochement des paiements, agrégation des statistiques, purge des OTP expirés | tâches Huey |
 | Hebdo | Search Console : couverture, erreurs d'indexation, Core Web Vitals, requêtes | — |
 | Hebdo | File de modération et signalements | admin |

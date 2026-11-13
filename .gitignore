@@ -30,3 +30,7 @@ desktop.ini
 
 # Exports de lots de cartes (contiennent les codes d'activation)
 /exports/
+
+# Sauvegardes (dossier de l'hôte, hors Git) et configuration rclone
+/backups/
+docker/backup/rclone/*.conf

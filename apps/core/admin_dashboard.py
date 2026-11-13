@@ -44,6 +44,7 @@ def get_kpis() -> dict:
 def get_platform_state() -> dict:
     """State chips of the admin index hero (control center switches) + latest audit entries."""
 
+    from apps.platform.backups import backup_status
     from apps.platform.services import get_settings
 
     s = get_settings()
@@ -58,6 +59,7 @@ def get_platform_state() -> dict:
     ]
     return {
         "chips": chips,
+        "backup": backup_status(),
         "maintenance": s.maintenance_mode,
         "announcement": s.announcement,
     }

@@ -1,6 +1,7 @@
 # Tour of every page (public, pro space, admin with 2FA) against the Docker database: reports 5xx errors and exceptions.
 # Usage: make pages   (= docker compose exec -T web python manage.py shell < scripts/check_pages.py)
 # The demo pro temporarily gets the current CGU version (restored at the end) so its pro space is covered.
+import contextlib
 import re
 
 from django.contrib import admin
@@ -87,7 +88,6 @@ pro_urls = [
     "/espace/partager",
     "/espace/partager/affiche",
     "/espace/cartes",
-    "/espace/cartes/lier",
     "/espace/statistiques",
     "/espace/aide",
     "/espace/modeles/",
@@ -101,7 +101,6 @@ for sec in [
     "liens",
     "horaires",
     "apparence",
-    "localisation",
 ]:
     pro_urls.append(f"/espace/page/{sec}")
 for step in ["nom", "metier", "photo", "contact", "fin"]:
@@ -135,7 +134,7 @@ from django.conf import settings  # noqa: E402
 
 base = "/" + settings.ADMIN_URL
 hit(adm, base, "admin")
-for model in admin.site._registry:
+for model, model_admin in admin.site._registry.items():
     meta = model._meta
     try:
         cl = reverse(f"admin:{meta.app_label}_{meta.model_name}_changelist")
@@ -143,11 +142,14 @@ for model in admin.site._registry:
         continue
     hit(adm, cl, "admin")
     hit(adm, cl + "?q=a", "admin-search")
+    fake = type("R", (), {"user": su, "method": "GET", "GET": {}, "path": cl})()
     try:
-        add = reverse(f"admin:{meta.app_label}_{meta.model_name}_add")
-        hit(adm, add, "admin")
-    except NoReverseMatch:
-        pass
+        can_add = model_admin.has_add_permission(fake)
+    except Exception:  # a ModelAdmin that needs a real request: test the page anyway
+        can_add = True
+    if can_add:  # read-only models (journal, codes, stats…) have no "add" page on purpose
+        with contextlib.suppress(NoReverseMatch):
+            hit(adm, reverse(f"admin:{meta.app_label}_{meta.model_name}_add"), "admin")
     obj = model._default_manager.order_by("-pk").first()
     if obj is not None:
         try:

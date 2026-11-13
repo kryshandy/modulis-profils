@@ -88,7 +88,11 @@ Activez ensuite les canaux dans le **centre de contrôle**.
 | `make check` | lint + vérifications Django + migrations + tests + couverture |
 | `make dmanage cmd="seo_audit --crawl"` | audit SEO automatique des pages publiques |
 | `make dshell` | console Django |
-| `docker compose down -v` | tout supprimer, **données comprises** (repartir de zéro) |
+| `make pages` | parcours de toutes les pages (public, espace pro, admin) : liste les erreurs |
+| `make backup` / `make backup-list` | sauvegarde immédiate base + photos hors Docker / inventaire |
+| `make backup-verify` | restauration test de la dernière sauvegarde (base jetable) |
+| `make restore name=latest` | restaurer une sauvegarde (voir [SAUVEGARDES.md](SAUVEGARDES.md)) |
+| `docker compose down -v` | tout supprimer, **données comprises** : seulement après `make backup` + `make backup-verify` |
 
 ## Après une mise à jour du code
 
@@ -96,11 +100,29 @@ Le serveur et le worker se rechargent tout seuls. Si le `Dockerfile`, `entrypoin
 reconstruisez les images :
 
 ```bash
-docker compose up -d --build
+make up        # sauvegarde automatique, puis reconstruction
 ```
+
+Erreur « column … does not exist » ou « relation … does not exist » : le code attend une migration
+que la base n'a pas encore. Appliquez-la : `make dmanage cmd=migrate` (elle s'applique aussi seule au
+redémarrage du service `web`).
 
 En cas de problème, le **centre de contrôle → Santé de la plateforme** vérifie la base, le cache, le **stockage des
 fichiers** (envoi de photos) et les tâches de fond.
+
+## Sauvegardes (hors Docker)
+
+Le service `backup` sauvegarde chaque nuit à 02:30 la base et les photos dans `./backups`
+(dossier du projet sur le disque Windows, hors des volumes Docker), avec rotation 7 jours / 4 semaines /
+12 mois, empreintes SHA-256 et restauration test chaque dimanche. Tout est décrit dans
+[SAUVEGARDES.md](SAUVEGARDES.md) (chiffrement, copie hors site, reprise après sinistre).
+
+## Pages légales
+
+`/cgu`, `/confidentialite` et `/mentions-legales`. Renseigner l'identité de l'entreprise
+(RCCM, NIU, siège, directeur de la publication, hébergeur) dans `.env`, variables `LEGAL_*` :
+les champs vides sont masqués. Quand le texte change, augmenter `LEGAL_VERSION` dans
+`apps/legal/conf.py` : chaque pro devra accepter la nouvelle version à sa prochaine visite.
 
 ## Ports
 
