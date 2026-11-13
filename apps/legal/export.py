@@ -72,6 +72,10 @@ def export_user_data(user) -> dict:
                 "prestations": [_row(s) for s in profile.services.order_by("order")],
                 "photos": [_row(m) for m in profile.media.order_by("order")],
                 "liens": [_row(link) for link in profile.links.order_by("order")],
+                "blocs": [
+                    {**_row(b), "images": [_row(i) for i in b.images.order_by("slot")]}
+                    for b in profile.blocks.order_by("pk")
+                ],
                 "cartes": [_row(c) for c in Card.objects.filter(profile=profile).order_by("activated_at")],
                 "abonnements": [_row(s) for s in Subscription.objects.filter(profile=profile).order_by("starts_at")],
                 "paiements": [_row(p) for p in Payment.objects.filter(profile=profile).order_by("created_at")],

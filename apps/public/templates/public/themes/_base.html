@@ -8,6 +8,7 @@
   {% endif %}<link rel="stylesheet" href="{% static 'css/themes/base.css' %}">
   <link rel="stylesheet" href="{% static 'css/themes/'|add:theme.layout|add:'.css' %}">
   {% if font_css_url %}<link rel="stylesheet" href="{{ font_css_url }}">
+  {% endif %}{% if page_blocks %}<link rel="stylesheet" href="{% static 'css/themes/blocks.css' %}">
   {% endif %}<link rel="stylesheet" href="{{ theme_css_url }}">{% endblock %}
 {% block head %}{% if photo %}<link rel="preload" as="image" {% preload_attrs photo %} fetchpriority="high">{% endif %}{% if preview %}
   <base target="_blank">{% endif %}{% endblock %}
@@ -37,7 +38,7 @@
   {% block hero %}{% endblock %}
   {% block band %}{% endblock %}
   <div class="t-body">
-    {% for s in sections %}{% section_template s.key as tpl %}{% include tpl with label=s.label %}{% endfor %}
+    {% for s in sections %}{% section_template s.key as tpl %}{% include tpl with label=s.label block=s.block %}{% endfor %}
   </div>
   {% endblock %}
   <p class="t-share t-wrap"><a class="t-share__link" href="{{ share_url }}" rel="{{ contact_rel }}" data-track="share"><svg class="t-ico" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#share"></use></svg>{% translate "Partager cette page sur WhatsApp" %}</a></p>
@@ -75,4 +76,5 @@
 {% if gallery %}{% include "public/themes/_lightbox.html" %}{% endif %}
 {% endblock %}
 {% block scripts %}<script src="{% static 'js/profile.js' %}" defer></script>
-  <script src="{% static 'js/site-motion.js' %}" defer></script>{% endblock %}
+  <script src="{% static 'js/site-motion.js' %}" defer></script>{% if has_video %}
+  <script src="{% static 'js/blocks.js' %}" defer></script>{% endif %}{% endblock %}

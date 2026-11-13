@@ -479,6 +479,9 @@ def delete_profile(profile: Profile) -> None:
     if profile.is_indexable:
         urls += _related_urls(profile)  # computed before the wipe
     disable_cards_for_profile(profile, reason="profile_deleted")
+    from apps.blocks.services import delete_all_for_profile
+
+    delete_all_for_profile(profile)  # page builder blocks and their image files
     for entry in list(profile.slugs.all()):
         hashed = slug_hash(entry.slug)
         entry.delete()

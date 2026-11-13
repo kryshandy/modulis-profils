@@ -1,0 +1,6 @@
+<ul class="t-quotes">
+  {% for item in block.items %}<li class="t-quote" data-reveal>
+    <blockquote class="t-quote__text"><p>{{ item.quote }}</p></blockquote>
+    <p class="t-quote__by"><strong>{{ item.author }}</strong>{% if item.role %}<span> · {{ item.role }}</span>{% endif %}</p>
+  </li>{% endfor %}
+</ul>

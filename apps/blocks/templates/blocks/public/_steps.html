@@ -1,0 +1,7 @@
+<ol class="t-steps">
+  {% for item in block.items %}<li class="t-step" data-reveal>
+    <span class="t-step__n" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span>
+    <h3 class="t-step__title">{{ item.title }}</h3>
+    {% if item.text %}<p class="t-step__text">{{ item.text }}</p>{% endif %}
+  </li>{% endfor %}
+</ol>

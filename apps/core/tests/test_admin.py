@@ -51,7 +51,12 @@ def _registered():
 def test_every_model_of_the_project_is_registered():
     from django.apps import apps
 
-    inline_only = {"profiles.ProfileLink", "profiles.ProfileService", "profiles.ProfileMedia"}  # edited via inlines
+    inline_only = {
+        "profiles.ProfileLink",
+        "profiles.ProfileService",
+        "profiles.ProfileMedia",
+        "blocks.BlockImage",
+    }  # inlines
     missing = [
         f"{m._meta.app_label}.{m.__name__}"
         for m in apps.get_models()

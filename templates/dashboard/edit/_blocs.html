@@ -1,0 +1,68 @@
+{% load i18n dashboard_tags %}
+<div class="panel stack" id="panel">
+  <section class="card stack">
+    <h2 class="h2">{% translate "Le plan de ta page" %}</h2>
+    <p class="tip">{% translate "Change l'ordre avec les flèches, masque ce que tu ne veux pas montrer, ajoute des blocs. Tout s'applique tout de suite à ta page publique ; ton référencement Google reste géré pour toi." %}</p>
+    <ol class="outline" aria-label="{% translate 'Ordre des sections de ta page' %}">
+      <li class="outline__row outline__row--fixed">
+        <span class="outline__icon">{% icon "user" %}</span>
+        <span class="outline__main"><span class="outline__label">{% translate "En-tête" %}</span><span class="outline__meta">{% translate "Ton nom, ton métier, tes boutons (toujours en haut)" %}</span></span>
+      </li>
+      {% for row in outline %}
+      <li class="outline__row{% if not row.visible %} outline__row--hidden{% endif %}{% if row.block %} outline__row--block{% endif %}">
+        <span class="outline__icon">{% if row.block %}{% icon row.icon %}{% else %}{% icon "list" %}{% endif %}</span>
+        <span class="outline__main">
+          <span class="outline__label">{{ row.label }}</span>
+          <span class="outline__meta">
+            {% if row.block %}{{ row.kind_label }} ·
+              {% if row.block.moderated %}<span class="badge badge--off">{% translate "Masqué par la modération" %}</span>
+              {% elif not row.complete %}<span class="badge badge--warn">{% translate "À compléter" %}</span>
+              {% elif row.visible %}<span class="badge badge--ok">{% translate "En ligne" %}</span>
+              {% else %}<span class="badge">{% translate "Masqué" %}</span>{% endif %}
+            {% else %}{% if row.pinned %}{% translate "Toujours en dernier" %}{% elif row.locked %}{% translate "Toujours affichée" %}{% elif row.visible %}{% translate "Section de ton modèle" %}{% else %}{% translate "Masquée" %}{% endif %}{% endif %}
+          </span>
+        </span>
+        <span class="outline__tools">
+          <form method="post" action="{% url 'dashboard:outline_move' row.key %}" hx-post="{% url 'dashboard:outline_move' row.key %}" hx-target="#panel" hx-swap="outerHTML">
+            {% csrf_token %}
+            <button class="iconbtn" type="submit" name="direction" value="up" aria-label="{% blocktranslate with label=row.label %}Monter « {{ label }} »{% endblocktranslate %}"{% if not row.can_up %} disabled{% endif %}>{% icon "up" %}</button>
+            <button class="iconbtn" type="submit" name="direction" value="down" aria-label="{% blocktranslate with label=row.label %}Descendre « {{ label }} »{% endblocktranslate %}"{% if not row.can_down %} disabled{% endif %}>{% icon "down" %}</button>
+          </form>
+          {% if not row.locked and not row.pinned %}
+          <form method="post" action="{% url 'dashboard:outline_visible' row.key %}" hx-post="{% url 'dashboard:outline_visible' row.key %}" hx-target="#panel" hx-swap="outerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="visible" value="{% if row.visible %}0{% else %}1{% endif %}">
+            <button class="iconbtn{% if not row.visible %} iconbtn--off{% endif %}" type="submit" aria-pressed="{% if row.visible %}true{% else %}false{% endif %}" aria-label="{% if row.visible %}{% blocktranslate with label=row.label %}Masquer « {{ label }} »{% endblocktranslate %}{% else %}{% blocktranslate with label=row.label %}Afficher « {{ label }} »{% endblocktranslate %}{% endif %}">{% icon "eye" %}</button>
+          </form>
+          {% endif %}
+          <a class="iconbtn" href="{{ row.edit_url }}" aria-label="{% blocktranslate with label=row.label %}Modifier « {{ label }} »{% endblocktranslate %}">{% icon "edit" %}</a>
+        </span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="card stack" id="bibliotheque">
+    <h2 class="h2">{% translate "Ajouter un bloc" %}</h2>
+    <p class="small muted">{% blocktranslate with n=block_count max=max_blocks %}{{ n }} bloc(s) sur {{ max }}. Chaque bloc est conçu pour être beau sur téléphone et bien compris par Google.{% endblocktranslate %}</p>
+    {% if room %}
+    <ul class="blocklib">
+      {% for t in library %}
+      <li>
+        <form method="post" action="{% url 'dashboard:block_add' %}">
+          {% csrf_token %}
+          <input type="hidden" name="kind" value="{{ t.kind }}">
+          <button class="blocklib__card" type="submit">
+            <span class="blocklib__icon">{% icon t.icon %}</span>
+            <span class="blocklib__name">{{ t.label }}</span>
+            <span class="blocklib__desc">{{ t.description }}</span>
+          </button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="tip">{% translate "Ta page a atteint le nombre maximum de blocs. Supprime un bloc pour en ajouter un autre." %}</p>
+    {% endif %}
+  </section>
+</div>

@@ -42,6 +42,7 @@ SECTIONS = [
     ("prestations", gettext_lazy("Prestations"), "list"),
     ("galerie", gettext_lazy("Galerie"), "image"),
     ("liens", gettext_lazy("Liens"), "link"),
+    ("blocs", gettext_lazy("Blocs et mise en page"), "blocks"),
     ("apparence", gettext_lazy("Apparence"), "palette"),
 ]
 SECTION_SLUGS = [s for s, _label, _icon in SECTIONS]
@@ -94,6 +95,10 @@ def _section_context(request, section: str, form=None, **extra) -> dict:
         )
     elif section == "apparence":
         ctx["colors"] = COVER_COLORS
+    elif section == "blocs":
+        from apps.blocks.views import outline_context
+
+        ctx.update(outline_context(profile))
     elif section == "horaires":
         ctx["form"] = form or OpeningHoursForm(hours=profile.opening_hours)
         ctx["presets"] = [(key, label) for key, (label, _hours) in HOURS_PRESETS.items()]

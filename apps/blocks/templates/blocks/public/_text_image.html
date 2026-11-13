@@ -1,0 +1,4 @@
+{% load public_images %}<div class="t-ti t-ti--{{ block.data.side|default:'right' }}">
+  <figure class="t-ti__media" data-reveal><img {% img_attrs block.image %} alt="{{ block.title|default:profile.display_name }}" loading="lazy" decoding="async"></figure>
+  <div class="t-ti__body t-prose" data-reveal>{{ block.data.body|linebreaks }}</div>
+</div>

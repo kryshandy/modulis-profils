@@ -559,12 +559,25 @@ def font_stylesheet_url(theme: themes.ResolvedTheme | None = None) -> str:
 
 
 def _theme_context(profile: Profile, theme: themes.ResolvedTheme, stylesheet_url: str) -> dict:
+    from apps.blocks.rendering import render_map
+
     category = theme.theme.category
     font_css = font_stylesheet_url(theme) if theme.uses_webfont else ""
     hours = _hours(profile)
+    blocks = render_map(profile)
+    sections = []
+    for key in theme.visible_sections():
+        if themes.is_block_key(key):
+            if key in blocks:  # empty or moderated blocks are never rendered
+                sections.append({"key": key, "label": blocks[key]["title"], "block": blocks[key]})
+        else:
+            sections.append({"key": key, "label": themes.section_label(key, category)})
+    shown = [s["block"] for s in sections if "block" in s]
     return {
         "theme": theme,
-        "sections": [{"key": key, "label": themes.section_label(key, category)} for key in theme.visible_sections()],
+        "sections": sections,
+        "page_blocks": shown,
+        "has_video": any(b["kind"] == "video" for b in shown),
         "theme_css_url": stylesheet_url,
         "font_css_url": font_css,
         "font_preload_url": _static_or_empty(theme.font_preload) if font_css else "",
@@ -661,7 +674,7 @@ def _profile_context(
         "preview": preview,
         "profile": profile,
         "meta": meta,
-        "jsonld": jsonld.dumps(graph),
+        "jsonld": None,  # set below, once the blocks are known (FAQ structured data)
         "job": job,
         "subtitle": job_at_city(job, city.name if city else ""),
         "breadcrumb": crumbs,
@@ -689,6 +702,12 @@ def _profile_context(
         "owner_private": owner_private,
         "photo_alt": _("Photo de %(name)s") % {"name": name},
     }
+    from apps.blocks.rendering import faq_node
+
+    faq = faq_node(context["page_blocks"], url)
+    if faq is not None:
+        graph["@graph"].append(faq)
+    context["jsonld"] = jsonld.dumps(graph)
     lede, bio_rest = split_bio(profile.bio)
     context.update(
         {
@@ -748,6 +767,11 @@ def render_profile_page(
             preview=preview,
         )
         response = render(request, theme.template, context)
+    if context.get("has_video"):  # click-to-load embeds only (apps.blocks), never site-wide
+        from apps.blocks.rendering import VIDEO_CSP
+        from apps.core import csp
+
+        csp.allow(response, VIDEO_CSP)
     mark_language_independent(response, lang)  # the language comes from the profile, not the browser
     return response
 

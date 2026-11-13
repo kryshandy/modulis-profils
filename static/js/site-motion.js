@@ -32,8 +32,10 @@ win.addEventListener("scroll", onScroll, { passive: true });
 win.addEventListener("resize", onScroll, { passive: true });
 frame();
 
-/* Reveal on scroll (below the fold only: nothing visible blinks) */
-if (!calm && IO) {
+/* Reveal on scroll (below the fold only: nothing visible blinks). A page opened on an anchor
+   (#realisations, #bloc-3...) is shown as is: the browser jumps there after this script ran, and
+   hidden content must never be the first thing a visitor sees. */
+if (!calm && IO && !win.location.hash) {
 var seen = new IntersectionObserver(function (entries) {
 entries.forEach(function (e) {
 if (!e.isIntersecting) { return; }
@@ -50,6 +52,15 @@ el.style.setProperty("--d", Math.min(n, 6) * 0.07 + "s");
 el.classList.add("t-rv");
 seen.observe(el);
 });
+/* Safety net: whatever sits in the viewport and is still hidden after 1.5 s is shown. */
+var rescue = function () {
+$$(".t-rv:not(.is-in)").forEach(function (el) {
+var box = el.getBoundingClientRect();
+if (box.top < vh() && box.bottom > 0) { el.classList.add("is-in"); seen.unobserve(el); }
+});
+};
+win.setTimeout(rescue, 1500);
+win.addEventListener("hashchange", function () { win.setTimeout(rescue, 600); });
 
 /* Counters (below the fold only): 0 → value */
 var count = new IntersectionObserver(function (entries) {

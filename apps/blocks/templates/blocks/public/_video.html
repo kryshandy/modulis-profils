@@ -1,0 +1,7 @@
+{% load i18n %}{% with v=block.video %}<div class="t-video" data-video data-embed="{{ v.embed_url }}" data-title="{% if block.title %}{{ block.title }}{% else %}{% translate 'Vidéo' %}{% endif %}" data-reveal>
+  <a class="t-video__facade" href="{{ v.watch_url }}" target="_blank" rel="noopener">
+    <span class="t-video__play" aria-hidden="true"></span>
+    <span class="t-video__label">{% blocktranslate with provider=v.label %}Lire la vidéo · {{ provider }}{% endblocktranslate %}</span>
+  </a>
+</div>{% endwith %}
+{% if block.data.caption %}<p class="t-video__caption" data-reveal>{{ block.data.caption }}</p>{% endif %}

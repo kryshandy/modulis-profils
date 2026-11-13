@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.security",
     "apps.legal",
+    "apps.blocks",
     "apps.public",
 ]
 

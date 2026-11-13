@@ -1,0 +1,18 @@
+{# One registry field (apps.blocks.registry.Field): f.spec, f.name, f.value, f.error #}
+<div class="form-field{% if f.error %} form-field--error{% endif %}">
+  {% if f.spec.kind == "choice" %}
+    <p class="form-field__label">{{ f.spec.label }}</p>
+    <div class="segmented">
+      {% for code, label in f.spec.choices %}<label class="segmented__opt"><input type="radio" name="{{ f.name }}" value="{{ code }}"{% if code == f.value or not f.value and forloop.first %} checked{% endif %}><span>{{ label }}</span></label>{% endfor %}
+    </div>
+  {% else %}
+    <label class="form-field__label" for="id_{{ f.name }}">{{ f.spec.label }}{% if f.spec.required %} <span class="muted">*</span>{% endif %}</label>
+    {% if f.spec.kind == "textarea" %}
+      <textarea id="id_{{ f.name }}" name="{{ f.name }}" rows="{% if f.spec.max_length > 900 %}7{% else %}3{% endif %}" maxlength="{{ f.spec.max_length }}"{% if f.spec.placeholder %} placeholder="{{ f.spec.placeholder }}"{% endif %}{% if f.error %} aria-invalid="true"{% endif %}>{{ f.value }}</textarea>
+    {% else %}
+      <input id="id_{{ f.name }}" name="{{ f.name }}" value="{{ f.value }}" maxlength="{{ f.spec.max_length }}"{% if f.spec.kind == "url" or f.spec.kind == "video" %} type="url" inputmode="url" autocomplete="off"{% else %} type="text"{% endif %}{% if f.spec.placeholder %} placeholder="{{ f.spec.placeholder }}"{% endif %}{% if f.error %} aria-invalid="true"{% endif %}>
+    {% endif %}
+  {% endif %}
+  {% if f.spec.help %}<p class="form-field__help">{{ f.spec.help }}</p>{% endif %}
+  {% if f.error %}<p class="form-field__error" role="alert">{{ f.error }}</p>{% endif %}
+</div>

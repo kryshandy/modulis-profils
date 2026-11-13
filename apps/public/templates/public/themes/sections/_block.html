@@ -1,0 +1,8 @@
+{% if block %}{# Page builder block (apps.blocks): one h2 per block, its own anchor, whitelisted style classes only. #}
+<section class="t-section t-block {{ block.classes }}" id="{{ block.anchor }}"{% if block.title %} aria-labelledby="t-h-{{ block.anchor }}"{% else %} aria-label="{{ block.kind_label }}"{% endif %}>
+  <div class="t-wrap t-block__inner">
+    {% if block.title and block.kind != "banner" %}<header class="t-sec-head" data-reveal><span class="t-index" aria-hidden="true"></span><h2 class="t-h2" id="t-h-{{ block.anchor }}">{{ block.title }}</h2></header>{% endif %}
+    <div class="t-block__content">{% include block.template %}</div>
+  </div>
+</section>
+{% endif %}

@@ -22,4 +22,6 @@ def pretty_phone(value: str) -> str:
 
 @register.simple_tag
 def section_template(key: str) -> str:
+    if key.startswith("b") and key[1:].isdigit():  # page builder block (apps.blocks)
+        return "public/themes/sections/_block.html"
     return f"public/themes/sections/_{key}.html"

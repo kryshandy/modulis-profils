@@ -2,6 +2,8 @@
 
 from django.urls import path
 
+from apps.blocks import views as blocks
+
 from .views import auth, editor, onboarding, pages
 
 app_name = "dashboard"
@@ -19,6 +21,11 @@ urlpatterns = [
     path("", pages.home, name="home"),
     path("profil/changer", pages.switch_profile, name="switch_profile"),
     # Editor
+    path("page/blocs/ajouter", blocks.block_add, name="block_add"),
+    path("page/blocs/<int:pk>", blocks.block_edit, name="block_edit"),
+    path("page/blocs/<int:pk>/supprimer", blocks.block_delete, name="block_delete"),
+    path("page/plan/<str:key>/deplacer", blocks.outline_move, name="outline_move"),
+    path("page/plan/<str:key>/affichage", blocks.outline_visible, name="outline_visible"),
     path("page/<slug:section>", editor.edit, name="edit"),
     path("page/prestations/ajouter", editor.service_add, name="service_add"),
     path("page/prestations/<int:pk>/modifier", editor.service_update, name="service_update"),

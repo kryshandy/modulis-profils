@@ -1,0 +1,67 @@
+{% load i18n dashboard_tags %}
+<div class="panel stack" id="panel">
+  <p><a class="btn btn--ghost btn--small" href="{% url 'dashboard:edit' 'blocs' %}">{% icon "back" %}<span>{% translate "Retour au plan de ta page" %}</span></a></p>
+
+  <section class="card stack">
+    <div class="blockform__head">
+      <span class="blocklib__icon">{% icon block_type.icon %}</span>
+      <div>
+        <h2 class="h2">{{ block_type.label }}</h2>
+        <p class="small muted">{{ block_type.description }}</p>
+      </div>
+      {% if page_block.moderated %}<span class="badge badge--off">{% translate "Masqué par la modération" %}</span>
+      {% elif complete %}<span class="badge badge--ok">{% translate "Complet" %}</span>
+      {% else %}<span class="badge badge--warn">{% translate "À compléter" %}</span>{% endif %}
+    </div>
+    {% if page_block.moderated %}
+      <p class="alert alert--error" role="alert">{% translate "L'équipe Modulis a masqué ce bloc" %}{% if page_block.moderation_note %} : {{ page_block.moderation_note }}{% endif %}. {% translate "Il n'apparaît plus sur ta page. Tu peux le supprimer ou contacter le support." %}</p>
+    {% endif %}
+    {% if form_error %}<p class="alert alert--error" role="alert">{{ form_error }}</p>{% elif has_errors %}<p class="alert alert--error" role="alert">{% translate "Vérifie les champs en rouge." %}</p>{% endif %}
+
+    {% if not page_block.moderated %}
+    <form class="stack" method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% for f in fields %}{% include "blocks/editor/_field.html" %}{% endfor %}
+
+      {% for img in block_images %}{% include "blocks/editor/_image.html" %}{% endfor %}
+
+      {% if items %}
+      <fieldset class="blockform__items">
+        <legend class="form-field__label">{{ block_type.items.label }}s <span class="small muted">({% blocktranslate with max=block_type.items.max_items %}{{ max }} au plus, les lignes vides sont ignorées{% endblocktranslate %})</span></legend>
+        {% for item in items %}
+        <div class="blockform__item">
+          <p class="blockform__num">{{ block_type.items.label }} {{ item.number }}</p>
+          {% for f in item.fields %}{% include "blocks/editor/_field.html" %}{% endfor %}
+          {% if item.images %}<div class="blockform__pair">{% for img in item.images %}{% include "blocks/editor/_image.html" %}{% endfor %}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <p class="small muted">{% translate "Besoin de plus de lignes ? Enregistre : de nouvelles lignes vides apparaîtront." %}</p>
+      </fieldset>
+      {% endif %}
+
+      <fieldset class="blockform__style">
+        <legend class="form-field__label">{% translate "Style du bloc" %}</legend>
+        {% for s in style_rows %}
+        <div class="blockform__styleRow">
+          <p class="small"><strong>{{ s.label }}</strong></p>
+          <div class="segmented">
+            {% for code, label in s.choices %}<label class="segmented__opt"><input type="radio" name="{{ s.name }}" value="{{ code }}"{% if code == s.value %} checked{% endif %}><span>{{ label }}</span></label>{% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <p class="small muted">{% translate "Les couleurs et polices sont celles de ton modèle : ta page reste harmonieuse." %}</p>
+      </fieldset>
+
+      <button class="btn btn--primary" type="submit" data-busy="{% translate 'Enregistrement…' %}">{% icon "check" %}<span>{% translate "Enregistrer le bloc" %}</span></button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card stack card--danger">
+    <h2 class="h2">{% translate "Supprimer ce bloc" %}</h2>
+    <form method="post" action="{% url 'dashboard:block_delete' page_block.pk %}" data-confirm="{% translate 'Supprimer ce bloc et ses images ?' %}">
+      {% csrf_token %}
+      <button class="btn btn--ghost btn--danger" type="submit">{% icon "trash" %}<span>{% translate "Supprimer le bloc" %}</span></button>
+    </form>
+  </section>
+</div>

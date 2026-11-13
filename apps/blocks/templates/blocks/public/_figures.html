@@ -1,0 +1,3 @@
+<ul class="t-figs t-figs--{{ block.items|length }}">
+  {% for item in block.items %}<li class="t-fig" data-reveal><strong class="t-fig__value">{{ item.value }}</strong><span class="t-fig__label">{{ item.label }}</span></li>{% endfor %}
+</ul>

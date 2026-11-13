@@ -1,0 +1,12 @@
+{% load i18n public_images %}{% if block.data.intro %}<p class="t-block__intro" data-reveal>{{ block.data.intro }}</p>{% endif %}
+<ul class="t-ba">
+  {% for item in block.items %}<li class="t-ba__pair" data-reveal>
+    <figure class="t-ba__fig">
+      <div class="t-ba__imgs">
+        <div class="t-ba__img"><img {% img_attrs item.images.before %} alt="{% translate 'Avant' %}{% if item.caption %} : {{ item.caption }}{% endif %}" loading="lazy" decoding="async"><span class="t-ba__tag">{% translate "Avant" %}</span></div>
+        <div class="t-ba__img"><img {% img_attrs item.images.after %} alt="{% translate 'Après' %}{% if item.caption %} : {{ item.caption }}{% endif %}" loading="lazy" decoding="async"><span class="t-ba__tag t-ba__tag--after">{% translate "Après" %}</span></div>
+      </div>
+      {% if item.caption %}<figcaption class="t-ba__cap">{{ item.caption }}</figcaption>{% endif %}
+    </figure>
+  </li>{% endfor %}
+</ul>

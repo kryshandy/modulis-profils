@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import timedelta
 
@@ -77,19 +78,41 @@ def section_label(key: str, category: str = "") -> str:
     return str(CATEGORY_LABELS.get(category, {}).get(key) or SECTION_LABELS[key])
 
 
-def normalize_sections(value) -> list[dict]:
-    """Known keys in the given order (duplicates dropped), missing keys appended; locked ones visible."""
+BLOCK_KEY_RE = re.compile(r"^b[1-9]\d{0,9}$")  # page builder blocks (apps.blocks): "b<id>"
+
+
+def is_block_key(key) -> bool:
+    return isinstance(key, str) and bool(BLOCK_KEY_RE.match(key))
+
+
+def normalize_sections(value, block_keys=None) -> list[dict]:
+    """Known keys in the given order (duplicates dropped), missing keys appended; locked ones visible.
+
+    Block keys ("b<id>") are kept where the pro put them. With `block_keys` (the page's existing
+    blocks), unknown block keys are dropped and the page's blocks missing from the list are inserted
+    just before Contact, so a block can never be lost or point to another page's block.
+    """
+    allowed = None if block_keys is None else set(block_keys)
     seen: dict[str, bool] = {}
     for item in value if isinstance(value, list) else []:
         if isinstance(item, dict):
             key, visible = item.get("key"), item.get("visible", True)
         else:
             key, visible = item, True
-        if key in SECTION_KEYS and key not in seen:
+        if key in seen:
+            continue
+        if key in SECTION_KEYS:
             seen[key] = bool(visible) or key in LOCKED_SECTIONS
+        elif is_block_key(key) and (allowed is None or key in allowed):
+            seen[key] = bool(visible)
     for key in SECTION_KEYS:
         seen.setdefault(key, True)
-    return [{"key": key, "visible": visible} for key, visible in seen.items()]
+    result = [{"key": key, "visible": visible} for key, visible in seen.items()]
+    missing = [key for key in (block_keys or ()) if key not in seen]
+    if missing:
+        at = next((i for i, s in enumerate(result) if s["key"] == "contact"), len(result))
+        result[at:at] = [{"key": key, "visible": True} for key in missing]
+    return result
 
 
 # --- fonts, corners, layouts ------------------------------------------------------------------
@@ -461,7 +484,24 @@ def live_data(pt: ProfileTheme) -> dict:
     }
 
 
+def block_keys_for(profile: Profile) -> list[str]:
+    """Section keys of the page's blocks the public may see (moderated blocks excluded)."""
+    from apps.blocks.models import PageBlock
+
+    if profile.pk is None:
+        return []
+    pks = PageBlock.objects.filter(profile=profile, moderated=False).order_by("pk").values_list("pk", flat=True)
+    return [f"b{pk}" for pk in pks]
+
+
 def resolve(profile: Profile, source="live") -> ResolvedTheme:
+    """Settings a page renders with, the page's blocks placed in its sections (apps.blocks)."""
+    resolved = _resolve_settings(profile, source)
+    resolved.sections = normalize_sections(resolved.sections, block_keys=block_keys_for(profile))
+    return resolved
+
+
+def _resolve_settings(profile: Profile, source="live") -> ResolvedTheme:
     """Settings a page renders with: the live ones, the draft (preview) or a theme's defaults."""
     if isinstance(source, Theme):
         return _resolved(source, theme_defaults(source), version_seed="preview")
@@ -764,3 +804,68 @@ def notification_status(profile: Profile, since=None) -> dict:
 
 
 STATUS_POLL_WINDOW = timedelta(minutes=2)
+
+
+# --- page outline (page builder, apps.blocks) -------------------------------------------------
+# The outline is edited live (like the rest of the page content) and mirrored into the draft of the
+# customizer when there is one, so publishing a draft never brings back an old order.
+
+
+@transaction.atomic
+def _edit_sections(profile: Profile, mutate) -> list[dict]:
+    from apps.blocks.models import PageBlock
+
+    pt = _get_or_create_settings(profile)
+    keys = [f"b{pk}" for pk in PageBlock.objects.filter(profile=profile).order_by("pk").values_list("pk", flat=True)]
+    pt.sections = mutate(normalize_sections(pt.sections, block_keys=keys))
+    fields = ["sections", "updated_at"]
+    if pt.draft:
+        pt.draft = {**pt.draft, "sections": mutate(normalize_sections(pt.draft.get("sections"), block_keys=keys))}
+        fields.append("draft")
+    pt.save(update_fields=fields)
+    return pt.sections
+
+
+def insert_block_section(profile: Profile, key: str) -> None:
+    """A new block appears just before Contact (normalize_sections inserts the missing keys there)."""
+    _edit_sections(profile, lambda sections: sections)
+
+
+def remove_block_section(profile: Profile, key: str) -> None:
+    _edit_sections(profile, lambda sections: [s for s in sections if s["key"] != key])
+
+
+def page_outline(profile: Profile) -> list[dict]:
+    """Live order of the page (sections and blocks), for the page builder."""
+    from apps.blocks.models import PageBlock
+
+    pt = settings_for(profile)
+    keys = [f"b{pk}" for pk in PageBlock.objects.filter(profile=profile).order_by("pk").values_list("pk", flat=True)]
+    raw = pt.sections if pt is not None else default_theme().sections
+    return normalize_sections(raw, block_keys=keys)
+
+
+def move_section(profile: Profile, key: str, direction: str) -> None:
+    """Swap with the neighbour above/below. Contact stays last: nothing moves below it."""
+
+    def mutate(sections):
+        index = next((i for i, s in enumerate(sections) if s["key"] == key), None)
+        if index is None or key == "contact":
+            return sections
+        target = index - 1 if direction == "up" else index + 1
+        if not 0 <= target < len(sections) or sections[target]["key"] == "contact":
+            return sections
+        sections[index], sections[target] = sections[target], sections[index]
+        return sections
+
+    _edit_sections(profile, mutate)
+
+
+def set_section_visible(profile: Profile, key: str, visible: bool) -> None:
+    def mutate(sections):
+        for s in sections:
+            if s["key"] == key:
+                s["visible"] = bool(visible) or key in LOCKED_SECTIONS
+        return sections
+
+    _edit_sections(profile, mutate)

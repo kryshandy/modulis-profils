@@ -1,0 +1,6 @@
+<div class="t-faq">
+  {% for item in block.items %}<details class="t-faq__item" data-reveal{% if forloop.first %} open{% endif %}>
+    <summary class="t-faq__q"><h3 class="t-faq__qt">{{ item.q }}</h3><span class="t-faq__sign" aria-hidden="true"></span></summary>
+    <div class="t-faq__a t-prose">{{ item.a|linebreaks }}</div>
+  </details>{% endfor %}
+</div>

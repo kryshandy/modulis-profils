@@ -1,0 +1,9 @@
+{% load i18n %}<div class="t-banner" data-reveal>
+  <h2 class="t-banner__title" id="t-h-{{ block.anchor }}">{{ block.title }}</h2>
+  {% if block.data.text %}<p class="t-banner__text">{{ block.data.text }}</p>{% endif %}
+  {% with action=block.data.button_action label=block.data.button_label %}
+    {% if action == "whatsapp" and whatsapp_url %}<p><a class="btn btn--primary t-banner__btn" href="{{ whatsapp_url }}" rel="{{ contact_rel }}" data-track="whatsapp">{% if label %}{{ label }}{% else %}{% translate "Écrire sur WhatsApp" %}{% endif %}<span class="t-arrow" aria-hidden="true">→</span></a></p>
+    {% elif action == "call" and phone %}<p><a class="btn btn--primary t-banner__btn" href="tel:{{ phone }}" data-track="call">{% if label %}{{ label }}{% else %}{% translate "Appeler" %}{% endif %}<span class="t-arrow" aria-hidden="true">→</span></a></p>
+    {% elif action == "link" and block.data.button_url %}<p><a class="btn btn--primary t-banner__btn" href="{{ block.data.button_url }}" rel="{{ user_link_rel }}" target="_blank">{% if label %}{{ label }}{% else %}{% translate "En savoir plus" %}{% endif %}<span class="t-arrow" aria-hidden="true">↗</span></a></p>{% endif %}
+  {% endwith %}
+</div>

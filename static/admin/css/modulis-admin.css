@@ -273,3 +273,6 @@ input.mx-2fa-code:focus { border-color: #17BDBB; outline: 3px solid color-mix(in
   input.mx-2fa-code { max-width: none; }
 }
 @media (max-width: 359px) { .mx-2fa-codes__list { grid-template-columns: minmax(0, 1fr); } }
+
+/* Page builder blocks (apps.blocks admin): read-only JSON of the content */
+.mp-json { white-space: pre-wrap; max-width: 60rem; margin: 0; font-size: .85rem; }

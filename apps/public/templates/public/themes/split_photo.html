@@ -15,7 +15,7 @@
       {% include "public/themes/_facts.html" %}
     </header>
     <div class="t-body">
-      {% for s in sections %}{% section_template s.key as tpl %}{% include tpl with label=s.label %}{% endfor %}
+      {% for s in sections %}{% section_template s.key as tpl %}{% include tpl with label=s.label block=s.block %}{% endfor %}
     </div>
   </div>
 </div>

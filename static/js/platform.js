@@ -6,6 +6,7 @@
   var items = document.querySelectorAll(".pf-reveal");
   if (!items.length || !("IntersectionObserver" in window)) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (window.location.hash) return; // opened on an anchor (/#comment): show the page as is
 
   var fold = window.innerHeight;
   var io = new IntersectionObserver(function (entries) {
@@ -23,4 +24,17 @@
     el.classList.add("is-pending");
     io.observe(el);
   });
+  // Safety net: anything in the viewport still hidden after 1.5 s is shown.
+  function rescue() {
+    document.querySelectorAll(".pf-reveal.is-pending").forEach(function (el) {
+      var box = el.getBoundingClientRect();
+      if (box.top < window.innerHeight && box.bottom > 0) {
+        el.classList.add("is-in");
+        el.classList.remove("is-pending");
+        io.unobserve(el);
+      }
+    });
+  }
+  window.setTimeout(rescue, 1500);
+  window.addEventListener("hashchange", function () { window.setTimeout(rescue, 600); });
 })();

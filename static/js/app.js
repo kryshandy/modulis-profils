@@ -117,7 +117,7 @@
     if (t.matches("select[data-autosubmit]")) { t.form.submit(); }
     if (t.matches("input[type=file][data-preview]")) { preview(t); }
     if (t.matches("input[type=file][data-files-label]")) {
-      var out = $("[data-files-output]", t.closest("form"));
+      var out = $("[data-files-output]", t.closest(".blockimg") || t.closest("form"));
       if (out) { out.textContent = t.files.length ? t.files.length + " photo(s) choisie(s) ✓" : ""; }
     }
   });
