@@ -18,7 +18,28 @@ THUMB_SIZE = 56  # profile cards
 THUMB_MAX_VARIANT = 160  # a 56 px thumbnail never downloads more than the 160 px copy
 AVATAR_SIZE = 160  # profile page photo
 AVATAR_MAX_VARIANT = 400  # 2.5× density at most: never the 800 px copy
-GALLERY_SIZES = "(min-width: 40rem) 14rem, 50vw"  # profile.css: 2 columns, 3 from 40rem in a 42rem page
+GALLERY_MAX_REM = 80  # themes/base.css: --wrap 84rem minus the gutters
+
+
+def gallery_sizes(index: int, count: int) -> str:
+    """`sizes` of gallery photo `index` among `count`, mirroring the grid of static/css/themes/base.css.
+
+    Phone (< 40rem): 2 columns, the first photo spans both unless there are 2 or 4. From 40rem: 6
+    columns; 1 photo = full width, 2 or 4 = halves, the first of 3, 5 or more = 2/3, the others = 1/3
+    (the last two of 5 = halves). Announcing the real width matters: the browser picks the copy from
+    it, and a too-small value makes it stretch the 160 px thumbnail (blurry photos).
+    """
+    phone_full = count == 1 or (index == 0 and count not in (2, 4))
+    if count == 1:
+        fraction = 1.0
+    elif count in (2, 4) or (count == 5 and index >= 3):
+        fraction = 0.5
+    elif index == 0:
+        fraction = 2 / 3
+    else:
+        fraction = 1 / 3
+    wide = round(GALLERY_MAX_REM * fraction)
+    return f"(min-width: 84rem) {wide}rem, (min-width: 40rem) {round(100 * fraction)}vw, {100 if phone_full else 50}vw"
 
 
 def variants(fieldfile) -> list[tuple[str, int]]:

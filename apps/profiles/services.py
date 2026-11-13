@@ -860,6 +860,14 @@ def delete_media(profile: Profile, media_id: int) -> None:
     refresh_seo_state(profile)
 
 
+def set_cover(profile: Profile, media_id: int | None) -> None:
+    """Use one of the page's own gallery photos as cover image (None = back to the drawn composition)."""
+    media = profile.media.get(pk=media_id) if media_id else None  # foreign id: DoesNotExist
+    Profile.objects.filter(pk=profile.pk).update(cover=media, updated_at=timezone.now())
+    profile.cover = media
+    refresh_seo_state(profile)
+
+
 # Links -----------------------------------------------------------------------------------------
 
 

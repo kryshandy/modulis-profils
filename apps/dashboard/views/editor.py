@@ -283,6 +283,16 @@ def media_delete(request, pk: int):
 
 @profile_required
 @require_POST
+def media_cover(request, pk: int):
+    """Toggle: this photo becomes the cover image of the page, or stops being it."""
+    current = request.profile.cover_id == pk
+    _owned(profiles.set_cover, request.profile, None if current else pk)
+    message = _("Image de couverture retirée.") if current else _("Image de couverture enregistrée ✓")
+    return _respond(request, "galerie", message=message)
+
+
+@profile_required
+@require_POST
 def media_move(request, pk: int):
     _owned(profiles.move_item, request.profile, "media", pk, _direction(request))
     return _respond(request, "galerie", message=_("Ordre enregistré ✓"))

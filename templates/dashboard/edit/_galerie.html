@@ -24,6 +24,7 @@
 
   <section class="card stack">
     {% if media %}
+      <p class="tip">{% translate "Choisis une photo « couverture » : elle remplace le grand visuel coloré en haut de ta page (modèles Signature, Vitrine et Studio)." %}</p>
       <ul class="gallery">
         {% for m in media %}
         <li class="gallery__item">
@@ -39,6 +40,10 @@
               {% csrf_token %}
               <button class="iconbtn" type="submit" name="direction" value="up" aria-label="{% translate 'Avant' %}"{% if forloop.first %} disabled{% endif %}>{% icon "left" %}</button>
               <button class="iconbtn" type="submit" name="direction" value="down" aria-label="{% translate 'Après' %}"{% if forloop.last %} disabled{% endif %}>{% icon "right" %}</button>
+            </form>
+            <form method="post" action="{% url 'dashboard:media_cover' m.pk %}" hx-post="{% url 'dashboard:media_cover' m.pk %}" hx-target="#panel" hx-swap="outerHTML">
+              {% csrf_token %}
+              <button class="chipbtn{% if profile.cover_id == m.pk %} chipbtn--on{% endif %}" type="submit" aria-pressed="{% if profile.cover_id == m.pk %}true{% else %}false{% endif %}">{% if profile.cover_id == m.pk %}{% icon "check" %}<span>{% translate "Couverture" %}</span>{% else %}<span>{% translate "Utiliser en couverture" %}</span>{% endif %}</button>
             </form>
             <form method="post" action="{% url 'dashboard:media_delete' m.pk %}" hx-post="{% url 'dashboard:media_delete' m.pk %}" hx-target="#panel" hx-swap="outerHTML" hx-confirm="{% translate 'Supprimer cette photo ?' %}">
               {% csrf_token %}

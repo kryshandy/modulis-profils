@@ -20,3 +20,11 @@ TURNSTILE_SECRET_KEY = ""
 KLIZ_ENABLED = False
 TRUSTED_PROXY_IPS: list[str] = []
 STAFF_2FA_REQUIRED = True  # conftest marks force_login() staff sessions as verified (apps.security.testing)
+
+# Legal identity filled in so the legal.W001 production check stays quiet in tests (tested on its own).
+LEGAL_FORM = "SARL (test)"
+LEGAL_RCCM = "RC/TEST/0000"
+LEGAL_NIU = "M000000000000T"
+LEGAL_ADDRESS = "Douala (test)"
+LEGAL_PUBLICATION_DIRECTOR = "Direction (test)"
+LEGAL_HOST_NAME = "Hébergeur (test)"

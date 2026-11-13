@@ -404,18 +404,43 @@ def _profile_breadcrumb(profile: Profile, name: str) -> list[tuple[str, str]]:
     return crumbs
 
 
+# Cover image (a gallery photo chosen by the pro): where it goes and how wide it is displayed.
+COVER_REPLACES_PHOTO = ("magazine", "split_photo")
+COVER_SIZES = {
+    "cover_color": (480, "(min-width: 48rem) 27rem, 20rem"),  # cover_color.css: the colour slab
+    "magazine": (560, "(min-width: 64rem) 36rem, 100vw"),
+    "split_photo": (640, "(min-width: 64rem) 40vw, 100vw"),
+}
+
+
+def _cover_image(profile, layout: str) -> dict | None:
+    if layout not in COVER_SIZES or not profile.cover_id:
+        return None
+    media = profile.cover
+    if media is None or media.profile_id != profile.pk or not media.image:
+        return None
+    display, sizes = COVER_SIZES[layout]
+    return responsive.responsive_image(
+        media.image,
+        display_width=display,
+        width=media.width or 1200,
+        height=media.height or 800,
+        sizes=sizes,
+        original_width=media.width or None,
+    )
+
+
 def _gallery(media, alt: str) -> list[dict]:
     gallery = []
+    media = [m for m in media if m.image]
     for index, m in enumerate(media):
-        if not m.image:
-            continue
         width, height = m.width or 800, m.height or 600
         image = responsive.responsive_image(
             m.image,
-            display_width=320,
+            display_width=400,
             width=width,
             height=height,
-            sizes=responsive.GALLERY_SIZES,
+            sizes=responsive.gallery_sizes(index, len(media)),
             original_width=m.width or None,
         )
         gallery.append(
@@ -611,6 +636,9 @@ def _profile_context(
             theme.layout, (responsive.AVATAR_SIZE, responsive.AVATAR_MAX_VARIANT, "")
         )
         photo = responsive.responsive_image(profile.photo, display_width=display, max_width=max_variant, sizes=sizes)
+    cover = _cover_image(profile, theme.layout)
+    if cover and theme.layout in COVER_REPLACES_PHOTO:
+        photo = cover  # image-first layouts: the big frame shows the cover instead of the portrait
     # JSON-LD image: the real photo only (og.png is noindex), never a placeholder (audit #1)
     entity = jsonld.profile_entity(profile, image_url=profile.photo.url if profile.photo else "")
     graph = jsonld.page_graph(
@@ -640,6 +668,7 @@ def _profile_context(
         "services": services,
         "gallery": _gallery(media, alt),
         "photo": photo,
+        "cover": cover,
         "links": links,
         "phone": profile.phone_public,
         "whatsapp_url": f"https://wa.me/{whatsapp}" if whatsapp else "",

@@ -1,4 +1,4 @@
-{% extends "public/themes/_base.html" %}
+{% extends "public/themes/_base.html" %}{% load public_images %}
 {# Signature — Modulis editorial-bold: XXL variable headline, colour composition with the portrait as a sticker, #}
 {# key facts, then a colour slab with the services marquee. Looks complete with or without a photo. #}
 {% block hero %}
@@ -11,7 +11,7 @@
         {% include "public/themes/_actions.html" %}
       </div>
       <div class="t-sig" data-parallax>
-        <span class="t-sig__slab" aria-hidden="true"><span class="t-sig__mono">{{ initials }}</span></span>
+        {% if cover %}<span class="t-sig__slab t-sig__slab--img"><img class="t-sig__img" {% img_attrs cover %} alt="{{ photo_alt }}" fetchpriority="high" decoding="async"></span>{% else %}<span class="t-sig__slab" aria-hidden="true"><span class="t-sig__mono">{{ initials }}</span></span>{% endif %}
         <span class="t-sig__sun" aria-hidden="true"></span>
         <span class="t-sig__ring" aria-hidden="true"></span>
         <span class="t-sig__dots" aria-hidden="true"></span>

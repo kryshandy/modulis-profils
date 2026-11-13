@@ -28,6 +28,7 @@ urlpatterns = [
     path("page/galerie/<int:pk>/legende", editor.media_update, name="media_update"),
     path("page/galerie/<int:pk>/supprimer", editor.media_delete, name="media_delete"),
     path("page/galerie/<int:pk>/deplacer", editor.media_move, name="media_move"),
+    path("page/galerie/<int:pk>/couverture", editor.media_cover, name="media_cover"),
     path("page/liens/ajouter", editor.link_add, name="link_add"),
     path("page/liens/<int:pk>/supprimer", editor.link_delete, name="link_delete"),
     path("page/liens/<int:pk>/deplacer", editor.link_move, name="link_move"),

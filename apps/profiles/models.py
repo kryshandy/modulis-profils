@@ -50,6 +50,16 @@ class Profile(TimeStampedModel):
     photo_width = models.PositiveIntegerField(default=0, editable=False)
     photo_height = models.PositiveIntegerField(default=0, editable=False)
     cover_color = models.CharField(_("couleur"), max_length=7, default="#0A7F7D")
+    # Cover image chosen among the gallery photos: fills the big visual of the page (Signature slab,
+    # Vitrine and Studio frames). Empty = the drawn composition (initials) or the portrait.
+    cover = models.ForeignKey(
+        "profiles.ProfileMedia",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("image de couverture"),
+    )
 
     # Contact (shown as action buttons)
     whatsapp = models.CharField(_("WhatsApp (E.164)"), max_length=16, blank=True)
