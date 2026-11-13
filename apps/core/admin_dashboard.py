@@ -46,6 +46,7 @@ def get_platform_state() -> dict:
 
     from apps.platform.backups import backup_status
     from apps.platform.services import get_settings
+    from apps.security.checks import bootstrap_admin_exists
 
     s = get_settings()
     chips = [
@@ -60,6 +61,7 @@ def get_platform_state() -> dict:
     return {
         "chips": chips,
         "backup": backup_status(),
+        "bootstrap_admin": bootstrap_admin_exists(),
         "maintenance": s.maintenance_mode,
         "announcement": s.announcement,
     }

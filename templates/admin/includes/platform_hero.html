@@ -3,6 +3,7 @@
   <div>
     <h2 id="mp-hero-title" class="mp-hero__title">{% translate "État de la plateforme" %}</h2>
     <ul class="mp-hero__chips">
+      {% if state.bootstrap_admin %}<li><span class="mp-state mp-state--error">{% translate "Super-admin d'évaluation actif : à supprimer avant la mise en ligne" %}</span></li>{% endif %}
       {% if state.maintenance %}<li><span class="mp-state mp-state--error">{% translate "Maintenance en cours" %}</span></li>{% endif %}
       {% for chip in state.chips %}
         <li><span class="mp-state {% if chip.on %}mp-state--on{% else %}mp-state--off{% endif %}">{{ chip.label }} : {% if chip.on %}{% translate "activé" %}{% else %}{% translate "désactivé" %}{% endif %}</span></li>

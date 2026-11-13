@@ -136,3 +136,30 @@ En cas de téléphone **volé**, changez aussi votre mot de passe (ci-dessous) e
   compte signale un mot de passe compromis → le changer.
 - Un compte d'équipe sans 2FA activée apparaît dans la colonne « 2FA » de la liste des utilisateurs (et dans le
   résumé `apps.security.services.two_factor_summary()` destiné au centre de contrôle).
+
+## Super-admin d'évaluation (mot de passe fixe, à supprimer)
+
+Pour évaluer l'administration sans dépendre d'un compte de démonstration :
+
+```bash
+make superadmin            # crée le compte, ou lui remet son mot de passe fixe
+make superadmin delete=1   # le supprime (refusé s'il est le dernier super-admin actif)
+```
+
+- Numéro : `BOOTSTRAP_ADMIN_PHONE` (par défaut `+237699000000`) ; mot de passe : `BOOTSTRAP_ADMIN_PASSWORD`,
+  48 caractères aléatoires générés dans `.env` (jamais versionné, jamais affiché par la commande).
+- La double authentification reste obligatoire : QR code à scanner à la première connexion.
+- Tant qu'il existe, le bandeau de l'admin l'affiche en rouge et, en production, `check --deploy`
+  émet `security.W101`.
+
+## Qui peut créer ou supprimer un compte de l'équipe
+
+| Action | Super-admin | Membre de l'équipe (même avec les permissions « utilisateur ») | Pro / visiteur |
+|---|---|---|---|
+| Créer un compte de l'équipe (admin) | oui, depuis l'admin ou `make admin` | **non** (403) | **non** : aucune inscription n'ouvre l'admin |
+| Donner les droits super-admin ou des permissions | oui, jamais sur soi-même | non (champs en lecture seule) | non |
+| Supprimer un compte de l'équipe | oui | non | non |
+| Supprimer un super-admin | oui, sauf soi-même et sauf le **dernier** super-admin actif | non | non |
+| Se connecter à l'admin avec un code SMS / WhatsApp | jamais : mot de passe + double authentification | jamais | — |
+
+Toutes ces actions sont inscrites au journal d'audit.

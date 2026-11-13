@@ -200,12 +200,33 @@ class UserAdmin(BaseUserAdmin):
         if change and set(PRIVILEGE_FIELDS) & set(form.changed_data):
             platform.audit(request.user, "user.permissions", obj.phone, fields=sorted(form.changed_data))
 
+    def has_add_permission(self, request):
+        """The "add user" form creates TEAM accounts: super-admins only (no other way in, ADR-0010)."""
+        return bool(request.user.is_active and request.user.is_superuser)
+
+    def has_delete_permission(self, request, obj=None):
+        """Never yourself, a super-admin only by a super-admin, never the last active super-admin."""
+        if not super().has_delete_permission(request, obj):
+            return False
+        if obj is None:
+            return True
+        if obj.pk == request.user.pk:
+            return False
+        if obj.is_superuser:
+            if not request.user.is_superuser:
+                return False
+            return User.objects.filter(is_superuser=True, is_active=True).exclude(pk=obj.pk).exists()
+        return bool(request.user.is_superuser or not obj.is_staff)  # team accounts: super-admins only
+
     def delete_model(self, request, obj):
         phone, pk = obj.phone, obj.pk
         super().delete_model(request, obj)
         platform.audit(request.user, "user.delete", phone, user_id=pk)
 
     def delete_queryset(self, request, queryset):
+        refused = [u for u in queryset if not self.has_delete_permission(request, u)]
+        if refused:  # bulk action: the per-object rule applies to every selected account
+            raise PermissionDenied
         doomed = list(queryset.values_list("pk", "phone"))
         super().delete_queryset(request, queryset)
         for pk, phone in doomed:
