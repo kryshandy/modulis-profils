@@ -154,30 +154,52 @@
 {% if cities %}
 <section class="section pf-section pf-cities" id="villes">
   <div class="pf-wrap">
-    <h2 class="pf-kicker"><span class="pf-sq pf-sq--teal" aria-hidden="true"></span>{% translate "Villes" %}</h2>
-    <ul class="chips pf-cloud">
-      {% for c in cities %}<li>{% if c.linked %}<a class="chip" href="{{ c.url }}">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></a>{% else %}<span class="chip">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></span>{% endif %}</li>{% endfor %}
+    <div class="pf-cities__head">
+      <h2 class="pf-kicker"><span class="pf-sq pf-sq--teal" aria-hidden="true"></span>{% translate "Villes" %}</h2>
+      <div class="pf-cities__controls" id="pf-cities-controls" hidden>
+        <label class="pf-sr" for="pf-city-search">{% translate "Filtrer les villes" %}</label>
+        <input class="pf-city-search" id="pf-city-search" type="search" placeholder="{% translate 'Chercher une ville…' %}" autocomplete="off">
+        <button class="pf-btn pf-btn--sm pf-btn--line" type="button" id="pf-city-all" aria-pressed="true">{% translate "Toutes les villes" %}</button>
+      </div>
+    </div>
+    <ul class="chips pf-cloud" id="pf-city-list">
+      {% for c in cities %}<li data-city-item="{{ c.city.name|lower }}">{% if c.linked %}<a class="chip pf-city" href="{{ c.url }}" data-city-slug="{{ c.city.slug }}" data-city-name="{{ c.city.name }}" data-city-count="{{ c.count }}" data-city-url="{{ c.url }}" aria-pressed="false">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></a>{% else %}<button type="button" class="chip pf-city" data-city-slug="{{ c.city.slug }}" data-city-name="{{ c.city.name }}" data-city-count="{{ c.count }}" aria-pressed="false">{{ c.city.name }} <span class="chip__count">{{ c.count }}</span></button>{% endif %}</li>{% endfor %}
     </ul>
+    <p class="pf-empty pf-cities__empty" id="pf-cities-empty" hidden>{% translate "Aucune ville ne correspond à ta recherche." %}</p>
+    <div class="pf-city-banner" id="pf-city-banner" role="status" aria-live="polite" hidden>
+      <div class="pf-city-banner__info">
+        <strong id="pf-city-banner-title"></strong>
+        <span id="pf-city-banner-meta"></span>
+      </div>
+      <div class="pf-city-banner__actions">
+        <a class="pf-btn pf-btn--sm pf-btn--aqua" id="pf-city-banner-link" href="#villes" hidden><span class="pf-btn__dot" aria-hidden="true"></span><span id="pf-city-banner-link-label"></span></a>
+        <button class="pf-btn pf-btn--sm pf-btn--line" type="button" id="pf-city-banner-reset">{% translate "Tout afficher" %}</button>
+      </div>
+    </div>
   </div>
 </section>
 {% endif %}
 
 {% if combos %}
-<section class="section pf-section pf-section--tight">
+<section class="section pf-section pf-section--tight" id="metiers">
   <div class="pf-wrap">
     <h2 class="pf-kicker"><span class="pf-sq pf-sq--coral" aria-hidden="true"></span>{% translate "Métiers" %}</h2>
-    <ul class="chips pf-chips">
-      {% for c in combos %}<li>{% if c.linked %}<a class="chip" href="{{ c.url }}">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</a>{% else %}<span class="chip">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</span>{% endif %}</li>{% endfor %}
+    <ul class="chips pf-chips" id="pf-combo-list">
+      {% for c in combos %}<li data-city-slug="{{ c.city.slug }}" data-trade-slug="{{ c.trade.plural_slug }}">{% if c.linked %}<a class="chip pf-combo" href="{{ c.url }}" data-city-slug="{{ c.city.slug }}" data-trade-slug="{{ c.trade.plural_slug }}" data-combo-label="{{ c.trade.plural_name }} à {{ c.city.name }}" aria-pressed="false">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</a>{% else %}<button type="button" class="chip pf-combo" data-city-slug="{{ c.city.slug }}" data-trade-slug="{{ c.trade.plural_slug }}" data-combo-label="{{ c.trade.plural_name }} à {{ c.city.name }}" aria-pressed="false">{% blocktranslate with plural=c.trade.plural_name city=c.city.name %}{{ plural }} à {{ city }}{% endblocktranslate %}</button>{% endif %}</li>{% endfor %}
     </ul>
   </div>
 </section>
 {% endif %}
 
 {% if recent %}
-<section class="section pf-section pf-section--tight">
+<section class="section pf-section pf-section--tight" id="pages-recentes">
   <div class="pf-wrap">
     <h2 class="pf-kicker"><span class="pf-sq pf-sq--saffron" aria-hidden="true"></span>{% translate "Pages récentes" %}</h2>
-    <ul class="pro-list pf-pros pf-reveal">{% for p in recent %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+    <ul class="pro-list pf-pros pf-reveal" id="pf-pros-list">{% for p in recent %}{% include "public/_profile_card.html" %}{% endfor %}</ul>
+    <div class="pf-empty pf-pros__empty" id="pf-pros-empty" hidden>
+      <p>{% translate "Aucune des pages récentes affichées ici ne correspond à ce filtre." %}</p>
+      <button class="pf-btn pf-btn--sm pf-btn--line" type="button" id="pf-pros-reset">{% translate "Afficher toutes les pages" %}</button>
+    </div>
   </div>
 </section>
 {% endif %}
@@ -193,4 +215,4 @@
 </section>
 {% endblock %}
 {% block footer %}{% include "partials/platform_footer.html" %}{% endblock %}
-{% block scripts %}<script src="{% static 'js/platform.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/platform.js' %}?v=20261127" defer></script>{% endblock %}

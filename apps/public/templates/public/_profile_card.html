@@ -1,4 +1,4 @@
-{% load public_images %}<li class="pro-card">
+{% load public_images %}<li class="pro-card" data-city="{{ p.city.slug|default:'' }}" data-trade="{{ p.trade.plural_slug|default:'' }}">
   <a class="pro-card__link" href="{{ p.get_absolute_url }}">
     {% if p.photo %}<img class="pro-card__photo" {% thumb_attrs p.photo %} alt="" loading="lazy" decoding="async">{% else %}<span class="pro-card__initial" aria-hidden="true">{{ p.display_name|first|upper }}</span>{% endif %}
     <span class="pro-card__text">
