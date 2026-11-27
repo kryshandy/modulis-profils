@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 from .base import *  # noqa: F403
 from .base import env
 
@@ -11,6 +14,8 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]  # fast tes
 SMS_BACKEND = "apps.accounts.sms.MemorySmsBackend"
 HUEY = {"huey_class": "huey.MemoryHuey", "name": "test", "immediate": True}
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+STATIC_ROOT = Path(tempfile.gettempdir()) / "modulis-test-staticfiles"
+STATIC_ROOT.mkdir(parents=True, exist_ok=True)
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
