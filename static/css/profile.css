@@ -10,6 +10,38 @@
   --bg: #f6f8f8;
   --card: #ffffff;
   --radius: 14px;
+  --badge-bg: #e3f5f4;
+  --banner-bg: #fff4e5;
+  --banner-line: #f5c98a;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --teal: #17BDBB;
+    --teal-dark: #6FDCDA;
+    --ink: #EAF6F5;
+    --muted: #9ED6D3;
+    --line: rgba(234, 246, 245, .14);
+    --bg: #03201F;
+    --card: #082E2D;
+    --badge-bg: #0F4A47;
+    --banner-bg: #3A2E10;
+    --banner-line: #7A5C18;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --teal: #17BDBB;
+  --teal-dark: #6FDCDA;
+  --ink: #EAF6F5;
+  --muted: #9ED6D3;
+  --line: rgba(234, 246, 245, .14);
+  --bg: #03201F;
+  --card: #082E2D;
+  --badge-bg: #0F4A47;
+  --banner-bg: #3A2E10;
+  --banner-line: #7A5C18;
+  color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -43,7 +75,7 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .btn--lg { min-height: 52px; padding: .8rem 1.4rem; font-size: 1.05rem; }
 
 .banner { padding: .75rem 1rem; border-radius: var(--radius); margin: 0 0 1rem; }
-.banner--private { background: #fff4e5; border: 1px solid #f5c98a; }
+.banner--private { background: var(--banner-bg); border: 1px solid var(--banner-line); }
 
 .profile-card { background: var(--card); border-radius: var(--radius); padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
 .profile-head { text-align: center; }
@@ -56,7 +88,7 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .profile-head__title { font-size: 1.05rem; font-weight: 500; color: var(--muted); margin: .25rem 0 0; }
 .profile-head__area { color: var(--muted); margin: .25rem 0 0; font-size: .95rem; }
 .badge { display: inline-block; margin: .4rem 0 0; padding: .1rem .6rem; border-radius: 999px; font-size: .85rem; font-weight: 600; }
-.badge--verified { background: #e3f5f4; color: var(--teal-dark); }
+.badge--verified { background: var(--badge-bg); color: var(--teal-dark); }
 
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: 1.25rem 0; }
 .actions .btn--ghost { grid-column: 1 / -1; }

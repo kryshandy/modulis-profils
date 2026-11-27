@@ -1,3 +1,5 @@
 {% load static %}{# Platform public pages (home, city, directory, errors): brand head + platform.css, replaces profile.css (block "styles"). #}
+  <meta name="color-scheme" content="light dark">
+  <script src="{% static 'js/theme-mode.js' %}"></script>
   {% include "partials/brand_head.html" %}
   <link rel="stylesheet" href="{% static 'css/platform.css' %}">

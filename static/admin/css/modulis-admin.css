@@ -57,7 +57,7 @@ html[data-theme="light"], :root {
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --primary: #0B4948;
     --primary-fg: #EAF6F5;
     --body-fg: #EAF6F5;

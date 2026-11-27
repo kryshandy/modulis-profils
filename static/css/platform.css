@@ -385,24 +385,66 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
   padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--pf-forest-line); font-size: .88rem; color: var(--pf-mint);
 }
 
+/* Theme toggle button inside .pf-nav__pill */
+.platform .pf-theme-toggle {
+  display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border-radius: 999px;
+  border: 0; background: transparent; color: var(--pf-ink); cursor: pointer;
+  transition: background-color .25s, color .25s, transform .15s;
+}
+.platform .pf-theme-toggle:hover { background: rgba(22, 36, 44, .08); }
+.platform .pf-theme-toggle:active { transform: scale(.94); }
+.platform .pf-theme-toggle .theme-icon--moon { display: none; }
+.platform .pf-theme-toggle[data-effective-theme="dark"] .theme-icon--sun { display: none; }
+.platform .pf-theme-toggle[data-effective-theme="dark"] .theme-icon--moon { display: block; }
+
 /* Dark mode: the forest night of the Espace pro; colour panels stay light islands with ink text. */
 @media (prefers-color-scheme: dark) {
-  body.platform {
+  :root:not([data-theme="light"]) body.platform {
     --pf-paper: #03201F; --pf-white: #082E2D; --pf-ink: #EAF6F5; --pf-ink-2: #9ED6D3; --pf-line: rgba(234, 246, 245, .14);
     --pf-forest: #0A403E; --pf-forest-2: #0E4E4C; --pf-nav-bg: rgba(3, 32, 31, .82); --pf-mute: rgba(234, 246, 245, .34);
     color-scheme: dark;
   }
-  .platform .pf-hl, .platform .pf-facts b, .platform .pf-link, .platform .pf-error__code, .platform .pf-marquee__list li:nth-child(even) { color: var(--pf-aqua); }
-  .platform .pf-nav__pill { box-shadow: 0 0 0 1px var(--pf-line), 0 10px 30px -18px rgba(0, 0, 0, .8); }
-  .platform .pf-nav__links a:hover { background: rgba(234, 246, 245, .08); }
-  .platform .pf-btn { --hover-fg: var(--pf-ink-fixed); }
-  .platform .pf-btn--line { --hover: var(--pf-on-forest); }
-  .platform .pf-promise--coral:hover h3, .platform .pf-promise--coral:hover p,
-  .platform .pf-promise--saffron:hover h3, .platform .pf-promise--saffron:hover p { color: var(--pf-ink-fixed); }
-  .platform .pf-thumb i { --pf-white: #FFFFFF; }
-  .platform .pf-footer { background: #021A19; }
-  .platform .pro-card__link:hover { box-shadow: 0 0 0 1.5px var(--pf-aqua), 0 20px 34px -24px rgba(0, 0, 0, .8); }
+  :root:not([data-theme="light"]) .platform .pf-hl,
+  :root:not([data-theme="light"]) .platform .pf-facts b,
+  :root:not([data-theme="light"]) .platform .pf-link,
+  :root:not([data-theme="light"]) .platform .pf-error__code,
+  :root:not([data-theme="light"]) .platform .pf-marquee__list li:nth-child(even) { color: var(--pf-aqua); }
+  :root:not([data-theme="light"]) .platform .pf-nav__pill { box-shadow: 0 0 0 1px var(--pf-line), 0 10px 30px -18px rgba(0, 0, 0, .8); }
+  :root:not([data-theme="light"]) .platform .pf-nav__links a:hover,
+  :root:not([data-theme="light"]) .platform .pf-theme-toggle:hover { background: rgba(234, 246, 245, .08); }
+  :root:not([data-theme="light"]) .platform .pf-btn { --hover-fg: var(--pf-ink-fixed); }
+  :root:not([data-theme="light"]) .platform .pf-btn--line { --hover: var(--pf-on-forest); }
+  :root:not([data-theme="light"]) .platform .pf-promise--coral:hover h3,
+  :root:not([data-theme="light"]) .platform .pf-promise--coral:hover p,
+  :root:not([data-theme="light"]) .platform .pf-promise--saffron:hover h3,
+  :root:not([data-theme="light"]) .platform .pf-promise--saffron:hover p { color: var(--pf-ink-fixed); }
+  :root:not([data-theme="light"]) .platform .pf-thumb i { --pf-white: #FFFFFF; }
+  :root:not([data-theme="light"]) .platform .pf-footer { background: #021A19; }
+  :root:not([data-theme="light"]) .platform .pro-card__link:hover { box-shadow: 0 0 0 1.5px var(--pf-aqua), 0 20px 34px -24px rgba(0, 0, 0, .8); }
 }
+
+:root[data-theme="dark"] body.platform {
+  --pf-paper: #03201F; --pf-white: #082E2D; --pf-ink: #EAF6F5; --pf-ink-2: #9ED6D3; --pf-line: rgba(234, 246, 245, .14);
+  --pf-forest: #0A403E; --pf-forest-2: #0E4E4C; --pf-nav-bg: rgba(3, 32, 31, .82); --pf-mute: rgba(234, 246, 245, .34);
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .platform .pf-hl,
+:root[data-theme="dark"] .platform .pf-facts b,
+:root[data-theme="dark"] .platform .pf-link,
+:root[data-theme="dark"] .platform .pf-error__code,
+:root[data-theme="dark"] .platform .pf-marquee__list li:nth-child(even) { color: var(--pf-aqua); }
+:root[data-theme="dark"] .platform .pf-nav__pill { box-shadow: 0 0 0 1px var(--pf-line), 0 10px 30px -18px rgba(0, 0, 0, .8); }
+:root[data-theme="dark"] .platform .pf-nav__links a:hover,
+:root[data-theme="dark"] .platform .pf-theme-toggle:hover { background: rgba(234, 246, 245, .08); }
+:root[data-theme="dark"] .platform .pf-btn { --hover-fg: var(--pf-ink-fixed); }
+:root[data-theme="dark"] .platform .pf-btn--line { --hover: var(--pf-on-forest); }
+:root[data-theme="dark"] .platform .pf-promise--coral:hover h3,
+:root[data-theme="dark"] .platform .pf-promise--coral:hover p,
+:root[data-theme="dark"] .platform .pf-promise--saffron:hover h3,
+:root[data-theme="dark"] .platform .pf-promise--saffron:hover p { color: var(--pf-ink-fixed); }
+:root[data-theme="dark"] .platform .pf-thumb i { --pf-white: #FFFFFF; }
+:root[data-theme="dark"] .platform .pf-footer { background: #021A19; }
+:root[data-theme="dark"] .platform .pro-card__link:hover { box-shadow: 0 0 0 1.5px var(--pf-aqua), 0 20px 34px -24px rgba(0, 0, 0, .8); }
 
 @media (prefers-reduced-motion: reduce) {
   .platform *, .platform *::before, .platform *::after { animation: none !important; transition-duration: .01ms !important; }

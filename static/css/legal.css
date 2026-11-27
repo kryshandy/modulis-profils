@@ -102,9 +102,13 @@
 .lg-accept__hint { width: 100%; font-size: .88rem; }
 
 @media (prefers-color-scheme: dark) {
-  .lg-hero, .lg-accept { background: #021A19; }
-  .lg-check__error { color: #FF9B8E; }
+  :root:not([data-theme="light"]) .lg-hero,
+  :root:not([data-theme="light"]) .lg-accept { background: #021A19; }
+  :root:not([data-theme="light"]) .lg-check__error { color: #FF9B8E; }
 }
+:root[data-theme="dark"] .lg-hero,
+:root[data-theme="dark"] .lg-accept { background: #021A19; }
+:root[data-theme="dark"] .lg-check__error { color: #FF9B8E; }
 
 @media print {
   .pf-nav, .pf-skip, .pf-footer, .lg-toc, .lg-tabs { display: none !important; }
