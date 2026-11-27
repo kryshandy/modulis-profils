@@ -77,4 +77,5 @@ def send_renewal_reminders(today: date | None = None) -> int:
 def daily_billing() -> dict:
     reminders = send_renewal_reminders()  # before expiry, so J0 reminders still see "active" rows
     expired = services.expire_subscriptions()
-    return {"reminders": reminders, "expired": expired}
+    reconciled = services.reconcile_pending_payments()
+    return {"reminders": reminders, "expired": expired, "reconciled": reconciled["confirmed"]}

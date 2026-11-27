@@ -77,6 +77,7 @@ SYSTEM_RESERVED_SLUGS = {
     "modulis",
     "modulis-tech",
     "abonnement",
+    "paiements",
     "offres",
     "pro",
     "entreprise",
