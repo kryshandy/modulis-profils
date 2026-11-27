@@ -22,6 +22,7 @@ urlpatterns = [
     path("espace/modeles/", include("apps.themes.urls")),  # site templates gallery, preview, publish
     path("espace/", include("apps.dashboard.urls")),
     path("c/", include("apps.cards.urls")),
+    path("paiements/", include("apps.billing.urls")),
     path("signaler/", include("apps.moderation.urls")),
     path("", include("apps.analytics.urls")),  # /p/… pixel, /a/… click tracking
     path("", include("apps.seo.urls")),  # robots.txt, sitemaps, IndexNow key file
