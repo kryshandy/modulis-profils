@@ -405,9 +405,15 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
 .platform .pf-footer li a, .platform .pf-footer li span { display: inline-flex; align-items: center; min-height: 36px; color: var(--pf-mint); text-decoration: none; }
 .platform .pf-footer li a:hover { color: var(--pf-on-forest); text-decoration: underline; }
 @media (min-width: 900px) { .platform .pf-footer__grid { grid-template-columns: minmax(0, 6fr) repeat(2, minmax(0, 3fr)); gap: 36px; } .platform .pf-footer__about { grid-column: auto; } }
+.platform .pf-footer .pf-wrap { container-type: inline-size; }
 .platform .pf-wordmark {
-  display: flex; justify-content: space-between; margin-top: clamp(48px, 7vw, 96px); font-size: clamp(3.6rem, 18.6vw, 22rem);
-  font-weight: 800; line-height: .78; letter-spacing: -.03em; color: var(--pf-on-forest); user-select: none;
+  display: flex; justify-content: space-between; align-items: baseline; width: 100%; max-width: 100%;
+  margin-top: clamp(48px, 7vw, 96px); padding-inline: 2px;
+  font-size: clamp(2.6rem, 13.5vw, 10.6rem);
+  font-weight: 800; line-height: .82; letter-spacing: -.03em; color: var(--pf-on-forest); user-select: none;
+}
+@supports (font-size: 1cqi) {
+  .platform .pf-wordmark { font-size: clamp(2.6rem, 14.2cqi, 10.6rem); }
 }
 .platform .pf-wordmark span { display: inline-block; font-weight: var(--g, 300); font-variation-settings: "wdth" var(--w, 100); transition: font-variation-settings .5s var(--pf-ease), font-weight .5s var(--pf-ease), color .3s; }
 .platform .pf-wordmark span:nth-child(1) { --w: 62; --g: 800; } .platform .pf-wordmark span:nth-child(2) { --w: 125; --g: 200; }
