@@ -62,9 +62,9 @@ down: ## Docker : arrête (les données restent ; ne JAMAIS ajouter -v sans sauv
 logs: ## Docker : journaux (les SMS de dev s'affichent ici)
 	$(COMPOSE) logs -f web worker
 
-dtest: ## Docker : tests sur PostgreSQL
+dtest: ## Docker : tests sur PostgreSQL (base de test dédiée)
 	$(COMPOSE) run --rm -e DJANGO_SETTINGS_MODULE=config.settings.test \
-		-e TEST_DATABASE_URL=postgres://modulis:modulis@db:5432/modulis_profils web pytest -p no:cacheprovider --create-db
+		-e TEST_DATABASE_URL=postgres://modulis:modulis@db:5432/modulis_profils_test web pytest -p no:cacheprovider --create-db
 
 dshell: ## Docker : shell Django
 	$(COMPOSE) exec web python manage.py shell
