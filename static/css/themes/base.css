@@ -107,7 +107,7 @@ p, figure, dl, dd { margin: 0; }
 
 /* Hero shared pieces --------------------------------------------------------------------------- */
 .t-hero { position: relative; }
-.t-name { font-size: var(--fs-display); line-height: .9; overflow-wrap: break-word; hyphens: manual; }
+.t-name { font-size: var(--fs-display); line-height: .9; overflow-wrap: normal; word-break: normal; hyphens: none; }
 .t-name--m { font-size: calc(var(--fs-display) * .86); }
 .t-name--s { font-size: calc(var(--fs-display) * .74); }
 .t-name--xs { font-size: calc(var(--fs-display) * .6); }

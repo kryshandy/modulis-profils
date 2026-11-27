@@ -1,10 +1,10 @@
 /* Signature — Modulis editorial-bold. XXL variable headline (Archivo width axis), a colour composition where
    the portrait becomes a sticker with an orbiting caption, key figures, then a colour slab with the marquee. */
-.t--cover_color { --fs-display: clamp(3.1rem, 12vw, 8.2rem); }
-@media (min-width: 48rem) { .t--cover_color { --fs-display: clamp(3.4rem, 9.4vw, 10.5rem); } }
+.t--cover_color { --fs-display: clamp(2.5rem, 9.5vw, 6.8rem); }
+@media (min-width: 48rem) { .t--cover_color { --fs-display: clamp(3rem, 7.4vw, 7.8rem); } }
 .t--cover_color .t-hero { padding-block: clamp(1.5rem, 5vw, 4.5rem) clamp(3rem, 6vw, 5rem); }
 .t--cover_color .t-hero__grid { display: grid; gap: clamp(2.5rem, 6vw, 4rem); }
-.t--cover_color .t-name { max-width: 11ch; font-variation-settings: "wdth" 120; letter-spacing: -.045em; line-height: .86; }
+.t--cover_color .t-name { max-width: none; font-variation-settings: "wdth" 114; letter-spacing: -.045em; line-height: .88; }
 
 .t-sig { position: relative; width: min(100%, 30rem); aspect-ratio: 1 / 1.02; justify-self: end; }
 .t-sig > span { position: absolute; display: block; }
