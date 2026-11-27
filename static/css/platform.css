@@ -300,14 +300,13 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
   min-height: 44px; padding: 6px 12px; background: transparent; box-shadow: none; border-radius: 14px; gap: .18em; align-items: center;
   font-size: clamp(1.85rem, 6.4vw, 4.2rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.08;
   font-variation-settings: "wdth" 100; color: var(--pf-ink);
-  transition: color .25s, background-color .25s, transform .3s var(--pf-ease);
+  transition: color .35s, background-color .25s, font-variation-settings .6s var(--pf-ease);
 }
 .platform .pf-cloud .chip:hover {
-  background: color-mix(in srgb, var(--pf-teal) 10%, transparent); color: var(--pf-teal);
-  transform: translateY(-2px); box-shadow: none;
+  background: none; color: var(--pf-teal); font-variation-settings: "wdth" 125; box-shadow: none;
 }
 .platform .pf-cloud .chip.is-active {
-  background: var(--pf-forest); color: var(--pf-on-forest); transform: none;
+  background: var(--pf-forest); color: var(--pf-on-forest); font-variation-settings: "wdth" 112;
 }
 .platform .pf-cloud .chip__count {
   font-size: .9rem; letter-spacing: 0; margin-top: -.35em; background: var(--pf-white); box-shadow: 0 0 0 1px var(--pf-line);
@@ -433,6 +432,7 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
     color-scheme: dark;
   }
   .platform .pf-hl, .platform .pf-facts b, .platform .pf-link, .platform .pf-error__code, .platform .pf-marquee__list li:nth-child(even) { color: var(--pf-aqua); }
+  .platform .pf-cloud .chip:hover { color: var(--pf-aqua); }
   .platform .pf-nav__pill { box-shadow: 0 0 0 1px var(--pf-line), 0 10px 30px -18px rgba(0, 0, 0, .8); }
   .platform .pf-nav__links a:hover { background: rgba(234, 246, 245, .08); }
   .platform .pf-btn { --hover-fg: var(--pf-ink-fixed); }
