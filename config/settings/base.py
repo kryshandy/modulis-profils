@@ -107,6 +107,8 @@ DATABASES = {
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DATABASE_CONN_MAX_AGE", default=60)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# Transitional Django 5.x setting: assume https:// for schemeless URLs in forms (silences RemovedInDjango60Warning).
+FORMS_URLFIELD_ASSUME_HTTPS = True
 
 AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]

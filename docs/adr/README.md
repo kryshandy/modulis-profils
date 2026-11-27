@@ -16,5 +16,6 @@ Statuts : Proposée → Acceptée → (Remplacée par ADR-xxxx).
 | 0009 | OTP par WhatsApp Cloud API, SMS Firebase ou passerelle | Acceptée |
 | 0010 | Double authentification (TOTP) obligatoire pour l'équipe | Acceptée |
 | 0011 | Sauvegardes de la base et des médias hors Docker (dossier de l'hôte, chiffrement, hors site, test de restauration) | Acceptée |
+| 0012 | Constructeur de page par blocs encadrés (`apps/blocks`) | Acceptée |
 
 Elles passent à « Acceptée » quand vous validez le plan.
