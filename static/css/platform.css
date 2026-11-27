@@ -297,23 +297,21 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
 .platform .pf-btn.is-active { --bg: var(--pf-ink); --fg: var(--pf-paper); box-shadow: none; }
 .platform .pf-cloud { gap: 6px .35em; }
 .platform .pf-cloud .chip {
-  min-height: 44px; padding: 6px 12px; background: transparent; box-shadow: none; border-radius: 14px; gap: .18em; align-items: center;
-  font-size: clamp(1.85rem, 6.4vw, 4.2rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.08;
+  min-height: 44px; padding: 6px 10px; background: transparent; box-shadow: none; border-radius: 14px; gap: .18em; align-items: center;
+  font-size: clamp(1.85rem, 5.8vw, 4.05rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.08;
   font-variation-settings: "wdth" 100; color: var(--pf-ink);
-  transition: color .35s, background-color .25s, font-variation-settings .6s var(--pf-ease);
+  transition: color .35s, font-variation-settings .6s var(--pf-ease);
 }
-.platform .pf-cloud .chip:hover {
-  background: none; color: var(--pf-teal); font-variation-settings: "wdth" 125; box-shadow: none;
-}
+.platform .pf-cloud .chip:hover,
 .platform .pf-cloud .chip.is-active {
-  background: var(--pf-forest); color: var(--pf-on-forest); font-variation-settings: "wdth" 112;
+  background: none; color: var(--pf-teal); font-variation-settings: "wdth" 125; box-shadow: none;
 }
 .platform .pf-cloud .chip__count {
   font-size: .9rem; letter-spacing: 0; margin-top: -.35em; background: var(--pf-white); box-shadow: 0 0 0 1px var(--pf-line);
   font-variation-settings: "wdth" 100;
 }
-.platform .pf-cloud li:not(:last-child)::after { content: "/"; color: var(--pf-mute); opacity: .55; font-size: clamp(1.85rem, 6.4vw, 4.2rem); font-weight: 800; margin-left: .25em; line-height: 1.08; align-self: center; }
-.platform .pf-cloud li { display: inline-flex; align-items: center; }
+.platform .pf-cloud li:not(:last-child)::after { content: "/"; color: var(--pf-mute); opacity: .55; font-size: clamp(1.85rem, 5.8vw, 4.05rem); font-weight: 800; margin-left: .2em; line-height: 1.08; align-self: center; }
+.platform .pf-cloud li { display: inline-flex; align-items: center; white-space: nowrap; }
 
 .platform .pf-city-banner {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 20px;
@@ -438,7 +436,8 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
     color-scheme: dark;
   }
   .platform .pf-hl, .platform .pf-facts b, .platform .pf-link, .platform .pf-error__code, .platform .pf-marquee__list li:nth-child(even) { color: var(--pf-aqua); }
-  .platform .pf-cloud .chip:hover { color: var(--pf-aqua); }
+  .platform .pf-cloud .chip:hover,
+  .platform .pf-cloud .chip.is-active { color: var(--pf-aqua); }
   .platform .pf-nav__pill { box-shadow: 0 0 0 1px var(--pf-line), 0 10px 30px -18px rgba(0, 0, 0, .8); }
   .platform .pf-nav__links a:hover { background: rgba(234, 246, 245, .08); }
   .platform .pf-btn { --hover-fg: var(--pf-ink-fixed); }
