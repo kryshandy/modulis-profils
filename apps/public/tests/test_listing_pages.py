@@ -19,7 +19,16 @@ def test_home_renders(client):
     assert '<link rel="canonical" href="https://profils.test/">' in body
     assert f'href="/{profile.slug}"' in body
     assert "Douala" in body
+    assert 'data-city="douala"' in body
+    assert 'data-city-slug="douala"' in body
     assert graph_node(body, "WebSite")["name"] == "Modulis Profils"
+
+
+def test_home_city_below_threshold_is_interactive_button_without_noindex_href(client):
+    indexable_profile()
+    body = client.get("/").content.decode()
+    assert '<button type="button" class="chip pf-city" data-city-slug="douala"' in body
+    assert 'href="/villes/douala"' not in body
 
 
 def test_home_does_not_list_non_indexable_profiles(client):

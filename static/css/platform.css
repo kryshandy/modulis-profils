@@ -262,32 +262,72 @@ body.platform > main, body.platform > main.page { max-width: none; margin: 0; pa
 @media (min-width: 1000px) { .platform .pf-templates__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; } }
 
 /* Chips (cities, trades) */
+.platform [hidden] { display: none !important; }
 .platform .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; }
 .platform .chip {
   display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 9px 16px; border-radius: 999px;
   background: var(--pf-white); color: var(--pf-ink); box-shadow: 0 0 0 1px var(--pf-line); border: 0;
-  font-weight: 600; font-size: .95rem; text-decoration: none; transition: background-color .3s, color .3s, box-shadow .3s;
+  font-family: inherit; font-weight: 600; font-size: .95rem; text-decoration: none; cursor: pointer;
+  transition: background-color .3s, color .3s, box-shadow .3s, transform .25s var(--pf-ease);
 }
-.platform a.chip:hover { background: var(--pf-ink); color: var(--pf-paper); box-shadow: none; }
-.platform span.chip { color: var(--pf-ink-2); background: transparent; }
+.platform a.chip:hover, .platform button.chip:hover { background: var(--pf-ink); color: var(--pf-paper); box-shadow: none; }
+.platform .chip.is-active { background: var(--pf-forest); color: var(--pf-on-forest); box-shadow: none; }
+.platform span.chip { color: var(--pf-ink-2); background: transparent; cursor: default; }
 .platform .chip__count {
   display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px;
   background: var(--pf-paper); color: var(--pf-ink); font-size: .78rem; font-weight: 700; font-variant-numeric: tabular-nums;
+  transition: background-color .3s, color .3s;
 }
-.platform a.chip:hover .chip__count { background: var(--pf-aqua); }
-/* City cloud: big Archivo words, width grows on hover (sector-cloud on modulis.tech) */
-.platform .pf-cloud { gap: .1em .3em; }
+.platform a.chip:hover .chip__count, .platform button.chip:hover .chip__count,
+.platform .chip.is-active .chip__count { background: var(--pf-aqua); color: var(--pf-ink-fixed); }
+
+/* City cloud: big Archivo words, crisp hover & active states without horizontal layout shift */
+.platform .pf-cities__head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; margin-bottom: 18px;
+}
+.platform .pf-cities__head .pf-kicker { margin-bottom: 0; }
+.platform .pf-cities__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
+@media (min-width: 720px) { .platform .pf-cities__controls { width: auto; } }
+.platform .pf-city-search {
+  min-height: 44px; min-width: 0; flex: 1 1 200px; padding: 0 16px; border-radius: 999px; border: 0;
+  background: var(--pf-white); color: var(--pf-ink); box-shadow: 0 0 0 1px var(--pf-line);
+  font: 550 .95rem/1 var(--pf-font);
+}
+.platform .pf-city-search::placeholder { color: var(--pf-ink-2); opacity: .8; }
+.platform .pf-btn.is-active { --bg: var(--pf-ink); --fg: var(--pf-paper); box-shadow: none; }
+.platform .pf-cloud { gap: 6px .35em; }
 .platform .pf-cloud .chip {
-  min-height: 0; padding: 0; background: none; box-shadow: none; border-radius: 0; gap: .18em; align-items: flex-start;
-  font-size: clamp(2rem, 7vw, 4.6rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.08;
-  font-variation-settings: "wdth" 100; transition: color .35s, font-variation-settings .6s var(--pf-ease);
+  min-height: 44px; padding: 6px 12px; background: transparent; box-shadow: none; border-radius: 14px; gap: .18em; align-items: center;
+  font-size: clamp(1.85rem, 6.4vw, 4.2rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.08;
+  font-variation-settings: "wdth" 100; color: var(--pf-ink);
+  transition: color .25s, background-color .25s, transform .3s var(--pf-ease);
 }
-.platform .pf-cloud a.chip { color: var(--pf-ink); }
-.platform .pf-cloud span.chip { color: var(--pf-mute); }
-.platform .pf-cloud a.chip:hover { background: none; color: var(--pf-teal); font-variation-settings: "wdth" 125; }
-.platform .pf-cloud .chip__count { font-size: .9rem; letter-spacing: 0; margin-top: .55em; background: var(--pf-white); font-variation-settings: "wdth" 100; }
-.platform .pf-cloud li:not(:last-child)::after { content: "/"; color: var(--pf-mute); opacity: .55; font-size: clamp(2rem, 7vw, 4.6rem); font-weight: 800; margin-left: .3em; line-height: 1.08; }
-.platform .pf-cloud li { display: inline-flex; align-items: flex-start; }
+.platform .pf-cloud .chip:hover {
+  background: color-mix(in srgb, var(--pf-teal) 10%, transparent); color: var(--pf-teal);
+  transform: translateY(-2px); box-shadow: none;
+}
+.platform .pf-cloud .chip.is-active {
+  background: var(--pf-forest); color: var(--pf-on-forest); transform: none;
+}
+.platform .pf-cloud .chip__count {
+  font-size: .9rem; letter-spacing: 0; margin-top: -.35em; background: var(--pf-white); box-shadow: 0 0 0 1px var(--pf-line);
+  font-variation-settings: "wdth" 100;
+}
+.platform .pf-cloud li:not(:last-child)::after { content: "/"; color: var(--pf-mute); opacity: .55; font-size: clamp(1.85rem, 6.4vw, 4.2rem); font-weight: 800; margin-left: .25em; line-height: 1.08; align-self: center; }
+.platform .pf-cloud li { display: inline-flex; align-items: center; }
+
+.platform .pf-city-banner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 20px;
+  margin-top: 22px; padding: 18px 22px; border-radius: 22px;
+  background: var(--pf-forest); color: var(--pf-on-forest);
+}
+.platform .pf-city-banner__info { display: grid; gap: 2px; }
+.platform .pf-city-banner__info strong { font-size: 1.25rem; font-weight: 800; font-variation-settings: "wdth" 108; }
+.platform .pf-city-banner__info span { color: var(--pf-mint); font-size: .95rem; }
+.platform .pf-city-banner__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.platform .pf-city-banner .pf-btn--line { --fg: var(--pf-on-forest); --hover: var(--pf-on-forest); --hover-fg: var(--pf-ink-fixed); }
+.platform .pf-cities__empty { margin-top: 16px; }
+.platform .pf-pros__empty { display: grid; gap: 14px; justify-items: start; margin-top: 16px; }
 
 .platform .pf-cities { padding-block: clamp(56px, 8vw, 112px) clamp(16px, 3vw, 32px); }
 
