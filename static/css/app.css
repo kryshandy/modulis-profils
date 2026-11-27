@@ -1007,3 +1007,20 @@ details[open] > summary.btn { margin-bottom:var(--space-4);}
 .blockimg__preview { width:100%;max-width:240px;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:var(--radius-md);}
 .blockimg__drop { display:inline-flex;align-items:center;min-height:var(--tap);padding:6px 14px;border-radius:999px;border:1.5px dashed var(--color-line-strong);cursor:pointer;font-weight:650;width:max-content;}
 .blockimg__drop:focus-within { outline:3px solid var(--color-accent);outline-offset:2px;}
+
+/* 13. Billing & plans (/espace/abonnement) */
+.billing-current .h2 { margin-top:var(--space-1);flex-wrap:wrap;}
+.plans-grid { display:grid;gap:var(--space-4);grid-template-columns:1fr;}
+@media (min-width:640px) { .plans-grid { grid-template-columns:repeat(2, minmax(0, 1fr));} }
+.plan-card { display:flex;flex-direction:column;gap:var(--space-3);height:100%;}
+.plan-card > * + * { margin-top:0;}
+.plan-card--featured { border-color:var(--brand-coral);box-shadow:var(--shadow-1), 0 0 0 1px color-mix(in srgb, var(--brand-coral) 35%, transparent);}
+.plan-card--current { border-color:var(--color-primary);background:color-mix(in srgb, var(--color-ok-bg) 35%, var(--color-surface));}
+.plan-card__head { display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);}
+.plan-card__price { display:flex;align-items:baseline;gap:var(--space-1);}
+.plan-card__price strong { font-size:1.65rem;line-height:1.1;font-weight:800;letter-spacing:-.025em;font-variation-settings:"wdth" 110;color:var(--color-ink);}
+.plan-card__features { list-style:none;display:grid;gap:var(--space-2);font-size:.925rem;}
+.plan-card__features li { display:flex;align-items:flex-start;gap:var(--space-2);}
+.plan-card__features .icon { color:var(--color-primary);margin-top:2px;}
+.plan-card__cta { margin-top:auto;padding-top:var(--space-2);}
+

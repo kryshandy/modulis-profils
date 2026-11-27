@@ -4,7 +4,7 @@ from django.urls import path
 
 from apps.blocks import views as blocks
 
-from .views import auth, editor, onboarding, pages
+from .views import auth, billing, editor, onboarding, pages
 
 app_name = "dashboard"
 
@@ -46,6 +46,7 @@ urlpatterns = [
     path("cartes/lier", pages.card_link, name="card_link"),
     path("cartes/<int:pk>/perdue", pages.card_lost, name="card_lost"),
     path("statistiques", pages.stats, name="stats"),
+    path("abonnement", billing.billing_view, name="billing"),
     path("parametres", pages.settings_view, name="settings"),
     path("parametres/adresse-disponible", pages.slug_check, name="slug_check"),
     path("parametres/mes-donnees", pages.data_export, name="data_export"),

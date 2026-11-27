@@ -1,0 +1,79 @@
+{% extends "dashboard_base.html" %}
+{% load i18n humanize dashboard_tags %}
+{% block page_title %}{% translate "Offre & Abonnement" %}{% endblock %}
+{% block dash_content %}
+<h1 class="h1">{% translate "Offre & Abonnement" %}</h1>
+<p class="lead">{% translate "Choisis l'offre adaptée à ton activité. Tu peux changer d'offre à tout moment." %}</p>
+
+<section class="card card--forest stack billing-current" aria-labelledby="current-plan-title">
+  <div class="row-between">
+    <div>
+      <p class="kicker"><span class="dot dot--aqua" aria-hidden="true"></span>{% translate "Ton offre actuelle" %}</p>
+      <h2 class="h2" id="current-plan-title">
+        {{ current_plan.name|default:_("Gratuit") }}
+        <span class="badge badge--{{ current_plan_code }}">{{ current_plan.name|default:current_plan_code }}</span>
+      </h2>
+    </div>
+    <span class="badge badge--ok">{% translate "Active" %}</span>
+  </div>
+  {% if current_subscription %}
+    <p class="small">
+      {% blocktranslate with end=current_subscription.ends_at|date:"d/m/Y" %}Valable jusqu'au {{ end }} · Renouvellement annuel sans engagement.{% endblocktranslate %}
+    </p>
+  {% else %}
+    <p class="small">{% translate "Ta page est en ligne gratuitement, sans limite de durée." %}</p>
+  {% endif %}
+  <p class="small muted">{% translate "Mode démo interne : le changement d'offre est activé immédiatement sans paiement en ligne." %}</p>
+</section>
+
+<section class="stack" aria-labelledby="plans-list-title">
+  <h2 class="h2" id="plans-list-title">{% translate "Les offres disponibles" %}</h2>
+  <div class="plans-grid">
+    {% for item in plan_cards %}
+      <article class="card stack plan-card{% if item.is_current %} plan-card--current{% endif %}{% if item.is_featured %} plan-card--featured{% endif %}">
+        <div class="plan-card__head">
+          <h3 class="h3">{{ item.plan.name }}</h3>
+          {% if item.is_current %}
+            <span class="badge badge--ok">{% translate "Actuelle" %}</span>
+          {% elif item.is_featured %}
+            <span class="badge badge--pro">{% translate "Populaire" %}</span>
+          {% endif %}
+        </div>
+
+        <p class="plan-card__price tnum">
+          {% if item.price and item.price.amount > 0 %}
+            <strong>{{ item.price.amount|intcomma }} {{ item.price.currency }}</strong>
+            <span class="muted small">/ {% translate "an" %}</span>
+          {% else %}
+            <strong>{% translate "Gratuit" %}</strong>
+          {% endif %}
+        </p>
+
+        {% if item.plan.description %}
+          <p class="muted small">{{ item.plan.description }}</p>
+        {% endif %}
+
+        <ul class="plan-card__features">
+          {% for feat in item.features %}
+            <li>{% icon "check" %}<span>{{ feat }}</span></li>
+          {% endfor %}
+        </ul>
+
+        <div class="plan-card__cta">
+          {% if item.is_current %}
+            <button class="btn btn--ghost btn--block" type="button" disabled aria-disabled="true">{% translate "Offre actuelle" %}</button>
+          {% else %}
+            <form method="post" action="{% url 'dashboard:billing' %}">
+              {% csrf_token %}
+              <input type="hidden" name="plan_code" value="{{ item.plan.code }}">
+              <button class="btn {% if item.is_featured %}btn--primary{% else %}btn--ghost{% endif %} btn--block" type="submit" data-busy="{% translate 'Activation…' %}">
+                {% blocktranslate with name=item.plan.name %}Choisir {{ name }}{% endblocktranslate %}
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

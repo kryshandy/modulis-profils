@@ -40,6 +40,7 @@
     <li><a href="{% url 'dashboard:share' %}"{% if nav == 'share' %} aria-current="page"{% endif %}>{% icon "share" %}<span>{% translate "Partager / QR" %}</span></a></li>
     <li><a href="{% url 'dashboard:stats' %}"{% if nav == 'stats' %} aria-current="page"{% endif %}>{% icon "chart" %}<span>{% translate "Statistiques" %}</span></a></li>
     <li><a href="{% url 'dashboard:cards' %}"{% if nav == 'cards' %} aria-current="page"{% endif %}>{% icon "card" %}<span>{% translate "Cartes NFC" %}</span></a></li>
+    <li><a href="{% url 'dashboard:billing' %}"{% if nav == 'billing' %} aria-current="page"{% endif %}>{% icon "sparkle" %}<span>{% translate "Offre / Abonnement" %}</span></a></li>
     <li><a href="{% url 'dashboard:settings' %}"{% if nav == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}<span>{% translate "Paramètres" %}</span></a></li>
     <li><a href="{% url 'dashboard:help' %}"{% if nav == 'help' %} aria-current="page"{% endif %}>{% icon "help" %}<span>{% translate "Aide" %}</span></a></li>
   </ul>
@@ -57,10 +58,11 @@
   <a href="{% url 'dashboard:share' %}"{% if nav == 'share' %} aria-current="page"{% endif %}>{% icon "share" %}<span>{% translate "Partager" %}</span></a>
   <a href="{% url 'dashboard:stats' %}"{% if nav == 'stats' %} aria-current="page"{% endif %}>{% icon "chart" %}<span>{% translate "Stats" %}</span></a>
   <details class="more">
-    <summary{% if nav == 'cards' or nav == 'settings' or nav == 'help' or app == 'themes' %} aria-current="page"{% endif %}>{% icon "more" %}<span>{% translate "Plus" %}</span></summary>
+    <summary{% if nav == 'cards' or nav == 'billing' or nav == 'settings' or nav == 'help' or app == 'themes' %} aria-current="page"{% endif %}>{% icon "more" %}<span>{% translate "Plus" %}</span></summary>
     <div class="more__sheet">
       <a href="/espace/modeles/"{% if app == 'themes' %} aria-current="page"{% endif %}>{% icon "palette" %}{% translate "Modèles" %}<span class="badge badge--new">{% translate "Nouveau" %}</span></a>
       <a href="{% url 'dashboard:cards' %}"{% if nav == 'cards' %} aria-current="page"{% endif %}>{% icon "card" %}{% translate "Cartes NFC" %}</a>
+      <a href="{% url 'dashboard:billing' %}"{% if nav == 'billing' %} aria-current="page"{% endif %}>{% icon "sparkle" %}{% translate "Offre / Abonnement" %}</a>
       <a href="{% url 'dashboard:settings' %}"{% if nav == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}{% translate "Paramètres" %}</a>
       <a href="{% url 'dashboard:help' %}"{% if nav == 'help' %} aria-current="page"{% endif %}>{% icon "help" %}{% translate "Aide" %}</a>
       <form method="post" action="{% url 'dashboard:logout' %}">{% csrf_token %}
